@@ -23,7 +23,7 @@ export const INDICATORS = {
     name: 'Moving Average Convergence Divergence',
     calculate: calculateMACD,
     defaultParams: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
-    description: 'Shows the relationship between two moving averages of an asset's price',
+    description: "Shows the relationship between two moving averages of an asset's price",
   },
   BB: {
     name: 'Bollinger Bands',

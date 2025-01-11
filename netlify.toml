@@ -1,7 +1,7 @@
 [build]
-  command = "npm run build"
+  base = "/"
   publish = "dist"
-  environment = { NODE_VERSION = "18" }
+  command = "npm run build"
 
 [[redirects]]
   from = "/*"

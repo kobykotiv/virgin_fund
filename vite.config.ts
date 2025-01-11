@@ -6,6 +6,7 @@ import dts from 'vite-plugin-dts';
 
 // Adding proper type for the format parameter
 export default defineConfig({
+  base: "/",
   plugins: [
     react({
       jsxRuntime: "automatic",

@@ -3,13 +3,32 @@ import { HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSearchMetrics } from '@/lib/hooks/useSearchMetrics';
 
-interface SearchHelpPopoverProps {
-  className?: string;
+// Define the expected shape of search metrics
+interface SearchMetricsStore {
+  cacheHits: number;
+  apiCalls: number;
+  averageResponseTime: number;
+  rateLimitRemaining: number;
+  lastUpdated: Date;
 }
 
-export function SearchHelpPopover({ className }: SearchHelpPopoverProps) {
+interface SearchHelpPopoverProps {
+  className?: string;
+  metrics?: Partial<SearchMetricsStore>;
+}
+
+export function SearchHelpPopover({ className, metrics: externalMetrics }: SearchHelpPopoverProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const metrics = useSearchMetrics();
+  const internalMetrics = useSearchMetrics();
+  
+  // Merge external metrics with internal metrics, providing default values
+  const metrics: SearchMetricsStore = {
+    cacheHits: externalMetrics?.cacheHits ?? internalMetrics.cacheHits ?? 0,
+    apiCalls: externalMetrics?.apiCalls ?? internalMetrics.apiCalls ?? 0,
+    averageResponseTime: externalMetrics?.averageResponseTime ?? internalMetrics.averageResponseTime ?? 0,
+    rateLimitRemaining: externalMetrics?.rateLimitRemaining ?? internalMetrics.rateLimitRemaining ?? 5,
+    lastUpdated: externalMetrics?.lastUpdated ?? internalMetrics.lastUpdated ?? new Date(),
+  };
 
   return (
     <div className="relative inline-block">

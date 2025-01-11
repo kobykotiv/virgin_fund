@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Search, X, AlertCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Search, X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '../ui/input';
 import { ErrorMessage } from '../ui/error-message';
 import { RawDataPopover } from '../ui/raw-data-popover';
@@ -9,35 +9,15 @@ import { AssetList } from './AssetList';
 import { SearchResults } from './SearchResults';
 import { useToast } from '../ui/use-toast';
 import { useSearch } from '@/lib/hooks/useSearch';
-import { handleSearchError } from '@/lib/errors/searchErrors';
-import type { SearchError } from '@/lib/errors/searchErrors';
 
 // Debug mode check
 const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true';
-
-interface SearchResult {
-  symbol: string;
-  name: string;
-  type: string;
-  region: string;
-  marketOpen: string;
-  marketClose: string;
-  timezone: string;
-  currency: string;
-  matchScore: string;
-}
 
 interface StockSearchProps {
   onSelect: (symbol: string) => void;
   selectedAssets: string[];
 }
 
-interface CachedResult {
-  data: SearchResult[];
-  timestamp: number;
-}
-
-const CACHE_DURATION = 5 * 60 * 1000;
 const MAX_ASSETS = 20;
 const DEBOUNCE_DELAY = 300;
 
@@ -45,11 +25,8 @@ export function StockSearch({ onSelect, selectedAssets }: StockSearchProps) {
   const { toast } = useToast();
   const { results, loading, error, search } = useSearch();
   const [query, setQuery] = useState('');
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const [rawResponse, setRawResponse] = useState<any>(null);
+  const [rawResponse] = useState<any>(null);
   const debouncedQuery = useDebounce(query, DEBOUNCE_DELAY);
-  const resultsRef = useRef<HTMLDivElement>(null);
-  const searchCache = useRef<Record<string, CachedResult>>({});
   const assetListRef = useRef<HTMLDivElement>(null);
 
   // Debug toast helper
@@ -231,14 +208,14 @@ export function StockSearch({ onSelect, selectedAssets }: StockSearchProps) {
 
         {/* Error Message */}
         {error && (
-          <ErrorMessage error={error.details} className="mt-2" />
+          <ErrorMessage error={error.message || 'An error occurred'} className="mt-2" />
         )}
 
         {/* Search Results */}
         <SearchResults
           results={results}
           loading={loading}
-          error={error}
+          error={error ? error.message : null}
           query={query}
           onSelect={handleSelect}
         />

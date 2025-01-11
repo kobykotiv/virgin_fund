@@ -10,12 +10,12 @@ import {
   TrendingUp, 
   Settings as SettingsIcon,
   UserCircle2,
-  CloudMoon,
+  // CloudMoon,
   LogOut,
   Inbox,
   BellRing,
   LayoutDashboard,
-  ChevronDown,
+  // ChevronDown,
   CheckCircle2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -166,8 +166,8 @@ export function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8">
-            <PerformanceMetrics strategies={strategies} />
-            <StrategyList strategies={strategies} />
+            <PerformanceMetrics strategies={strategies || []} />
+            <StrategyList strategies={strategies || []} />
           </div>
         )}
       </div>

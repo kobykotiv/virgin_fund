@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { Link } from 'react-router-dom';
 import { Strategy } from '../types';
 import { ArrowUpRight, Calendar, DollarSign, Repeat, TrendingUp, TrendingDown } from 'lucide-react';

@@ -34,13 +34,40 @@ Virgin Fund is a sophisticated investment strategy platform that enables users t
 - Secure authentication with Supabase
 - Comprehensive testing suite
 
-## Technology Stack
+## Self-Hosting Instructions
 
-- Frontend: React with TypeScript
-- Styling: Tailwind CSS with custom glass-morphic design
-- State Management: Zustand
-- Data Fetching: TanStack Query
-- Database: Supabase (PostgreSQL)
-- Authentication: Supabase Auth
-- API Integration: Alpha Vantage
-- Testing: Vitest
+### Docker
+
+1. Build the Docker image:
+   ```bash
+   docker build -t virgin-fund .
+   ```
+
+2. Run the Docker container:
+   ```bash
+   docker run -p 3000:3000 virgin-fund
+   ```
+
+### Netlify
+
+1. Push your code to a Git repository (GitHub, GitLab, etc.).
+2. Go to [Netlify](https://www.netlify.com/) and create a new site from Git.
+3. Connect your repository and set the build command to `npm run build` and the publish directory to `dist`.
+
+### Vercel
+
+1. Push your code to a Git repository.
+2. Go to [Vercel](https://vercel.com/) and import your project.
+3. Set the build command to `npm run build` and the output directory to `dist`.
+
+### AWS
+
+1. Create an S3 bucket and upload your build files.
+2. Configure the bucket for static website hosting.
+3. Optionally, set up CloudFront for CDN.
+
+## Contact
+
+For any questions or feedback, please reach out to us at `issues`.
+
+Happy investing! 💰

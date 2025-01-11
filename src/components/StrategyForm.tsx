@@ -2,15 +2,14 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Calculator, Search, Plus, X, AlertCircle, Save } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Calculator, X, AlertCircle, Save } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { TickerSearch } from './TickerSearch';
+import { StockSearch } from './StockSearch';
 
 interface FormData {
   name: string;
@@ -193,7 +192,7 @@ export function StrategyForm() {
 
             <div className="space-y-2">
               <Label>Select Assets (Max 10)</Label>
-              <TickerSearch onSelect={handleAssetSelect} selectedAssets={selectedAssets} />
+              <StockSearch onSelect={handleAssetSelect} selectedAssets={selectedAssets} />
               
               <div className="flex flex-wrap gap-2 mt-2">
                 {selectedAssets.map((symbol) => (

@@ -21,7 +21,7 @@ interface ProfileFormData {
 export function Settings() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProfileFormData>();
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileFormData>();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
@@ -58,7 +58,9 @@ export function Settings() {
   React.useEffect(() => {
     if (profile) {
       Object.entries(profile).forEach(([key, value]) => {
-        setValue(key as keyof ProfileFormData, value);
+        if (typeof value === 'string' || (typeof value === 'object' && value !== null)) {
+          setValue(key as keyof ProfileFormData, value as any);
+        }
       });
     }
   }, [profile, setValue]);

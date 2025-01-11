@@ -1,9 +1,10 @@
 import { supabase } from '../supabase';
-import { useToast } from '@/components/ui/use-toast';
+// import { useToast } from '@/components/ui/use-toast';
 import { useSearchMetrics } from '@/lib/hooks/useSearchMetrics';
 import { AxiosError } from 'axios';
 import axios from 'axios';
-import { handleSearchError } from '@/lib/errors/searchErrors';
+import { // handleSearchError, 
+  SearchError } from '@/lib/errors/searchErrors';
 
 interface CacheEntry {
   data: any;
@@ -11,18 +12,18 @@ interface CacheEntry {
   error?: string;
 }
 
-interface SearchHistoryEntry {
-  user_id: string;
-  symbol: string;
-  results: any;
-  search_count: number;
-  last_searched: number;
-}
+// interface SearchHistoryEntry {
+//   user_id: string;
+//   symbol: string;
+//   results: any;
+//   search_count: number;
+//   last_searched: number;
+// }
 
-interface ApiResponse {
-  data: any;
-  source: 'cache' | 'database' | 'api';
-}
+// interface ApiResponse {
+//   data: any;
+//   source: 'cache' | 'database' | 'api';
+// }
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 const CACHE_KEY_PREFIX = 'financial_data_';
@@ -221,12 +222,13 @@ async function recordSearch(symbol: string, userId: string, results: any): Promi
   }
 }
 
-async function updateSearchHistory(symbol: string, userId: string, results: any): Promise<void> {
+async function updateSearchHistory(symbol: string, userId: string, results: object): Promise<void> {
   try {
     const { error } = await supabase
       .from('search_history')
       .update({
-        last_searched: Date.now()
+        last_searched: Date.now(),
+        results: results
       })
       .eq('user_id', userId)
       .eq('symbol', symbol);
@@ -306,11 +308,11 @@ function handleSearchError(error: unknown): void {
   throw Object.assign(new Error(errorDetails.message), { debug: errorDetails });
 }
 
-function logPerformanceMetrics(
-  symbol: string,
-  source: 'cache' | 'database' | 'api',
-  startTime: number
-): void {
-  const duration = Date.now() - startTime;
-  console.debug(`Performance: ${symbol} from ${source} took ${duration}ms`);
-}
+// function logPerformanceMetrics(
+//   symbol: string,
+//   source: 'cache' | 'database' | 'api',
+//   startTime: number
+// ): void {
+//   const duration = Date.now() - startTime;
+//   console.debug(`Performance: ${symbol} from ${source} took ${duration}ms`);
+// }

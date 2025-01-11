@@ -1,4 +1,6 @@
-export function calculateMetrics(transactions: Transaction[], currentPrices: Record<string, number>) {
+import { Transaction, StrategyResult } from '../types';
+
+export function calculateMetrics(transactions: Transaction[], currentPrices: Record<string, number>): StrategyResult {
   const totalInvestment = transactions.reduce((sum, t) => sum + t.amount, 0);
   
   const currentValue = transactions.reduce((sum, t) => {
@@ -41,5 +43,6 @@ export function calculateMetrics(transactions: Transaction[], currentPrices: Rec
     roi,
     volatility,
     maxDrawdown,
+    transactions,
   };
 }

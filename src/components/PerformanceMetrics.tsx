@@ -1,4 +1,3 @@
-import React from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -83,10 +82,10 @@ export function PerformanceMetrics({ strategies }: Props) {
         },
       },
     },
-    interaction: {
-      intersect: false,
-      mode: 'index',
-    },
+  interaction: {
+    intersect: false,
+    mode: 'nearest' as const,
+  },
   };
 
   return (

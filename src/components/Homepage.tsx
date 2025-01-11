@@ -9,7 +9,7 @@ import {
 import { Button } from './ui/button';
 import { BlobBackground } from './ui/blob-background';
 import { MobileMenu } from './ui/mobile-menu';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
+// import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const techStack = [
   { name: 'React', icon: <Layers className="w-5 h-5" />, color: 'text-blue-500' },
@@ -26,7 +26,7 @@ const techStack = [
 
 export function Homepage() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  // const isMobile = useMediaQuery('(max-width: 768px)');
   const location = useLocation();
 
   React.useEffect(() => {

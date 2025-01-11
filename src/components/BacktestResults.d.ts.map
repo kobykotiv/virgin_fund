@@ -1,0 +1,1 @@
+{"version":3,"file":"BacktestResults.d.ts","sourceRoot":"","sources":["BacktestResults.tsx"],"names":[],"mappings":"AAMA,OAAO,KAAK,EAAE,cAAc,EAAE,MAAM,SAAS,CAAC;AAE9C,UAAU,oBAAoB;IAC5B,OAAO,EAAE,cAAc,CAAC;IACxB,MAAM,EAAE,MAAM,IAAI,CAAC;IACnB,QAAQ,EAAE,MAAM,IAAI,CAAC;CACtB;AAED,wBAAgB,eAAe,CAAC,EAAE,OAAO,EAAE,MAAM,EAAE,QAAQ,EAAE,EAAE,oBAAoB,2CA0HlF"}

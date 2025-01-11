@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import Fuse from 'fuse.js';
+// import Fuse from 'fuse.js';
 
 const ALPHA_VANTAGE_API_KEY = import.meta.env.VITE_ALPHA_VANTAGE_API_KEY;
 const BASE_URL = 'https://www.alphavantage.co/query';
@@ -65,14 +65,15 @@ export async function validateTicker(symbol: string): Promise<boolean> {
 
 export async function recordSearch(symbol: string): Promise<void> {
   try {
-    const userId = supabase.auth.user()?.id;
-    if (!userId) return;
+    const { data, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !data?.user) return;
 
-    await supabase
+    const { error } = await supabase
       .from('search_history')
       .upsert(
         {
-          user_id: userId,
+          user_id: data.user.id,
           symbol,
           search_count: 1,
           last_searched: new Date().toISOString()
@@ -81,7 +82,11 @@ export async function recordSearch(symbol: string): Promise<void> {
           onConflict: 'user_id,symbol'
         }
       );
+
+    if (error) {
+      console.error('Error recording search:', error);
+    }
   } catch (error) {
-    console.error('Error recording search:', error);
+    console.error('Unexpected error recording search:', error);
   }
 }

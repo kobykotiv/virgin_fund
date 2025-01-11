@@ -1,7 +1,7 @@
-import { Strategy, Asset, StrategyResult, Transaction } from '@/types';
+import { Strategy, StrategyResult, Transaction } from '@/types';
 import { calculateMetrics } from '../calculations';
 import { fetchHistoricalData } from '../api';
-import { STRATEGIES } from './index';
+import { RSI, MACD, ROC, SuperTrend } from "@debut/indicators";
 
 export async function backtest(
   strategy: Strategy,
@@ -17,14 +17,20 @@ export async function backtest(
     );
 
     // Initialize result variables
-    const transactions: Transaction[] = [];
-    let totalInvestment = 0;
-    let currentValue = 0;
+    // const transactions: Transaction[] = [];
+    // let totalInvestment = 0;
+    // let currentValue = 0;
 
     // Process strategy based on type
     switch (strategy.strategyType) {
       case 'DCA':
         return processDCAStrategy(strategy, historicalData, startDate, endDate);
+      case 'MEAN_REVERSION':
+        throw new Error('Mean reversion strategy not implemented yet');
+        // return processMeanReversionStrategy(strategy, historicalData, startDate, endDate);
+      case 'GRID':
+        throw new Error('Grid strategy not implemented yet');
+        // return processGridStrategy(strategy, historicalData, startDate, endDate);
       case 'MOMENTUM':
         return processMomentumStrategy(strategy, historicalData, startDate, endDate);
       case 'TREND_FOLLOWING':
@@ -59,11 +65,13 @@ function processDCAStrategy(
       if (price) {
         const shares = amountPerAsset / price;
         transactions.push({
-          date: currentDate.toISOString(),
+          date: currentDate,
           symbol: asset.symbol,
           shares,
           price,
-          amount: amountPerAsset
+          amount: amountPerAsset,
+          id: '',
+          type: 'buy'
         });
         totalInvestment += amountPerAsset;
       }
@@ -91,22 +99,166 @@ function processMomentumStrategy(
   strategy: Strategy,
   historicalData: any[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  // add arguments for the indicators
+  rsiPeriod: number = 14,
+  macdFastPeriod: number = 12,
+  macdSlowPeriod: number = 26,
+  macdSignalPeriod: number = 9,
+  rocPeriod: number = 10,
+  // rsiOverbought: number = 70,
+  // rsiOversold: number = 30
 ): StrategyResult {
+
   // Implementation for momentum strategy
+  const transactions: Transaction[] = [];
+  let totalInvestment = 0;
+
+  // Initialize technical indicators
+  const indicators = strategy.selectedAssets.map(() => ({
+    rsi: new RSI(rsiPeriod),
+    macd: new MACD(macdFastPeriod, macdSlowPeriod, macdSignalPeriod),
+    roc: new ROC(rocPeriod),
+  }));
+
+  // Process each asset
+  strategy.selectedAssets.forEach((asset, assetIndex) => {
+    const assetData = historicalData[assetIndex];
+    let position = 0;
+
+    assetData.forEach((dataPoint: { date: string | number | Date; price: number; }) => {
+      const date = new Date(dataPoint.date);
+      if (date >= startDate && date <= endDate) {
+        const { rsi, macd, roc } = indicators[assetIndex];
+        const rsiValue = rsi.nextValue(dataPoint.price);
+        const macdValue = macd.nextValue(dataPoint.price);
+        const rocValue = roc.nextValue(dataPoint.price);
+
+        if (rsiValue && macdValue && rocValue) {
+          const investmentAmount = strategy.strategyConfig.investmentAmount;
+
+          // Buy signal
+          if (rsiValue < 30 && macdValue.histogram > 0 && rocValue > 0 && position === 0) {
+            const shares = investmentAmount / dataPoint.price;
+            position = shares;
+            totalInvestment += investmentAmount;
+            
+            transactions.push({
+              date: date,
+              symbol: asset.symbol,
+              shares,
+              price: dataPoint.price,
+              amount: investmentAmount,
+              type: "buy",
+              id: ''
+            });
+          }
+          // Sell signal
+          else if (rsiValue > 70 && macdValue.histogram < 0 && rocValue < 0 && position > 0) {
+            const saleAmount = position * dataPoint.price;
+            transactions.push({
+              date: date,
+              symbol: asset.symbol,
+              shares: -position,
+              price: dataPoint.price,
+              amount: saleAmount,
+              type: 'sell',
+              id: ''
+            });
+            position = 0;
+          }
+        }
+      }
+    });
+  });
+
+  const currentPrices = getCurrentPrices(historicalData);
+  const metrics = calculateMetrics(transactions, currentPrices);
+
+  return {
+    totalInvestment,
+    currentValue: metrics.currentValue,
+    roi: metrics.roi,
+    volatility: metrics.volatility,
+    maxDrawdown: metrics.maxDrawdown,
+    transactions
+  };
   // This would include RSI calculations and momentum-based trading decisions
-  throw new Error('Momentum strategy not implemented yet');
+  // throw new Error('Momentum strategy not implemented yet');
 }
+
 
 function processTrendFollowingStrategy(
   strategy: Strategy,
   historicalData: any[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  atrPeriod: number = 10,
+  atrMultiplier: number = 3
 ): StrategyResult {
-  // Implementation for trend following strategy
-  // This would include moving average calculations and trend-based trading decisions
-  throw new Error('Trend following strategy not implemented yet');
+  const transactions: Transaction[] = [];
+  let totalInvestment = 0;
+
+  // Process each asset
+  strategy.selectedAssets.forEach((asset, assetIndex) => {
+    const assetData = historicalData[assetIndex];
+    const superTrend = new SuperTrend(atrPeriod, atrMultiplier);
+    let position = 0;
+
+    assetData.forEach((dataPoint: { date: string | number | Date; high: number; low: number; price: number; }) => {
+      const date = new Date(dataPoint.date);
+      if (date >= startDate && date <= endDate) {
+        const superTrendValue = superTrend.nextValue(dataPoint.high, dataPoint.low, dataPoint.price);
+
+        if (superTrendValue) {
+          const investmentAmount = strategy.strategyConfig.investmentAmount;
+
+          // Buy signal when trend turns up
+          if (superTrendValue.direction === 1 && position === 0) {
+            const shares = investmentAmount / dataPoint.price;
+            position = shares;
+            totalInvestment += investmentAmount;
+            
+            transactions.push({
+              date,
+              symbol: asset.symbol,
+              shares,
+              price: dataPoint.price,
+              amount: investmentAmount,
+              type: 'buy',
+              id: ''
+            });
+          }
+          // Sell signal when trend turns down
+          else if (superTrendValue.direction === -1 && position > 0) {
+            const saleAmount = position * dataPoint.price;
+            transactions.push({
+              date,
+              symbol: asset.symbol,
+              shares: -position,
+              price: dataPoint.price,
+              amount: saleAmount,
+              type: 'sell',
+              id: ''
+            });
+            position = 0;
+          }
+        }
+      }
+    });
+  });
+
+  const currentPrices = getCurrentPrices(historicalData);
+  const metrics = calculateMetrics(transactions, currentPrices);
+
+  return {
+    totalInvestment,
+    currentValue: metrics.currentValue,
+    roi: metrics.roi,
+    volatility: metrics.volatility,
+    maxDrawdown: metrics.maxDrawdown,
+    transactions
+  };
 }
 
 function getIntervalInDays(frequency: string): number {

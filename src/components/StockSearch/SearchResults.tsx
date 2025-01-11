@@ -1,8 +1,7 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle, Code } from 'lucide-react';
 import { SearchHelpPopover } from '../ui/search-help-popover';
 import { RawDataPopover } from '../ui/raw-data-popover';
+// import { useSearchMetrics } from '@/lib/hooks/useSearchMetrics';
 
 interface SearchResult {
   symbol: string;
@@ -24,28 +23,8 @@ interface SearchResultsProps {
   onSelect: (symbol: string) => void;
 }
 
-const searchMetrics = {
-  cacheHits: 0,
-  apiCalls: 0,
-  averageResponseTime: 0,
-  lastUpdated: new Date(),
-  rateLimitRemaining: 5,
-};
-
 export function SearchResults({ results, loading, error, query, onSelect }: SearchResultsProps) {
-  const [metrics, setMetrics] = React.useState(searchMetrics);
-
-  // Update metrics when results change
-  React.useEffect(() => {
-    if (results.length > 0) {
-      setMetrics(prev => ({
-        ...prev,
-        apiCalls: prev.apiCalls + 1,
-        lastUpdated: new Date(),
-        rateLimitRemaining: Math.max(0, prev.rateLimitRemaining - 1)
-      }));
-    }
-  }, [results]);
+  // const metrics = useSearchMetrics();
 
   if (loading) {
     return (
@@ -83,7 +62,7 @@ export function SearchResults({ results, loading, error, query, onSelect }: Sear
             <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
             <div className="flex items-center gap-2">
               <RawDataPopover data={results} />
-              <SearchHelpPopover metrics={metrics} />
+              <SearchHelpPopover />
             </div>
           </div>
           <div className="absolute w-full mt-2 rounded-xl overflow-hidden
@@ -117,6 +96,7 @@ export function SearchResults({ results, loading, error, query, onSelect }: Sear
                   <p className="text-sm text-white/90">{result.region}</p>
                   <p className="text-xs text-white/50 mt-1">{result.currency}</p>
                 </div>
+
               </div>
               <div className="mt-2 flex justify-between text-xs text-white/50">
                 <span>

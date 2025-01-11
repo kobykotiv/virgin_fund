@@ -82,21 +82,20 @@ export function generateSignals(
     let confidence = 0;
     
     // Strategy-specific signal generation
-    switch (strategy.strategyType) {
-      case 'MOMENTUM':
-        // Implementation for momentum strategy
-        break;
-      case 'TREND_FOLLOWING':
-        // Implementation for trend following strategy
-        break;
-      case 'MEAN_REVERSION':
-        // Implementation for mean reversion strategy
-        break;
-      default:
+      switch (strategy.strategyType as StrategyType) {
+      case 'DCA':
         // DCA strategy always returns HOLD
         signal = 'HOLD';
         confidence = 1;
-    }
+        break;
+      case 'MOMENTUM':
+      case 'TREND_FOLLOWING':
+      case 'MEAN_REVERSION':
+        // Placeholder for strategy-specific implementations
+        signal = 'HOLD';
+        confidence = 0.5;
+        break;
+      }
     
     signals.push({ asset: asset.symbol, action: signal, confidence });
   }

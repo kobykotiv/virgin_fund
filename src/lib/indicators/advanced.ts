@@ -1,5 +1,6 @@
-import { calculateSMA, calculateEMA, calculateRSI, calculateMACD } from './calculations';
-import type { Price } from './types';
+// import { calculateSMA, calculateEMA, calculateRSI, calculateMACD } from './calculations';
+import type { Price } from './types.ts';
+
 
 export function calculateADX(prices: Price[], period: number = 14): number[] {
   const tr: number[] = [];  // True Range

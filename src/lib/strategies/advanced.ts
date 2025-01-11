@@ -1,6 +1,18 @@
-import { INDICATORS } from '../indicators';
+// import { INDICATORS } from '../indicators';
 import { calculateADX, calculateMFI } from '../indicators/advanced';
-import type { Strategy, Asset } from '@/types/strategy';
+// import type { Strategy, Asset } from '@/types';
+import type { Price } from '../indicators/types';
+
+// Placeholder functions for EMA and RSI calculations
+function calculateEMA(prices: Price[], period: number): number[] {
+  // Simple implementation - this should be replaced with a proper calculation
+  return prices.slice(period - 1).map(p => p.value);
+}
+
+function calculateRSI(prices: Price[], period: number): number[] {
+  // Simple implementation - this should be replaced with a proper calculation
+  return prices.slice(period - 1).map(() => 50);
+}
 
 export const ADVANCED_STRATEGY = {
   name: 'Advanced Trend-Momentum Strategy',

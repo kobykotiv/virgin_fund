@@ -1,20 +1,23 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface AdvertisementProps {
   className?: string;
-  position?: 'sidebar' | 'footer' | 'inline';
+  position?: "sidebar" | "footer" | "inline";
 }
 
-export function Advertisement({ className, position = 'sidebar' }: AdvertisementProps) {
+export function Advertisement({
+  className,
+  position = "sidebar",
+}: AdvertisementProps) {
   return (
     <div
       className={cn(
         "relative overflow-hidden glass-card",
-        position === 'sidebar' && "w-[300px] h-[600px]",
-        position === 'footer' && "w-full h-[90px]",
-        position === 'inline' && "w-full h-[250px]",
+        position === "sidebar" && "w-[300px] h-[600px]",
+        position === "footer" && "w-full h-[90px]",
+        position === "inline" && "w-full h-[250px]",
         "flex items-center justify-center",
-        className
+        className,
       )}
     >
       <div className="text-center p-4">

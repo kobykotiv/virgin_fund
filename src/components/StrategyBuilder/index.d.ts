@@ -1,3 +1,2 @@
-import React from 'react';
-export declare function StrategyBuilder(): React.JSX.Element;
+export declare function StrategyBuilder(): import("@emotion/react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map

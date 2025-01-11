@@ -1,7 +1,14 @@
 // import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { TrendingUp, Clock, ArrowRight } from 'lucide-react';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Clock, ArrowRight } from "lucide-react";
 
 interface WelcomeProps {
   onNext: () => void;
@@ -15,7 +22,9 @@ export function Welcome({ onNext }: WelcomeProps) {
           <TrendingUp className="w-8 h-8 text-primary" />
           <div>
             <CardTitle>Welcome to Strategy Builder</CardTitle>
-            <CardDescription>Create your personalized investment strategy in 4 simple steps</CardDescription>
+            <CardDescription>
+              Create your personalized investment strategy in 4 simple steps
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -25,7 +34,8 @@ export function Welcome({ onNext }: WelcomeProps) {
           <div>
             <h3 className="font-medium">Estimated Time: 5-10 minutes</h3>
             <p className="text-sm text-muted-foreground">
-              Take your time to carefully consider each step. Your progress will be saved automatically.
+              Take your time to carefully consider each step. Your progress will
+              be saved automatically.
             </p>
           </div>
         </div>
@@ -43,9 +53,10 @@ export function Welcome({ onNext }: WelcomeProps) {
         <div className="bg-muted/50 p-4 rounded-lg">
           <h3 className="font-medium mb-2">What is a trading strategy?</h3>
           <p className="text-sm text-muted-foreground">
-            A trading strategy is a systematic approach to buying and selling assets. It defines what to buy,
-            when to buy, and how much to invest. A well-defined strategy helps remove emotion from trading
-            and provides clear rules to follow.
+            A trading strategy is a systematic approach to buying and selling
+            assets. It defines what to buy, when to buy, and how much to invest.
+            A well-defined strategy helps remove emotion from trading and
+            provides clear rules to follow.
           </p>
         </div>
       </CardContent>

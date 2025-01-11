@@ -1,13 +1,13 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
-import { StrategyList } from './StrategyList';
-import { PerformanceMetrics } from './PerformanceMetrics';
-import { Settings } from './Settings';
-import { BlobBackground } from './ui/blob-background';
-import { 
-  PlusCircle, 
-  TrendingUp, 
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../lib/supabase";
+import { StrategyList } from "./StrategyList";
+import { PerformanceMetrics } from "./PerformanceMetrics";
+import { Settings } from "./Settings";
+import { BlobBackground } from "./ui/blob-background";
+import {
+  PlusCircle,
+  TrendingUp,
   Settings as SettingsIcon,
   UserCircle2,
   // CloudMoon,
@@ -16,12 +16,12 @@ import {
   BellRing,
   LayoutDashboard,
   // ChevronDown,
-  CheckCircle2
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
+  CheckCircle2,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +29,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu';
+} from "./ui/dropdown-menu";
 
 export function Dashboard() {
   const { session } = useAuth();
@@ -37,12 +37,12 @@ export function Dashboard() {
   const [showNotifications, setShowNotifications] = React.useState(false);
 
   const { data: strategies, isLoading } = useQuery({
-    queryKey: ['strategies'],
+    queryKey: ["strategies"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('strategies')
-        .select('*, transactions (*)')
-        .order('created_at', { ascending: false });
+        .from("strategies")
+        .select("*, transactions (*)")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -64,7 +64,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <BlobBackground />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-8">
@@ -82,7 +82,10 @@ export function Dashboard() {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="relative h-12 w-12 rounded-full">
+                <Button
+                  variant="outline"
+                  className="relative h-12 w-12 rounded-full"
+                >
                   <UserCircle2 className="h-7 w-7 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
@@ -109,8 +112,8 @@ export function Dashboard() {
               <Inbox className="h-7 w-7 text-muted-foreground" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse"></span>
             </Button>
-            
-            <Button 
+
+            <Button
               asChild
               className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
             >
@@ -137,14 +140,18 @@ export function Dashboard() {
                 <div className="p-3 bg-primary/10 rounded-lg">
                   <div className="flex items-center gap-2 mb-1">
                     <BellRing className="w-6 h-6 text-primary" />
-                  <p className="text-sm font-medium">Strategy "DCA Bitcoin" reached target</p>
+                    <p className="text-sm font-medium">
+                      Strategy "DCA Bitcoin" reached target
+                    </p>
                   </div>
                   <p className="text-xs text-muted-foreground">2 hours ago</p>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
                   <div className="flex items-center gap-2 mb-1">
                     <LayoutDashboard className="w-6 h-6 text-muted-foreground" />
-                  <p className="text-sm font-medium">New feature: Advanced Backtesting</p>
+                    <p className="text-sm font-medium">
+                      New feature: Advanced Backtesting
+                    </p>
                   </div>
                   <p className="text-xs text-muted-foreground">1 day ago</p>
                 </div>

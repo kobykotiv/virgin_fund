@@ -1,19 +1,27 @@
-import { calculateSMA, calculateEMA, calculateRSI, calculateMACD, calculateBollingerBands } from "./calculations";
+import {
+  calculateSMA,
+  calculateEMA,
+  calculateRSI,
+  calculateMACD,
+  calculateBollingerBands,
+} from "./calculations";
 
-export type Indicator = { name: "sma" | "ema" | "rsi", periods: number };
+export type Indicator = { name: "sma" | "ema" | "rsi"; periods: number };
 
 export const INDICATORS = {
   SMA: {
     name: "Simple Moving Average",
     calculate: calculateSMA,
     defaultParams: { period: 20 },
-    description: "Calculates the arithmetic mean of prices over a specified period",
+    description:
+      "Calculates the arithmetic mean of prices over a specified period",
   },
   EMA: {
     name: "Exponential Moving Average",
     calculate: calculateEMA,
     defaultParams: { period: 12 },
-    description: "Gives more weight to recent prices in the moving average calculation",
+    description:
+      "Gives more weight to recent prices in the moving average calculation",
   },
   RSI: {
     name: "Relative Strength Index",
@@ -25,7 +33,8 @@ export const INDICATORS = {
     name: "Moving Average Convergence Divergence",
     calculate: calculateMACD,
     defaultParams: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
-    description: "Shows the relationship between two moving averages of an asset\'s price",
+    description:
+      "Shows the relationship between two moving averages of an asset\'s price",
   },
   BB: {
     name: "Bollinger Bands",

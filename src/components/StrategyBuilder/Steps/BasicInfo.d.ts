@@ -1,2 +1,2 @@
-export default function BasicInfo(): import("react").JSX.Element;
+export default function BasicInfo(): import("@emotion/react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=BasicInfo.d.ts.map

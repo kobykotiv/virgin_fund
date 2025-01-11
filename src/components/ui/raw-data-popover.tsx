@@ -1,6 +1,6 @@
-import React from 'react';
-import { Code } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { Code } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface RawDataPopoverProps {
   data: any;
@@ -8,7 +8,11 @@ interface RawDataPopoverProps {
   className?: string;
 }
 
-export function RawDataPopover({ data, title = "Raw Data", className }: RawDataPopoverProps) {
+export function RawDataPopover({
+  data,
+  title = "Raw Data",
+  className,
+}: RawDataPopoverProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
@@ -20,7 +24,7 @@ export function RawDataPopover({ data, title = "Raw Data", className }: RawDataP
         className={cn(
           "p-1 rounded-full text-muted-foreground/50 hover:text-muted-foreground",
           "transition-colors duration-200",
-          className
+          className,
         )}
         aria-label="View raw data"
       >

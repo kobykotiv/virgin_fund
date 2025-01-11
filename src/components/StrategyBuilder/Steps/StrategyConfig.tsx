@@ -1,20 +1,33 @@
 // import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { useStrategy } from '@/context/StrategyContext';
-import { Info } from 'lucide-react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { useStrategy } from "@/context/StrategyContext";
+import { Info } from "lucide-react";
 
 const StrategyConfigSchema = z.object({
-  strategyType: z.enum(['DCA', 'TRADER', 'GRID']),
+  strategyType: z.enum(["DCA", "TRADER", "GRID"]),
   strategyConfig: z.object({
     investmentAmount: z.number().min(1),
-    frequency: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly']),
+    frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]),
     rebalanceThreshold: z.number().min(1).max(100).optional(),
   }),
 });
@@ -26,18 +39,18 @@ export default function StrategyConfig() {
   const form = useForm<StrategyConfigFormData>({
     resolver: zodResolver(StrategyConfigSchema),
     defaultValues: {
-      strategyType: state.formData.strategyType || 'DCA',
+      strategyType: state.formData.strategyType || "DCA",
       strategyConfig: state.formData.strategyConfig || {
         investmentAmount: 100,
-        frequency: 'monthly',
+        frequency: "monthly",
         rebalanceThreshold: 5,
       },
     },
   });
 
   const onSubmit = (data: StrategyConfigFormData) => {
-    dispatch({ type: 'UPDATE_FORM', payload: data });
-    dispatch({ type: 'SET_STEP', payload: 3 });
+    dispatch({ type: "UPDATE_FORM", payload: data });
+    dispatch({ type: "SET_STEP", payload: 3 });
   };
 
   return (
@@ -54,8 +67,10 @@ export default function StrategyConfig() {
           <div className="space-y-2">
             <Label>Strategy Type</Label>
             <Select
-              onValueChange={(value) => form.setValue('strategyType', value as any)}
-              defaultValue={form.getValues('strategyType')}
+              onValueChange={(value) =>
+                form.setValue("strategyType", value as any)
+              }
+              defaultValue={form.getValues("strategyType")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a strategy type" />
@@ -88,7 +103,9 @@ export default function StrategyConfig() {
               <Label>Investment Amount ($)</Label>
               <Input
                 type="number"
-                {...form.register('strategyConfig.investmentAmount', { valueAsNumber: true })}
+                {...form.register("strategyConfig.investmentAmount", {
+                  valueAsNumber: true,
+                })}
                 min={1}
               />
             </div>
@@ -96,8 +113,10 @@ export default function StrategyConfig() {
             <div className="space-y-2">
               <Label>Investment Frequency</Label>
               <Select
-                onValueChange={(value) => form.setValue('strategyConfig.frequency', value as any)}
-                defaultValue={form.getValues('strategyConfig.frequency')}
+                onValueChange={(value) =>
+                  form.setValue("strategyConfig.frequency", value as any)
+                }
+                defaultValue={form.getValues("strategyConfig.frequency")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select frequency" />
@@ -112,12 +131,14 @@ export default function StrategyConfig() {
               </Select>
             </div>
 
-            {form.watch('strategyType') !== 'DCA' && (
+            {form.watch("strategyType") !== "DCA" && (
               <div className="space-y-2">
                 <Label>Rebalance Threshold (%)</Label>
                 <Input
                   type="number"
-                  {...form.register('strategyConfig.rebalanceThreshold', { valueAsNumber: true })}
+                  {...form.register("strategyConfig.rebalanceThreshold", {
+                    valueAsNumber: true,
+                  })}
                   min={1}
                   max={100}
                 />
@@ -130,7 +151,7 @@ export default function StrategyConfig() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => dispatch({ type: 'SET_STEP', payload: 1 })}
+            onClick={() => dispatch({ type: "SET_STEP", payload: 1 })}
           >
             Back
           </Button>

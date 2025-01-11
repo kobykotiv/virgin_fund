@@ -1,3 +1,2 @@
-import React from 'react';
-export default function App(): React.JSX.Element;
+export default function App(): import("@emotion/react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=App.d.ts.map

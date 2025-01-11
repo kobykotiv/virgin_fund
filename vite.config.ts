@@ -8,12 +8,16 @@ import dts from 'vite-plugin-dts';
 export default defineConfig({
   plugins: [
     react({
-      jsxRuntime: 'automatic'
+      jsxRuntime: "automatic",
+      jsxImportSource: "@emotion/react",
+      babel: {
+        plugins: ["@emotion/babel-plugin"],
+      },
     }),
-    dts()
+    dts(),
   ],
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    exclude: ["lucide-react"],
   },
   resolve: {
     alias: {
@@ -22,11 +26,11 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
-    outDir: 'dist',
+    outDir: "dist",
     lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
-      formats: ['es'] as const,
-      fileName: (format: string) => `index.${format}.js`
-    }
-  }
+      entry: path.resolve(__dirname, "src/main.tsx"),
+      formats: ["es"] as const,
+      fileName: (format: string) => `main.${format}.js`,
+    },
+  },
 });

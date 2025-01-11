@@ -3,8 +3,8 @@ export interface ErrorDetails {
     message: string;
     userMessage: string;
     technical: string;
-    stage: 'cache' | 'database' | 'api' | 'validation' | 'processing';
-    origin: 'client' | 'server' | 'third-party';
+    stage: "cache" | "database" | "api" | "validation" | "processing";
+    origin: "client" | "server" | "third-party";
     timestamp: number;
     troubleshooting: string[];
     referenceCode?: string;

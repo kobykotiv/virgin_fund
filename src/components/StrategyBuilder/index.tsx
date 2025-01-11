@@ -1,14 +1,14 @@
-import React, { Suspense } from 'react';
-import { Welcome } from './Welcome';
-import { Progress } from '@/components/ui/progress';
-import { useStrategy } from '@/context/StrategyContext';
-import { ErrorBoundary } from './ErrorBoundary';
+import React, { Suspense } from "react";
+import { Welcome } from "./Welcome";
+import { Progress } from "@/components/ui/progress";
+import { useStrategy } from "@/context/StrategyContext";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 // Import components directly to avoid dynamic import issues
-import BasicInfo from './Steps/BasicInfo';
-import StrategyConfig from './Steps/StrategyConfig';
-import TechnicalAnalysis from './Steps/TechnicalAnalysis';
-import RiskManagement from './Steps/RiskManagement';
+import BasicInfo from "./Steps/BasicInfo";
+import StrategyConfig from "./Steps/StrategyConfig";
+import TechnicalAnalysis from "./Steps/TechnicalAnalysis";
+import RiskManagement from "./Steps/RiskManagement";
 
 const StepComponents: Record<number, React.ComponentType> = {
   1: BasicInfo,
@@ -25,7 +25,8 @@ export function StrategyBuilder() {
     return <Welcome onNext={() => setShowWelcome(false)} />;
   }
 
-  const CurrentStep = StepComponents[state.currentStep as keyof typeof StepComponents];
+  const CurrentStep =
+    StepComponents[state.currentStep as keyof typeof StepComponents];
   const progress = (state.currentStep / 4) * 100;
 
   return (

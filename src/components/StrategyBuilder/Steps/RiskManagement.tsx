@@ -1,15 +1,22 @@
 // import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
-import { useStrategy } from '@/context/StrategyContext';
-import { useConfetti } from '@/components/ui/confetti';
-import { Shield, TrendingDown, TrendingUp } from 'lucide-react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { useStrategy } from "@/context/StrategyContext";
+import { useConfetti } from "@/components/ui/confetti";
+import { Shield, TrendingDown, TrendingUp } from "lucide-react";
 
 const RiskManagementSchema = z.object({
   riskManagement: z.object({
@@ -39,13 +46,13 @@ export default function RiskManagement() {
   });
 
   const onSubmit = (data: RiskManagementFormData) => {
-    dispatch({ type: 'UPDATE_FORM', payload: data });
+    dispatch({ type: "UPDATE_FORM", payload: data });
     triggerConfetti();
     // Navigate to success/review page
   };
 
   const calculateRiskReward = () => {
-    const { stopLoss, takeProfit } = form.watch('riskManagement');
+    const { stopLoss, takeProfit } = form.watch("riskManagement");
     return takeProfit / stopLoss;
   };
 
@@ -55,7 +62,8 @@ export default function RiskManagement() {
         <CardHeader>
           <CardTitle>Risk Management</CardTitle>
           <CardDescription>
-            Configure your risk management parameters to protect your investment.
+            Configure your risk management parameters to protect your
+            investment.
           </CardDescription>
         </CardHeader>
 
@@ -90,8 +98,10 @@ export default function RiskManagement() {
             <div className="space-y-2">
               <Label>Stop Loss (%)</Label>
               <Slider
-                value={[form.watch('riskManagement.stopLoss')]}
-                onValueChange={([value]) => form.setValue('riskManagement.stopLoss', value)}
+                value={[form.watch("riskManagement.stopLoss")]}
+                onValueChange={([value]) =>
+                  form.setValue("riskManagement.stopLoss", value)
+                }
                 min={0}
                 max={100}
                 step={1}
@@ -99,7 +109,9 @@ export default function RiskManagement() {
               />
               <Input
                 type="number"
-                {...form.register('riskManagement.stopLoss', { valueAsNumber: true })}
+                {...form.register("riskManagement.stopLoss", {
+                  valueAsNumber: true,
+                })}
                 className="w-24"
               />
             </div>
@@ -107,8 +119,10 @@ export default function RiskManagement() {
             <div className="space-y-2">
               <Label>Take Profit (%)</Label>
               <Slider
-                value={[form.watch('riskManagement.takeProfit')]}
-                onValueChange={([value]) => form.setValue('riskManagement.takeProfit', value)}
+                value={[form.watch("riskManagement.takeProfit")]}
+                onValueChange={([value]) =>
+                  form.setValue("riskManagement.takeProfit", value)
+                }
                 min={0}
                 max={200}
                 step={1}
@@ -116,7 +130,9 @@ export default function RiskManagement() {
               />
               <Input
                 type="number"
-                {...form.register('riskManagement.takeProfit', { valueAsNumber: true })}
+                {...form.register("riskManagement.takeProfit", {
+                  valueAsNumber: true,
+                })}
                 className="w-24"
               />
             </div>
@@ -124,8 +140,10 @@ export default function RiskManagement() {
             <div className="space-y-2">
               <Label>Trailing Stop (%)</Label>
               <Slider
-                value={[form.watch('riskManagement.trailingStop') || 0]}
-                onValueChange={([value]) => form.setValue('riskManagement.trailingStop', value)}
+                value={[form.watch("riskManagement.trailingStop") || 0]}
+                onValueChange={([value]) =>
+                  form.setValue("riskManagement.trailingStop", value)
+                }
                 min={0}
                 max={100}
                 step={1}
@@ -133,7 +151,9 @@ export default function RiskManagement() {
               />
               <Input
                 type="number"
-                {...form.register('riskManagement.trailingStop', { valueAsNumber: true })}
+                {...form.register("riskManagement.trailingStop", {
+                  valueAsNumber: true,
+                })}
                 className="w-24"
               />
             </div>
@@ -141,8 +161,10 @@ export default function RiskManagement() {
             <div className="space-y-2">
               <Label>Position Size per Trade (%)</Label>
               <Slider
-                value={[form.watch('riskManagement.positionSize')]}
-                onValueChange={([value]) => form.setValue('riskManagement.positionSize', value)}
+                value={[form.watch("riskManagement.positionSize")]}
+                onValueChange={([value]) =>
+                  form.setValue("riskManagement.positionSize", value)
+                }
                 min={0}
                 max={100}
                 step={1}
@@ -150,7 +172,9 @@ export default function RiskManagement() {
               />
               <Input
                 type="number"
-                {...form.register('riskManagement.positionSize', { valueAsNumber: true })}
+                {...form.register("riskManagement.positionSize", {
+                  valueAsNumber: true,
+                })}
                 className="w-24"
               />
             </div>
@@ -158,7 +182,9 @@ export default function RiskManagement() {
 
           <div className="p-4 rounded-lg bg-muted">
             <h4 className="font-medium mb-2">Risk/Reward Ratio</h4>
-            <p className="text-2xl font-bold">{calculateRiskReward().toFixed(2)}</p>
+            <p className="text-2xl font-bold">
+              {calculateRiskReward().toFixed(2)}
+            </p>
             <p className="text-sm text-muted-foreground">
               A ratio above 1:2 is recommended for optimal risk management
             </p>
@@ -169,7 +195,7 @@ export default function RiskManagement() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => dispatch({ type: 'SET_STEP', payload: 3 })}
+            onClick={() => dispatch({ type: "SET_STEP", payload: 3 })}
           >
             Back
           </Button>

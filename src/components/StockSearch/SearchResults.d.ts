@@ -16,6 +16,6 @@ interface SearchResultsProps {
     query: string;
     onSelect: (symbol: string) => void;
 }
-export declare function SearchResults({ results, loading, error, query, onSelect }: SearchResultsProps): import("react").JSX.Element;
+export declare function SearchResults({ results, loading, error, query, onSelect, }: SearchResultsProps): import("@emotion/react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=SearchResults.d.ts.map

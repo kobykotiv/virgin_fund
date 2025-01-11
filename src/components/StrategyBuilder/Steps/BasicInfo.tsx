@@ -1,21 +1,31 @@
 // import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { StockSearch } from '@/components/StockSearch';
-import { SearchHelpPopover } from '@/components/ui/search-help-popover';
-import { useStrategy } from '@/context/StrategyContext';
-import { AssetSchema } from '@/types/strategy';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { StockSearch } from "@/components/StockSearch";
+import { SearchHelpPopover } from "@/components/ui/search-help-popover";
+import { useStrategy } from "@/context/StrategyContext";
+import { AssetSchema } from "@/types/strategy";
 
 const BasicInfoSchema = z.object({
   name: z.string().min(1, "Strategy name is required"),
   description: z.string(),
-  selectedAssets: z.array(AssetSchema).min(1, "Select at least one asset").max(20, "Maximum 20 assets allowed"),
+  selectedAssets: z
+    .array(AssetSchema)
+    .min(1, "Select at least one asset")
+    .max(20, "Maximum 20 assets allowed"),
 });
 
 type BasicInfoFormData = z.infer<typeof BasicInfoSchema>;
@@ -25,15 +35,15 @@ export default function BasicInfo() {
   const form = useForm<BasicInfoFormData>({
     resolver: zodResolver(BasicInfoSchema),
     defaultValues: {
-      name: state.formData.name || '',
-      description: state.formData.description || '',
+      name: state.formData.name || "",
+      description: state.formData.description || "",
       selectedAssets: state.formData.selectedAssets || [],
     },
   });
 
   const onSubmit = (data: BasicInfoFormData) => {
-    dispatch({ type: 'UPDATE_FORM', payload: data });
-    dispatch({ type: 'SET_STEP', payload: 2 });
+    dispatch({ type: "UPDATE_FORM", payload: data });
+    dispatch({ type: "SET_STEP", payload: 2 });
   };
 
   return (
@@ -42,7 +52,8 @@ export default function BasicInfo() {
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
           <CardDescription>
-            Let's start by naming your strategy and selecting the assets you want to trade.
+            Let's start by naming your strategy and selecting the assets you
+            want to trade.
           </CardDescription>
         </CardHeader>
 
@@ -51,11 +62,13 @@ export default function BasicInfo() {
             <Label htmlFor="name">Strategy Name</Label>
             <Input
               id="name"
-              {...form.register('name')}
+              {...form.register("name")}
               placeholder="My Investment Strategy"
             />
             {form.formState.errors.name && (
-              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+              <p className="text-sm text-destructive">
+                {form.formState.errors.name.message}
+              </p>
             )}
           </div>
 
@@ -63,7 +76,7 @@ export default function BasicInfo() {
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              {...form.register('description')}
+              {...form.register("description")}
               placeholder="Describe your investment strategy..."
               className="h-24"
             />
@@ -76,10 +89,15 @@ export default function BasicInfo() {
             </div>
             <StockSearch
               onSelect={(symbol) => {
-                const currentAssets = form.getValues('selectedAssets') || [];
-                form.setValue('selectedAssets', [...currentAssets, { symbol, name: symbol }]);
+                const currentAssets = form.getValues("selectedAssets") || [];
+                form.setValue("selectedAssets", [
+                  ...currentAssets,
+                  { symbol, name: symbol },
+                ]);
               }}
-              selectedAssets={form.watch('selectedAssets')?.map(a => a.symbol) || []}
+              selectedAssets={
+                form.watch("selectedAssets")?.map((a) => a.symbol) || []
+              }
             />
           </div>
         </CardContent>
@@ -88,7 +106,7 @@ export default function BasicInfo() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => dispatch({ type: 'SET_STEP', payload: 1 })}
+            onClick={() => dispatch({ type: "SET_STEP", payload: 1 })}
           >
             Back
           </Button>

@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-type Theme = 'light' | 'dark' | 'black';
+type Theme = "light" | "dark" | "black";
 
 interface ThemeStore {
   theme: Theme;
@@ -11,14 +11,14 @@ interface ThemeStore {
 export const useThemeStore = create<ThemeStore>()(
   persist(
     (set) => ({
-      theme: 'dark',
+      theme: "dark",
       setTheme: (theme) => {
-        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute("data-theme", theme);
         set({ theme });
       },
     }),
     {
-      name: 'theme-storage',
-    }
-  )
+      name: "theme-storage",
+    },
+  ),
 );

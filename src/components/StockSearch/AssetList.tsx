@@ -1,6 +1,6 @@
-import { forwardRef } from 'react';
-import { X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { forwardRef } from "react";
+import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AssetListProps {
   selectedAssets: string[];
@@ -25,11 +25,13 @@ export const AssetList = forwardRef<HTMLDivElement, AssetListProps>(
               exit={{ opacity: 0, scale: 0.8 }}
               className="flex-shrink-0 group"
             >
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-lg
                             bg-white/10 backdrop-blur-md border border-white/20
                             shadow-[0_4px_16px_0_rgba(31,38,135,0.2)]
                             hover:shadow-[0_4px_16px_0_rgba(31,38,135,0.3)]
-                            transition-all duration-300">
+                            transition-all duration-300"
+              >
                 <span className="font-medium text-white/90">{symbol}</span>
                 <button
                   onClick={() => onRemove(symbol)}
@@ -44,5 +46,5 @@ export const AssetList = forwardRef<HTMLDivElement, AssetListProps>(
         </AnimatePresence>
       </div>
     );
-  }
+  },
 );

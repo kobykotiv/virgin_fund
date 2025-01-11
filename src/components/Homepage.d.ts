@@ -1,3 +1,2 @@
-import React from 'react';
-export declare function Homepage(): React.JSX.Element;
+export declare function Homepage(): import("@emotion/react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=Homepage.d.ts.map

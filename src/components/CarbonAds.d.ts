@@ -5,5 +5,5 @@ declare global {
         };
     }
 }
-export declare function CarbonAds(): import("react").JSX.Element;
+export declare function CarbonAds(): import("@emotion/react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=CarbonAds.d.ts.map

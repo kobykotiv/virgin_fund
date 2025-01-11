@@ -1,17 +1,23 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
   NavigationMenuLink,
   navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
-import { TrendingUp, BookOpen, BarChart2, Settings, LogOut } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+} from "@/components/ui/navigation-menu";
+import {
+  TrendingUp,
+  BookOpen,
+  BarChart2,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export function Navbar() {
   const { session } = useAuth();
@@ -34,12 +40,12 @@ export function Navbar() {
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link 
-                    to="/dashboard" 
+                  <Link
+                    to="/dashboard"
                     className={cn(
                       navigationMenuTriggerStyle(),
                       "glass-button",
-                      isActive('/dashboard') && "bg-primary/20"
+                      isActive("/dashboard") && "bg-primary/20",
                     )}
                   >
                     <BarChart2 className="w-6 h-6 mr-2" />
@@ -49,12 +55,12 @@ export function Navbar() {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
-                  <Link 
-                    to="/learn" 
+                  <Link
+                    to="/learn"
                     className={cn(
                       navigationMenuTriggerStyle(),
                       "glass-button",
-                      isActive('/learn') && "bg-primary/20"
+                      isActive("/learn") && "bg-primary/20",
                     )}
                   >
                     <BookOpen className="w-6 h-6 mr-2" />
@@ -71,7 +77,9 @@ export function Navbar() {
           <Button
             variant="outline"
             className="relative glass-button h-12 w-12 rounded-full"
-            onClick={() => {/* Add settings handler */}}
+            onClick={() => {
+              /* Add settings handler */
+            }}
           >
             <Settings className="h-7 w-7" />
           </Button>

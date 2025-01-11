@@ -1,3 +1,2 @@
-import React from 'react';
-export default function TechnicalAnalysis(): React.JSX.Element;
+export default function TechnicalAnalysis(): import("@emotion/react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=TechnicalAnalysis.d.ts.map

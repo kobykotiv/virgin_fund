@@ -1,19 +1,30 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { useStrategy } from '@/context/StrategyContext';
-import { TrendingUp, Activity, BarChart2 } from 'lucide-react';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useStrategy } from "@/context/StrategyContext";
+import { TrendingUp, Activity, BarChart2 } from "lucide-react";
 
 const TechnicalAnalysisSchema = z.object({
-  technicalIndicators: z.array(z.object({
-    type: z.enum(['SMA', 'EMA', 'RSI', 'MACD', 'BB']),
-    parameters: z.record(z.number()),
-  })).max(3),
+  technicalIndicators: z
+    .array(
+      z.object({
+        type: z.enum(["SMA", "EMA", "RSI", "MACD", "BB"]),
+        parameters: z.record(z.number()),
+      }),
+    )
+    .max(3),
 });
 
 type TechnicalAnalysisFormData = z.infer<typeof TechnicalAnalysisSchema>;
@@ -28,7 +39,9 @@ const INDICATOR_PRESETS = {
 
 export default function TechnicalAnalysis() {
   const { state, dispatch } = useStrategy();
-  const [selectedIndicator, setSelectedIndicator] = React.useState<keyof typeof INDICATOR_PRESETS | null>(null);
+  const [selectedIndicator, setSelectedIndicator] = React.useState<
+    keyof typeof INDICATOR_PRESETS | null
+  >(null);
 
   const form = useForm<TechnicalAnalysisFormData>({
     resolver: zodResolver(TechnicalAnalysisSchema),
@@ -38,15 +51,15 @@ export default function TechnicalAnalysis() {
   });
 
   const onSubmit = (data: TechnicalAnalysisFormData) => {
-    dispatch({ type: 'UPDATE_FORM', payload: data });
-    dispatch({ type: 'SET_STEP', payload: 4 });
+    dispatch({ type: "UPDATE_FORM", payload: data });
+    dispatch({ type: "SET_STEP", payload: 4 });
   };
 
   const addIndicator = (type: keyof typeof INDICATOR_PRESETS) => {
-    const currentIndicators = form.getValues('technicalIndicators') || [];
+    const currentIndicators = form.getValues("technicalIndicators") || [];
     if (currentIndicators.length >= 3) return;
 
-    form.setValue('technicalIndicators', [
+    form.setValue("technicalIndicators", [
       ...currentIndicators,
       { type, parameters: INDICATOR_PRESETS[type] },
     ]);
@@ -54,8 +67,11 @@ export default function TechnicalAnalysis() {
   };
 
   const removeIndicator = (index: number) => {
-    const currentIndicators = form.getValues('technicalIndicators') || [];
-    form.setValue('technicalIndicators', currentIndicators.filter((_, i) => i !== index));
+    const currentIndicators = form.getValues("technicalIndicators") || [];
+    form.setValue(
+      "technicalIndicators",
+      currentIndicators.filter((_, i) => i !== index),
+    );
   };
 
   return (
@@ -72,7 +88,7 @@ export default function TechnicalAnalysis() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               type="button"
-              onClick={() => setSelectedIndicator('SMA')}
+              onClick={() => setSelectedIndicator("SMA")}
               className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
             >
               <TrendingUp className="w-6 h-6 mb-2" />
@@ -84,7 +100,7 @@ export default function TechnicalAnalysis() {
 
             <button
               type="button"
-              onClick={() => setSelectedIndicator('RSI')}
+              onClick={() => setSelectedIndicator("RSI")}
               className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
             >
               <Activity className="w-6 h-6 mb-2" />
@@ -96,7 +112,7 @@ export default function TechnicalAnalysis() {
 
             <button
               type="button"
-              onClick={() => setSelectedIndicator('BB')}
+              onClick={() => setSelectedIndicator("BB")}
               className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
             >
               <BarChart2 className="w-6 h-6 mb-2" />
@@ -109,14 +125,18 @@ export default function TechnicalAnalysis() {
 
           {selectedIndicator && (
             <div className="p-4 rounded-lg border bg-muted">
-              <h3 className="font-medium mb-4">Configure {selectedIndicator}</h3>
+              <h3 className="font-medium mb-4">
+                Configure {selectedIndicator}
+              </h3>
               <div className="space-y-4">
-                {Object.entries(INDICATOR_PRESETS[selectedIndicator]).map(([param, defaultValue]) => (
-                  <div key={param} className="space-y-2">
-                    <Label>{param}</Label>
-                    <Input type="number" defaultValue={defaultValue} />
-                  </div>
-                ))}
+                {Object.entries(INDICATOR_PRESETS[selectedIndicator]).map(
+                  ([param, defaultValue]) => (
+                    <div key={param} className="space-y-2">
+                      <Label>{param}</Label>
+                      <Input type="number" defaultValue={defaultValue} />
+                    </div>
+                  ),
+                )}
                 <div className="flex justify-end gap-2">
                   <Button
                     type="button"
@@ -137,7 +157,7 @@ export default function TechnicalAnalysis() {
           )}
 
           <div className="space-y-4">
-            {form.watch('technicalIndicators')?.map((indicator, index) => (
+            {form.watch("technicalIndicators")?.map((indicator, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-4 rounded-lg border bg-card"
@@ -147,7 +167,7 @@ export default function TechnicalAnalysis() {
                   <p className="text-sm text-muted-foreground">
                     {Object.entries(indicator.parameters)
                       .map(([key, value]) => `${key}: ${value}`)
-                      .join(', ')}
+                      .join(", ")}
                   </p>
                 </div>
                 <Button
@@ -166,7 +186,7 @@ export default function TechnicalAnalysis() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => dispatch({ type: 'SET_STEP', payload: 2 })}
+            onClick={() => dispatch({ type: "SET_STEP", payload: 2 })}
           >
             Back
           </Button>

@@ -1,9 +1,16 @@
 // import React from 'react';
-import { Link } from 'react-router-dom';
-import { Strategy } from '../types';
-import { ArrowUpRight, Calendar, DollarSign, Repeat, TrendingUp, TrendingDown } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
-import { Button } from './ui/button';
+import { Link } from "react-router-dom";
+import { Strategy } from "../types";
+import {
+  ArrowUpRight,
+  Calendar,
+  DollarSign,
+  Repeat,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+import { Button } from "./ui/button";
 
 interface Props {
   strategies: Strategy[];
@@ -13,7 +20,10 @@ export function StrategyList({ strategies }: Props) {
   return (
     <div className="space-y-4">
       {strategies.map((strategy) => (
-        <Card key={strategy.id} className="hover:shadow-lg transition-shadow duration-200">
+        <Card
+          key={strategy.id}
+          className="hover:shadow-lg transition-shadow duration-200"
+        >
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl flex items-center gap-2">
@@ -26,7 +36,10 @@ export function StrategyList({ strategies }: Props) {
                 )}
               </CardTitle>
               <Button variant="ghost" asChild>
-                <Link to={`/strategy/${strategy.id}`} className="flex items-center">
+                <Link
+                  to={`/strategy/${strategy.id}`}
+                  className="flex items-center"
+                >
                   <span className="hidden sm:block mr-2">View Details</span>
                   <ArrowUpRight className="w-5 h-5" />
                 </Link>
@@ -39,10 +52,12 @@ export function StrategyList({ strategies }: Props) {
                 <DollarSign className="w-4 h-4 mr-2 text-primary" />
                 <div>
                   <p className="text-muted-foreground">Investment</p>
-                  <p className="font-medium">${strategy.initial_investment.toLocaleString()}</p>
+                  <p className="font-medium">
+                    ${strategy.initial_investment.toLocaleString()}
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center text-sm">
                 <Repeat className="w-4 h-4 mr-2 text-primary" />
                 <div>
@@ -50,12 +65,14 @@ export function StrategyList({ strategies }: Props) {
                   <p className="font-medium capitalize">{strategy.frequency}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center text-sm">
                 <Calendar className="w-4 h-4 mr-2 text-primary" />
                 <div>
                   <p className="text-muted-foreground">Started</p>
-                  <p className="font-medium">{new Date(strategy.start_date).toLocaleDateString()}</p>
+                  <p className="font-medium">
+                    {new Date(strategy.start_date).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </div>

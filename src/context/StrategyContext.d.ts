@@ -1,5 +1,5 @@
-import React from 'react';
-import { Strategy } from '@/types/strategy';
+import React from "react";
+import { Strategy } from "@/types/strategy";
 interface StrategyState {
     currentStep: number;
     formData: Partial<Strategy>;
@@ -7,21 +7,21 @@ interface StrategyState {
     isDirty: boolean;
 }
 type StrategyAction = {
-    type: 'SET_STEP';
+    type: "SET_STEP";
     payload: number;
 } | {
-    type: 'UPDATE_FORM';
+    type: "UPDATE_FORM";
     payload: Partial<Strategy>;
 } | {
-    type: 'SET_VALID';
+    type: "SET_VALID";
     payload: boolean;
 } | {
-    type: 'SET_DIRTY';
+    type: "SET_DIRTY";
     payload: boolean;
 };
 export declare function StrategyProvider({ children }: {
     children: React.ReactNode;
-}): React.JSX.Element;
+}): import("@emotion/react/jsx-runtime").JSX.Element;
 export declare function useStrategy(): {
     state: StrategyState;
     dispatch: React.Dispatch<StrategyAction>;

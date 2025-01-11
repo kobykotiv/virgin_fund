@@ -1,15 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthForm } from './components/AuthForm';
-import { StrategyBuilder } from './components/StrategyBuilder';
-import { Dashboard } from './components/Dashboard';
-import { Homepage } from './components/Homepage';
-import { Navbar } from './components/Navbar';
-import { useAuth } from './hooks/useAuth';
-import { StrategyProvider } from './context/StrategyContext';
-import { Toaster } from './components/ui/toaster';
-import { useThemeStore } from './lib/theme';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthForm } from "./components/AuthForm";
+import { StrategyBuilder } from "./components/StrategyBuilder";
+import { Dashboard } from "./components/Dashboard";
+import { Homepage } from "./components/Homepage";
+import { Navbar } from "./components/Navbar";
+import { useAuth } from "./hooks/useAuth";
+import { StrategyProvider } from "./context/StrategyContext";
+import { Toaster } from "./components/ui/toaster";
+import { useThemeStore } from "./lib/theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +45,7 @@ export default function App() {
 
   // Set initial theme
   React.useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   return (
@@ -52,9 +57,32 @@ export default function App() {
             <div className="container mx-auto py-6">
               <main>
                 <Routes>
-                  <Route path="/" element={session ? <Navigate to="/dashboard" /> : <Homepage />} />
-                  <Route path="/login" element={session ? <Navigate to="/dashboard" /> : <AuthForm type="login" />} />
-                  <Route path="/signup" element={session ? <Navigate to="/dashboard" /> : <AuthForm type="signup" />} />
+                  <Route
+                    path="/"
+                    element={
+                      session ? <Navigate to="/dashboard" /> : <Homepage />
+                    }
+                  />
+                  <Route
+                    path="/login"
+                    element={
+                      session ? (
+                        <Navigate to="/dashboard" />
+                      ) : (
+                        <AuthForm type="login" />
+                      )
+                    }
+                  />
+                  <Route
+                    path="/signup"
+                    element={
+                      session ? (
+                        <Navigate to="/dashboard" />
+                      ) : (
+                        <AuthForm type="signup" />
+                      )
+                    }
+                  />
                   <Route
                     path="/dashboard"
                     element={

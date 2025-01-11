@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface ApiKeyState {
   currentKeyIndex: number;
@@ -9,7 +9,7 @@ interface ApiKeyState {
   getNextAvailableKey: () => string | null;
 }
 
-const API_KEYS = JSON.parse(import.meta.env.ALPHAVANTAGE_API_KEYS || '[]');
+const API_KEYS = JSON.parse(import.meta.env.ALPHAVANTAGE_API_KEYS || "[]");
 const RATE_LIMIT_RESET = 60 * 1000; // 1 minute
 
 export const useApiKeyStore = create<ApiKeyState>((set, get) => ({
@@ -18,15 +18,15 @@ export const useApiKeyStore = create<ApiKeyState>((set, get) => ({
   lastUsed: {},
 
   incrementKeyIndex: () => {
-    set(state => ({
-      currentKeyIndex: (state.currentKeyIndex + 1) % API_KEYS.length
+    set((state) => ({
+      currentKeyIndex: (state.currentKeyIndex + 1) % API_KEYS.length,
     }));
   },
 
   updateRateLimit: (key: string, remaining: number) => {
-    set(state => ({
+    set((state) => ({
       rateLimits: { ...state.rateLimits, [key]: remaining },
-      lastUsed: { ...state.lastUsed, [key]: Date.now() }
+      lastUsed: { ...state.lastUsed, [key]: Date.now() },
     }));
   },
 
@@ -42,7 +42,10 @@ export const useApiKeyStore = create<ApiKeyState>((set, get) => ({
       const timeSinceLastUse = now - lastUsed;
 
       // If key hasn't been used in the last minute or has remaining rate limit
-      if (timeSinceLastUse >= RATE_LIMIT_RESET || (state.rateLimits[key] || 5) > 0) {
+      if (
+        timeSinceLastUse >= RATE_LIMIT_RESET ||
+        (state.rateLimits[key] || 5) > 0
+      ) {
         if (index !== state.currentKeyIndex) {
           set({ currentKeyIndex: index });
         }
@@ -51,5 +54,5 @@ export const useApiKeyStore = create<ApiKeyState>((set, get) => ({
     }
 
     return null; // All keys are rate limited
-  }
+  },
 }));

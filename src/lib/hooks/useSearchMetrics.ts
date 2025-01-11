@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface SearchMetrics {
   cacheHits: number;
@@ -36,54 +36,60 @@ const initialState: SearchMetrics = {
   rateLimitRemaining: 5,
   responseTimes: [],
   errors: {
-    count: 0
-  }
+    count: 0,
+  },
 };
 
 export const useSearchMetrics = create<SearchMetricsStore>((set) => ({
   ...initialState,
-  
-  incrementCacheHits: () => set((state) => ({ 
-    cacheHits: state.cacheHits + 1,
-    lastUpdated: new Date()
-  })),
-  
-  incrementApiCalls: () => set((state) => ({ 
-    apiCalls: state.apiCalls + 1,
-    lastUpdated: new Date()
-  })),
 
-  incrementRetries: () => set((state) => ({
-    retryCount: state.retryCount + 1,
-    lastUpdated: new Date()
-  })),
-  
-  addResponseTime: (time: number) => set((state) => {
-    const responseTimes = [...state.responseTimes, time].slice(-100); // Keep last 100 times
-    const averageResponseTime = Math.round(
-      responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-    );
-    return {
-      responseTimes,
-      averageResponseTime,
-      lastUpdated: new Date()
-    };
-  }),
-  
-  updateRateLimit: (remaining: number) => set({ 
-    rateLimitRemaining: remaining,
-    lastUpdated: new Date()
-  }),
-  
-  recordError: (code: string) => set((state) => ({
-    errors: {
-      count: state.errors.count + 1,
-      lastError: {
-        code,
-        timestamp: Date.now()
-      }
-    }
-  })),
-  
+  incrementCacheHits: () =>
+    set((state) => ({
+      cacheHits: state.cacheHits + 1,
+      lastUpdated: new Date(),
+    })),
+
+  incrementApiCalls: () =>
+    set((state) => ({
+      apiCalls: state.apiCalls + 1,
+      lastUpdated: new Date(),
+    })),
+
+  incrementRetries: () =>
+    set((state) => ({
+      retryCount: state.retryCount + 1,
+      lastUpdated: new Date(),
+    })),
+
+  addResponseTime: (time: number) =>
+    set((state) => {
+      const responseTimes = [...state.responseTimes, time].slice(-100); // Keep last 100 times
+      const averageResponseTime = Math.round(
+        responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length,
+      );
+      return {
+        responseTimes,
+        averageResponseTime,
+        lastUpdated: new Date(),
+      };
+    }),
+
+  updateRateLimit: (remaining: number) =>
+    set({
+      rateLimitRemaining: remaining,
+      lastUpdated: new Date(),
+    }),
+
+  recordError: (code: string) =>
+    set((state) => ({
+      errors: {
+        count: state.errors.count + 1,
+        lastError: {
+          code,
+          timestamp: Date.now(),
+        },
+      },
+    })),
+
   reset: () => set(initialState),
 }));

@@ -24,15 +24,18 @@ export const StrategySchema = z.object({
   // Step 1: Basic Info
   name: z.string().min(1, "Strategy name is required"),
   description: z.string(),
-  selectedAssets: z.array(AssetSchema).min(1, "Select at least one asset").max(10, "Maximum 10 assets allowed"),
-  
+  selectedAssets: z
+    .array(AssetSchema)
+    .min(1, "Select at least one asset")
+    .max(10, "Maximum 10 assets allowed"),
+
   // Step 2: Strategy Configuration
   strategyType: z.enum(["DCA", "TRADER", "GRID"]),
   strategyConfig: z.record(z.any()),
-  
+
   // Step 3: Technical Analysis
   technicalIndicators: z.array(TechnicalIndicatorSchema).max(3).optional(),
-  
+
   // Step 4: Risk Management
   riskManagement: RiskManagementSchema,
 });

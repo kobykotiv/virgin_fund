@@ -1,6 +1,6 @@
-import { INDICATORS } from '../indicators';
-import type { Strategy, Asset } from '@/types/strategy';
-export type StrategyType = 'DCA' | 'MOMENTUM' | 'TREND_FOLLOWING' | 'MEAN_REVERSION';
+import { INDICATORS } from "../indicators";
+import type { Strategy, Asset } from "@/types/strategy";
+export type StrategyType = "DCA" | "MOMENTUM" | "TREND_FOLLOWING" | "MEAN_REVERSION";
 export declare const STRATEGIES: Record<StrategyType, {
     name: string;
     description: string;
@@ -16,7 +16,7 @@ export declare function generateSignals(strategy: Strategy, assets: Asset[], pri
     value: number;
 }[]>): {
     asset: string;
-    action: 'BUY' | 'SELL' | 'HOLD';
+    action: "BUY" | "SELL" | "HOLD";
     confidence: number;
 }[];
 //# sourceMappingURL=index.d.ts.map

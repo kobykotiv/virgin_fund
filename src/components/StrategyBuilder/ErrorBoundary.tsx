@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo } from 'react';
-import { AlertCircle } from 'lucide-react';
+import React, { Component, ErrorInfo } from "react";
+import { AlertCircle } from "lucide-react";
 
 interface Props {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Strategy Builder error:', error, errorInfo);
+    console.error("Strategy Builder error:", error, errorInfo);
   }
 
   public render() {
@@ -33,7 +33,8 @@ export class ErrorBoundary extends Component<Props, State> {
             <h2 className="text-lg font-semibold">Something went wrong</h2>
           </div>
           <p className="text-muted-foreground mb-4">
-            An error occurred while loading this step. Please try refreshing the page.
+            An error occurred while loading this step. Please try refreshing the
+            page.
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}

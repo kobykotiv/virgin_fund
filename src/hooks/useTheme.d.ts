@@ -1,4 +1,4 @@
-type Theme = 'light' | 'dark';
+type Theme = "light" | "dark";
 export declare function useTheme(): {
     theme: Theme;
     toggleTheme: () => Promise<void>;

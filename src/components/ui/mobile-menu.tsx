@@ -1,9 +1,9 @@
 // import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { X, Github, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from './button';
+import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import { X, Github, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "./button";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -12,11 +12,11 @@ interface MobileMenuProps {
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const menuItems = [
-    { label: 'About', href: '#about' },
-    { label: 'Features', href: '#features' },
-    { label: 'Blog', href: '#blog' },
-    { label: 'Documentation', href: '#documentation' },
-    { label: 'Pricing', href: '#pricing' },
+    { label: "About", href: "#about" },
+    { label: "Features", href: "#features" },
+    { label: "Blog", href: "#blog" },
+    { label: "Documentation", href: "#documentation" },
+    { label: "Pricing", href: "#pricing" },
   ];
 
   return (
@@ -34,14 +34,14 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
           {/* Menu Panel */}
           <motion.div
-            initial={{ x: '100%' }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 20 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 20 }}
             className={cn(
               "fixed right-0 top-0 bottom-0 w-full sm:w-80 z-50",
               "bg-white/10 backdrop-blur-xl border-l border-white/20",
-              "flex flex-col"
+              "flex flex-col",
             )}
           >
             {/* Header */}
@@ -67,7 +67,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     onClick={onClose}
                     className={cn(
                       "flex items-center justify-between w-full p-3 rounded-lg",
-                      "hover:bg-white/10 transition-colors duration-200"
+                      "hover:bg-white/10 transition-colors duration-200",
                     )}
                   >
                     <span>{item.label}</span>
@@ -79,7 +79,10 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
             {/* Auth Buttons */}
             <div className="p-4 border-t border-white/10 space-y-2">
-              <Button asChild className="w-full bg-gradient-to-r from-primary to-purple-600">
+              <Button
+                asChild
+                className="w-full bg-gradient-to-r from-primary to-purple-600"
+              >
                 <Link to="/signup" onClick={onClose}>
                   Sign Up
                 </Link>
@@ -89,11 +92,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   Sign In
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="w-full glass-button"
-              >
+              <Button asChild variant="ghost" className="w-full glass-button">
                 <a
                   href="https://github.com/yourusername/virgin-fund"
                   target="_blank"

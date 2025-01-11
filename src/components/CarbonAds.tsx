@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -21,7 +21,8 @@ export function CarbonAds() {
     }
 
     const script = document.createElement("script");
-    script.src = "//cdn.carbonads.com/carbon.js?serve=CVAIKKQM&placement=carbonadsnet";
+    script.src =
+      "//cdn.carbonads.com/carbon.js?serve=CVAIKKQM&placement=carbonadsnet";
     script.id = "_carbonads_js";
     script.async = true;
 
@@ -38,8 +39,8 @@ export function CarbonAds() {
   }, [location.pathname]);
 
   return (
-    <div 
-      id="carbon-container" 
+    <div
+      id="carbon-container"
       className="fixed bottom-4 right-4 z-50 bg-card rounded-lg shadow-lg overflow-hidden"
     />
   );

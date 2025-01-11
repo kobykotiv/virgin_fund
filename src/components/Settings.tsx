@@ -1,16 +1,23 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
-import { Settings as SettingsIcon, User, Bell, DollarSign, Shield, AlertCircle } from 'lucide-react';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
+import {
+  Settings as SettingsIcon,
+  User,
+  Bell,
+  DollarSign,
+  Shield,
+  AlertCircle,
+} from "lucide-react";
 
 interface ProfileFormData {
   full_name: string;
   bio: string;
   avatar_url: string;
-  investment_experience: 'beginner' | 'intermediate' | 'advanced';
-  risk_tolerance: 'conservative' | 'moderate' | 'aggressive';
+  investment_experience: "beginner" | "intermediate" | "advanced";
+  risk_tolerance: "conservative" | "moderate" | "aggressive";
   preferred_currency: string;
   notification_preferences: {
     email: boolean;
@@ -21,15 +28,20 @@ interface ProfileFormData {
 export function Settings() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileFormData>();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<ProfileFormData>();
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile'],
+    queryKey: ["profile"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', session?.user?.id)
+        .from("profiles")
+        .select("*")
+        .eq("user_id", session?.user?.id)
         .single();
 
       if (error) throw error;
@@ -40,25 +52,26 @@ export function Settings() {
 
   const updateProfile = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: session?.user?.id,
-          ...data,
-          updated_at: new Date().toISOString(),
-        });
+      const { error } = await supabase.from("profiles").upsert({
+        user_id: session?.user?.id,
+        ...data,
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 
   React.useEffect(() => {
     if (profile) {
       Object.entries(profile).forEach(([key, value]) => {
-        if (typeof value === 'string' || (typeof value === 'object' && value !== null)) {
+        if (
+          typeof value === "string" ||
+          (typeof value === "object" && value !== null)
+        ) {
           setValue(key as keyof ProfileFormData, value as any);
         }
       });
@@ -81,40 +94,53 @@ export function Settings() {
           <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
         </div>
 
-        <form onSubmit={handleSubmit((data) => updateProfile.mutate(data))} className="p-6 space-y-6">
+        <form
+          onSubmit={handleSubmit((data) => updateProfile.mutate(data))}
+          className="p-6 space-y-6"
+        >
           {/* Profile Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium flex items-center">
               <User className="w-5 h-5 mr-2 text-gray-500" />
               Profile Information
             </h3>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Full Name
+              </label>
               <input
                 type="text"
-                {...register('full_name', { required: 'Full name is required' })}
+                {...register("full_name", {
+                  required: "Full name is required",
+                })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
               {errors.full_name && (
-                <p className="mt-1 text-sm text-red-600">{errors.full_name.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.full_name.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Bio</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Bio
+              </label>
               <textarea
-                {...register('bio')}
+                {...register("bio")}
                 rows={3}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Avatar URL</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Avatar URL
+              </label>
               <input
                 type="url"
-                {...register('avatar_url')}
+                {...register("avatar_url")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
@@ -128,9 +154,11 @@ export function Settings() {
             </h3>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Investment Experience</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Investment Experience
+              </label>
               <select
-                {...register('investment_experience')}
+                {...register("investment_experience")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="beginner">Beginner</option>
@@ -140,9 +168,11 @@ export function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Risk Tolerance</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Risk Tolerance
+              </label>
               <select
-                {...register('risk_tolerance')}
+                {...register("risk_tolerance")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="conservative">Conservative</option>
@@ -152,9 +182,11 @@ export function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Preferred Currency</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Preferred Currency
+              </label>
               <select
-                {...register('preferred_currency')}
+                {...register("preferred_currency")}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="USD">USD</option>
@@ -176,7 +208,7 @@ export function Settings() {
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  {...register('notification_preferences.email')}
+                  {...register("notification_preferences.email")}
                   className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
                 <label className="ml-2 block text-sm text-gray-700">
@@ -187,7 +219,7 @@ export function Settings() {
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  {...register('notification_preferences.push')}
+                  {...register("notification_preferences.push")}
                   className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
                 <label className="ml-2 block text-sm text-gray-700">
@@ -210,7 +242,9 @@ export function Settings() {
               </p>
               <button
                 type="button"
-                onClick={() => {/* Add password change logic */}}
+                onClick={() => {
+                  /* Add password change logic */
+                }}
                 className="mt-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Change Password

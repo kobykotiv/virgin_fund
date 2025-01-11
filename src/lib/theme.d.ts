@@ -1,4 +1,4 @@
-type Theme = 'light' | 'dark' | 'black';
+type Theme = "light" | "dark" | "black";
 interface ThemeStore {
     theme: Theme;
     setTheme: (theme: Theme) => void;

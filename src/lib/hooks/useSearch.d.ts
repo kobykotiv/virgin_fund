@@ -1,4 +1,4 @@
-import { SearchError } from '../errors/searchErrors';
+import { SearchError } from "../errors/searchErrors";
 interface SearchResult {
     symbol: string;
     name: string;

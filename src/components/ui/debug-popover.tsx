@@ -1,6 +1,6 @@
-import React from 'react';
-import { AlertCircle, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { AlertCircle, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ErrorDetails {
   message: string;
@@ -25,7 +25,7 @@ export function DebugPopover({ error, className }: DebugPopoverProps) {
   if (!error) return null;
 
   // Handle different error message formats
-  const errorMessage = typeof error === 'string' ? error : error.message;
+  const errorMessage = typeof error === "string" ? error : error.message;
 
   return (
     <div className="relative inline-block">
@@ -34,7 +34,7 @@ export function DebugPopover({ error, className }: DebugPopoverProps) {
         onMouseLeave={() => setIsOpen(false)}
         className={cn(
           "inline-flex items-center gap-2 text-red-400 cursor-help",
-          className
+          className,
         )}
       >
         <AlertCircle className="w-4 h-4" />
@@ -56,7 +56,9 @@ export function DebugPopover({ error, className }: DebugPopoverProps) {
           <div className="space-y-3 text-sm">
             <div>
               <div className="text-muted-foreground mb-1">Timestamp</div>
-              <div>{new Date(error.timestamp || Date.now()).toLocaleString()}</div>
+              <div>
+                {new Date(error.timestamp || Date.now()).toLocaleString()}
+              </div>
             </div>
 
             {error.request && (

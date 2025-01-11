@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { Strategy } from '@/types/strategy';
+import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { Strategy } from "@/types/strategy";
 
 interface StrategyState {
   currentStep: number;
@@ -9,10 +9,10 @@ interface StrategyState {
 }
 
 type StrategyAction =
-  | { type: 'SET_STEP'; payload: number }
-  | { type: 'UPDATE_FORM'; payload: Partial<Strategy> }
-  | { type: 'SET_VALID'; payload: boolean }
-  | { type: 'SET_DIRTY'; payload: boolean };
+  | { type: "SET_STEP"; payload: number }
+  | { type: "UPDATE_FORM"; payload: Partial<Strategy> }
+  | { type: "SET_VALID"; payload: boolean }
+  | { type: "SET_DIRTY"; payload: boolean };
 
 const initialState: StrategyState = {
   currentStep: 1,
@@ -26,19 +26,22 @@ const StrategyContext = createContext<{
   dispatch: React.Dispatch<StrategyAction>;
 } | null>(null);
 
-function strategyReducer(state: StrategyState, action: StrategyAction): StrategyState {
+function strategyReducer(
+  state: StrategyState,
+  action: StrategyAction,
+): StrategyState {
   switch (action.type) {
-    case 'SET_STEP':
+    case "SET_STEP":
       return { ...state, currentStep: action.payload };
-    case 'UPDATE_FORM':
+    case "UPDATE_FORM":
       return {
         ...state,
         formData: { ...state.formData, ...action.payload },
         isDirty: true,
       };
-    case 'SET_VALID':
+    case "SET_VALID":
       return { ...state, isValid: action.payload };
-    case 'SET_DIRTY':
+    case "SET_DIRTY":
       return { ...state, isDirty: action.payload };
     default:
       return state;
@@ -53,8 +56,8 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
     if (!state.isDirty) return;
 
     const timer = setTimeout(() => {
-      localStorage.setItem('strategyFormData', JSON.stringify(state.formData));
-      dispatch({ type: 'SET_DIRTY', payload: false });
+      localStorage.setItem("strategyFormData", JSON.stringify(state.formData));
+      dispatch({ type: "SET_DIRTY", payload: false });
     }, 30000);
 
     return () => clearTimeout(timer);
@@ -70,7 +73,7 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
 export function useStrategy() {
   const context = useContext(StrategyContext);
   if (!context) {
-    throw new Error('useStrategy must be used within a StrategyProvider');
+    throw new Error("useStrategy must be used within a StrategyProvider");
   }
   return context;
 }

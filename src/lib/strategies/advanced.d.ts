@@ -1,4 +1,4 @@
-import type { Price } from '../indicators/types';
+import type { Price } from "../indicators/types";
 export declare const ADVANCED_STRATEGY: {
     name: string;
     timeframe: string;
@@ -133,7 +133,7 @@ export declare function generateAdvancedSignals(prices: Price[], volume: number[
         };
     };
 }): {
-    signal: 'BUY' | 'SELL' | 'HOLD';
+    signal: "BUY" | "SELL" | "HOLD";
     confidence: number;
     meta: any;
 };

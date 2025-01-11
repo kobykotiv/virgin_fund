@@ -5,7 +5,7 @@ type Price = {
 export declare function calculateSMA(prices: Price[], period: number): number[];
 export declare function calculateEMA(prices: Price[], period: number): number[];
 export declare function calculateRSI(prices: Price[], period: number): number[];
-export declare function calculateMACD(prices: Price[], { fastPeriod, slowPeriod, signalPeriod }: {
+export declare function calculateMACD(prices: Price[], { fastPeriod, slowPeriod, signalPeriod, }: {
     fastPeriod: number;
     slowPeriod: number;
     signalPeriod: number;
@@ -14,7 +14,7 @@ export declare function calculateMACD(prices: Price[], { fastPeriod, slowPeriod,
     signal: number[];
     histogram: number[];
 };
-export declare function calculateBollingerBands(prices: Price[], { period, standardDeviations }: {
+export declare function calculateBollingerBands(prices: Price[], { period, standardDeviations, }: {
     period: number;
     standardDeviations: number;
 }): {

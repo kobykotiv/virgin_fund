@@ -1,7 +1,7 @@
-import React from 'react';
-import { HelpCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useSearchMetrics } from '@/lib/hooks/useSearchMetrics';
+import React from "react";
+import { HelpCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useSearchMetrics } from "@/lib/hooks/useSearchMetrics";
 
 // Define the expected shape of search metrics
 interface SearchMetricsStore {
@@ -17,17 +17,27 @@ interface SearchHelpPopoverProps {
   metrics?: Partial<SearchMetricsStore>;
 }
 
-export function SearchHelpPopover({ className, metrics: externalMetrics }: SearchHelpPopoverProps) {
+export function SearchHelpPopover({
+  className,
+  metrics: externalMetrics,
+}: SearchHelpPopoverProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const internalMetrics = useSearchMetrics();
-  
+
   // Merge external metrics with internal metrics, providing default values
   const metrics: SearchMetricsStore = {
     cacheHits: externalMetrics?.cacheHits ?? internalMetrics.cacheHits ?? 0,
     apiCalls: externalMetrics?.apiCalls ?? internalMetrics.apiCalls ?? 0,
-    averageResponseTime: externalMetrics?.averageResponseTime ?? internalMetrics.averageResponseTime ?? 0,
-    rateLimitRemaining: externalMetrics?.rateLimitRemaining ?? internalMetrics.rateLimitRemaining ?? 5,
-    lastUpdated: externalMetrics?.lastUpdated ?? internalMetrics.lastUpdated ?? new Date(),
+    averageResponseTime:
+      externalMetrics?.averageResponseTime ??
+      internalMetrics.averageResponseTime ??
+      0,
+    rateLimitRemaining:
+      externalMetrics?.rateLimitRemaining ??
+      internalMetrics.rateLimitRemaining ??
+      5,
+    lastUpdated:
+      externalMetrics?.lastUpdated ?? internalMetrics.lastUpdated ?? new Date(),
   };
 
   return (
@@ -39,7 +49,7 @@ export function SearchHelpPopover({ className, metrics: externalMetrics }: Searc
         className={cn(
           "p-1 rounded-full text-muted-foreground/50 hover:text-muted-foreground",
           "transition-colors duration-200",
-          className
+          className,
         )}
         aria-label="Search help information"
       >
@@ -61,7 +71,9 @@ export function SearchHelpPopover({ className, metrics: externalMetrics }: Searc
                   <span>{metrics.apiCalls}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Avg Response Time</span>
+                  <span className="text-muted-foreground">
+                    Avg Response Time
+                  </span>
                   <span>{metrics.averageResponseTime}ms</span>
                 </div>
               </div>
@@ -82,7 +94,10 @@ export function SearchHelpPopover({ className, metrics: externalMetrics }: Searc
             </div>
 
             <div className="text-xs text-muted-foreground/75">
-              <p>Search is limited to 5 calls per minute. Results are cached for 24 hours.</p>
+              <p>
+                Search is limited to 5 calls per minute. Results are cached for
+                24 hours.
+              </p>
             </div>
           </div>
         </div>

@@ -8,11 +8,7 @@ import dts from 'vite-plugin-dts';
 export default defineConfig({
   plugins: [
     react({
-      jsxRuntime: 'automatic',
-      jsxImportSource: '@emotion/react',
-      babel: {
-        plugins: ['@emotion/babel-plugin']
-      }
+      jsxRuntime: 'automatic'
     }),
     dts()
   ],

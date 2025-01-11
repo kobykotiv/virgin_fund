@@ -1,3 +1,4 @@
+import React from 'react';
 import type { SearchError } from '@/lib/errors/searchErrors';
 interface BaseErrorDetails {
     message?: string;
@@ -15,6 +16,6 @@ interface ErrorMessageProps {
     } | BaseErrorDetails | null;
     className?: string;
 }
-export declare function ErrorMessage({ error, className }: ErrorMessageProps): import("react/jsx-runtime").JSX.Element | null;
+export declare function ErrorMessage({ error, className }: ErrorMessageProps): React.JSX.Element | null;
 export {};
 //# sourceMappingURL=error-message.d.ts.map

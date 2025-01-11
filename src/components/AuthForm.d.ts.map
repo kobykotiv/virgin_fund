@@ -1,1 +1,1 @@
-{"version":3,"file":"AuthForm.d.ts","sourceRoot":"","sources":["AuthForm.tsx"],"names":[],"mappings":"AAQA,UAAU,aAAa;IACrB,IAAI,EAAE,OAAO,GAAG,QAAQ,CAAC;CAC1B;AAED,wBAAgB,QAAQ,CAAC,EAAE,IAAI,EAAE,EAAE,aAAa,2CA2M/C"}
+{"version":3,"file":"AuthForm.d.ts","sourceRoot":"","sources":["AuthForm.tsx"],"names":[],"mappings":"AAQA,UAAU,aAAa;IACrB,IAAI,EAAE,OAAO,GAAG,QAAQ,CAAC;CAC1B;AAED,wBAAgB,QAAQ,CAAC,EAAE,IAAI,EAAE,EAAE,aAAa,+BA2M/C"}

@@ -1,2 +1,3 @@
-export declare function Settings(): import("react/jsx-runtime").JSX.Element;
+import React from 'react';
+export declare function Settings(): React.JSX.Element;
 //# sourceMappingURL=Settings.d.ts.map

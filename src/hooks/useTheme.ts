@@ -31,7 +31,7 @@ export function useTheme() {
 
   const toggleTheme = async () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    const userId = supabase.auth.user()?.id;
+    const userId = (await supabase.auth.getUser()).data?.user?.id;
     
     if (!userId) return;
     

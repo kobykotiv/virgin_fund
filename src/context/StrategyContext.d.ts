@@ -21,7 +21,7 @@ type StrategyAction = {
 };
 export declare function StrategyProvider({ children }: {
     children: React.ReactNode;
-}): import("react/jsx-runtime").JSX.Element;
+}): React.JSX.Element;
 export declare function useStrategy(): {
     state: StrategyState;
     dispatch: React.Dispatch<StrategyAction>;

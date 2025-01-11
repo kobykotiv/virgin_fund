@@ -1,2 +1,2 @@
-export default function StrategyConfig(): import("react/jsx-runtime").JSX.Element;
+export default function StrategyConfig(): import("react").JSX.Element;
 //# sourceMappingURL=StrategyConfig.d.ts.map

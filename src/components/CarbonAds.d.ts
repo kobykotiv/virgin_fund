@@ -5,5 +5,5 @@ declare global {
         };
     }
 }
-export declare function CarbonAds(): import("react/jsx-runtime").JSX.Element;
+export declare function CarbonAds(): import("react").JSX.Element;
 //# sourceMappingURL=CarbonAds.d.ts.map

@@ -1,2 +1,2 @@
-export default function RiskManagement(): import("react/jsx-runtime").JSX.Element;
+export default function RiskManagement(): import("react").JSX.Element;
 //# sourceMappingURL=RiskManagement.d.ts.map

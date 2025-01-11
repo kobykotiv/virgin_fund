@@ -1,2 +1,3 @@
-export default function TechnicalAnalysis(): import("react/jsx-runtime").JSX.Element;
+import React from 'react';
+export default function TechnicalAnalysis(): React.JSX.Element;
 //# sourceMappingURL=TechnicalAnalysis.d.ts.map

@@ -1,3 +1,4 @@
+import React from 'react';
 interface ErrorDetails {
     message: string;
     timestamp: number;
@@ -12,6 +13,6 @@ interface DebugPopoverProps {
     error?: ErrorDetails;
     className?: string;
 }
-export declare function DebugPopover({ error, className }: DebugPopoverProps): import("react/jsx-runtime").JSX.Element | null;
+export declare function DebugPopover({ error, className }: DebugPopoverProps): React.JSX.Element | null;
 export {};
 //# sourceMappingURL=debug-popover.d.ts.map

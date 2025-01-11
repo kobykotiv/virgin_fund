@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "composite": true,        // Required for project references
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -19,12 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    }
   },
-  "include": ["src", "vite.config.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }],
-  "exclude": ["vite.config.ts", "node_modules"]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

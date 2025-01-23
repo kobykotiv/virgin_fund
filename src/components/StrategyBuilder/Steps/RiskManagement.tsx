@@ -199,7 +199,7 @@ export default function RiskManagement() {
           >
             Back
           </Button>
-          <Button type="submit">Complete Strategy</Button>
+          <Button>Begin Backtest</Button>
         </CardFooter>
       </Card>
     </form>

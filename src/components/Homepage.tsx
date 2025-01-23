@@ -63,16 +63,112 @@ const techStack = [
     icon: <Layers className="w-5 h-5" />,
     color: "text-yellow-500",
   },
+  // {
+  //   name: "React Query",
+  //   icon: <Globe2 className="w-5 h-5" />,
+  //   color: "text-purple-600",
+  // },
+  // {
+  //   name: "React Router",
+  //   icon: <Globe2 className="w-5 h-5" />,
+  //   color: "text-red-600",
+  // },
+];
+
+const testimonials = [
   {
-    name: "React Query",
-    icon: <Globe2 className="w-5 h-5" />,
-    color: "text-purple-600",
+    icon: <TrendingUp className="w-5 h-5" />,
+    name: "Sarah Johnson",
+    role: "Individual Investor",
+    content: "Virgin Fund has completely transformed how I approach dollar-cost averaging. The analytics are incredibly insightful."
   },
   {
-    name: "React Router",
-    icon: <Globe2 className="w-5 h-5" />,
-    color: "text-red-600",
+    icon: <BarChart2 className="w-5 h-5" />,
+    name: "Michael Chen",
+    role: "Financial Advisor",
+    content: "The backtesting tools are exceptional. My clients love seeing the historical performance data of different DCA strategies."
   },
+  {
+    icon: <LineChart className="w-5 h-5" />,
+    name: "Emma Wilson",
+    role: "Portfolio Manager",
+    content: "A game-changer for portfolio optimization. The risk management features are particularly impressive."
+  },
+  {
+    icon: <Shield className="w-5 h-5" />,
+    name: "David Thompson",
+    role: "Investment Analyst",
+    content: "Virgin Fund is a must-have for any serious investor. The market analysis tools are top-notch."
+  },
+  {
+    icon: <CreditCard className="w-5 h-5" />,
+    name: "Jessica Lee",
+    role: "Financial Planner",
+    content: "The smart portfolio feature is fantastic. It's helped me build and manage my clients' investments more effectively."
+  },
+  {
+    icon: <Wallet className="w-5 h-5" />,
+    name: "Alex Miller",
+    role: "Crypto Enthusiast",
+    content: "I've been using Virgin Fund to optimize my crypto DCA strategy. The performance tracking is incredibly useful."
+  },
+  {
+    icon: <TrendingUp className="w-5 h-5" />,
+    name: "Sophia Garcia",
+    role: "Stock Trader",
+    content: "The platform is user-friendly and the support is excellent. I highly recommend Virgin Fund to anyone looking to invest smarter."
+  },
+  {
+    icon: <BarChart2 className="w-5 h-5" />,
+    name: "Ryan Clark",
+    role: "Financial Analyst",
+    content: "Virgin Fund is a game-changer for anyone looking to optimize their investment strategy. The analytics are second to none."
+  },
+  {
+    icon: <LineChart className="w-5 h-5" />,
+    name: "Olivia Roberts",
+    role: "Hedge Fund Manager",
+    content: "The risk management tools are incredibly powerful. I've been able to protect and optimize my investments more effectively."
+  }
+];
+
+const faqs = [
+  {
+    question: "What is Dollar-Cost Averaging (DCA)?",
+    answer: "DCA is an investment strategy where you invest a fixed amount regularly, regardless of market conditions, helping to reduce the impact of volatility."
+  },
+  {
+    question: "How does Virgin Fund help with investment decisions?",
+    answer: "We provide advanced analytics, backtesting tools, and performance metrics to help you optimize your DCA strategy and make data-driven decisions."
+  },
+  {
+    question: "Is Virgin Fund suitable for beginners?",
+    answer: "Yes! Our platform is designed to be user-friendly while offering powerful features for investors of all experience levels."
+  },
+  {
+    question: "What kind of support do you offer?",
+    answer: "We provide comprehensive documentation, email support, and regular webinars to help you make the most of our platform."
+  },
+  {
+    question: "Is my data secure with Virgin Fund?",
+    answer: "Absolutely, just trust me bro."
+  },
+  {
+    question: "Can I use Virgin Fund for crypto investments?",
+    answer: "Yes, you can use Virgin Fund to optimize your crypto DCA strategy and track the performance of your crypto investments."
+  },
+  {
+    question: "How do I get started with Virgin Fund?",
+    answer: "Simply create a free account, and start analyzing your DCA strategy with our powerful tools."
+  },
+  {
+    question: "Do you offer a mobile app?",
+    answer: "Not yet, but we're working on it! Our platform is fully responsive and works great on mobile devices."
+  },
+  {
+    question: "Can I integrate Virgin Fund with my brokerage account?",
+    answer: "Not Yet, but we're working on it! We plan to offer integrations with popular brokerage platforms in the future."
+  }
 ];
 
 export function Homepage() {
@@ -319,37 +415,35 @@ export function Homepage() {
         </div>
       </section>
 
-      {/* Teastimonials Section */}
-      <section className="display:none my-12 hidden"></section>
-        <div className="text-center">
-          <motion.h2
-            className="text-2xl font-bold"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            What Our Users Say
-          </motion.h2>
-          <div className="grid gap-6 mt-8 md:grid-cols-3">
-            {[
-              { name: "Alex", message: "This platform is amazing—highly recommended!" },
-              { name: "Jordan", message: "Excellent support and intuitive features!" },
-              { name: "Taylor", message: "My favorite tool for investment tracking." },
-              { name: "Chris", message: "Great platform for data-driven investing!" },
-              { name: "Morgan", message: "Makes tracking investments so much easier." },
-              { name: "Sam", message: "Best analytics tools I've used for DCA strategy." },
-            ].map((t, i) => (
+      {/* Testimonials Section */}
+      <section className="py-12 sm:py-20 bg-gradient-to-b from-background to-background/50">
+        <div className="container px-4 mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold">What Our Users Say</h2>
+            <p className="mt-4 text-muted-foreground">
+              Join thousands of satisfied investors using Virgin Fund
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
               <motion.div
-                key={i}
-                className="p-6 border border-white/10 rounded-xl glass-card"
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="glass-card p-6 rounded-xl"
               >
-                <p className="text-muted-foreground">&quot;{t.message}&quot;</p>
-                <p className="mt-2 font-semibold">— {t.name}</p>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    {testimonial.icon}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">{testimonial.name}</h4>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground">{testimonial.content}</p>
               </motion.div>
             ))}
           </div>
@@ -359,46 +453,24 @@ export function Homepage() {
       {/* FAQ Section */}
       <section className="py-12 sm:py-20">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-12">
-            <motion.h2 
-              className="text-2xl sm:text-4xl font-bold"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              Frequently Asked Questions
-            </motion.h2>
+          <div className="text-center mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold">Frequently Asked Questions</h2>
+            <p className="mt-4 text-muted-foreground">
+              Everything you need to know about Virgin Fund
+            </p>
           </div>
-          <div className="grid gap-6 max-w-3xl mx-auto">
-            {[
-              {
-                q: "What is Virgin Fund?",
-                a: "Virgin Fund is a modern investment platform that helps you analyze and optimize your Dollar-Cost Averaging strategy through powerful backtesting tools."
-              },
-              {
-                q: "How does the backtesting work?",
-                a: "Our platform uses historical market data to simulate how your investment strategy would have performed in the past, helping you make better decisions."
-              },
-              {
-                q: "Is my data secure?",
-                a: "Yes, we use industry-standard encryption and security measures to protect your personal and financial information."
-              },
-              {
-                q: "Do you offer a free trial?",
-                a: "Yes, you can create a free account to explore our basic features and upgrade when you're ready."
-              }
-            ].map((faq, i) => (
+          
+          <div className="max-w-3xl mx-auto grid gap-6">
+            {faqs.map((faq, index) => (
               <motion.div
-                key={i}
-                className="p-6 glass-card rounded-xl"
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="glass-card p-6 rounded-xl"
               >
-                <h3 className="font-semibold text-lg mb-2">{faq.q}</h3>
-                <p className="text-muted-foreground">{faq.a}</p>
+                <h3 className="text-lg font-semibold mb-2">{faq.question}</h3>
+                <p className="text-muted-foreground">{faq.answer}</p>
               </motion.div>
             ))}
           </div>

@@ -9,6 +9,7 @@ import {
   validateCaptcha,
 } from "react-simple-captcha";
 import { Button } from "./ui/button";
+import { triggerConfetti } from '@/lib/confetti';
 
 interface AuthFormProps {
   type: "login" | "signup";
@@ -87,12 +88,12 @@ export function AuthForm({ type }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8">
         <Button
           variant="ghost"
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          className="glass-button flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
@@ -100,28 +101,28 @@ export function AuthForm({ type }: AuthFormProps) {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
           {type === "login"
             ? "Sign in to your account"
             : "Create a new account"}
         </h2>
         {type === "login" && (
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             Or{" "}
             <Link
               to="/signup"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-primary hover:text-primary/80"
             >
               create a new account
             </Link>
           </p>
         )}
         {type === "signup" && (
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-primary hover:text-primary/80"
             >
               Sign in
             </Link>
@@ -130,10 +131,10 @@ export function AuthForm({ type }: AuthFormProps) {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="glass-card bg-card text-card-foreground py-8 px-4 sm:px-10">
           {authError && (
-            <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
-              <p className="text-sm text-red-600">{authError}</p>
+            <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm text-destructive">{authError}</p>
             </div>
           )}
 
@@ -141,7 +142,7 @@ export function AuthForm({ type }: AuthFormProps) {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-foreground"
               >
                 Email address
               </label>
@@ -157,10 +158,10 @@ export function AuthForm({ type }: AuthFormProps) {
                       message: "Invalid email address",
                     },
                   })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="glass-input w-full text-foreground placeholder:text-muted-foreground border-border focus:border-primary focus:ring-primary"
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-destructive">
                     {errors.email.message as string}
                   </p>
                 )}
@@ -170,7 +171,7 @@ export function AuthForm({ type }: AuthFormProps) {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-foreground"
               >
                 Password
               </label>
@@ -184,14 +185,14 @@ export function AuthForm({ type }: AuthFormProps) {
                   {...register("password", {
                     required: "Password is required",
                     minLength: {
-                      value: 6,
-                      message: "Password must be at least 6 characters",
+                      value: 10,
+                      message: "Password must be at least 10 characters",
                     },
                   })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="glass-input w-full text-foreground placeholder:text-muted-foreground border-border focus:border-primary focus:ring-primary"
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-destructive">
                     {errors.password.message as string}
                   </p>
                 )}
@@ -202,7 +203,7 @@ export function AuthForm({ type }: AuthFormProps) {
               <div>
                 <label
                   htmlFor="captcha"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-foreground"
                 >
                   Verify Captcha
                 </label>
@@ -216,31 +217,31 @@ export function AuthForm({ type }: AuthFormProps) {
                       setUserCaptcha(e.target.value);
                       setCaptchaError("");
                     }}
-                    className="mt-2 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-2 glass-input w-full text-foreground placeholder:text-muted-foreground border-border focus:border-primary focus:ring-primary"
                     placeholder="Enter captcha"
                   />
                   {captchaError && (
-                    <p className="mt-2 text-sm text-red-600">{captchaError}</p>
+                    <p className="mt-2 text-sm text-destructive">{captchaError}</p>
                   )}
                 </div>
               </div>
             )}
 
             <div>
-              <button
+              <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
                 ) : type === "login" ? (
                   <LogIn className="w-5 h-5 mr-2" />
                 ) : (
                   <UserPlus className="w-5 h-5 mr-2" />
                 )}
                 {type === "login" ? "Sign in" : "Sign up"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

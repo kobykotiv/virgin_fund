@@ -82,25 +82,87 @@ export default function BasicInfo() {
             />
           </div>
 
-          <div className="space-y-2">
+            <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Select Assets (Max 20)</Label>
               <SearchHelpPopover className="text-muted-foreground hover:text-primary transition-colors" />
             </div>
             <StockSearch
               onSelect={(symbol) => {
-                const currentAssets = form.getValues("selectedAssets") || [];
+              const currentAssets = form.getValues("selectedAssets") || [];
+              const assetExists = currentAssets.some(a => a.symbol === symbol);
+              
+              if (assetExists) {
+                form.setValue("selectedAssets", currentAssets.filter(a => a.symbol !== symbol));
+              } else {
                 form.setValue("selectedAssets", [
-                  ...currentAssets,
-                  { symbol, name: symbol },
+                ...currentAssets,
+                { symbol, name: symbol },
                 ]);
+              }
               }}
               selectedAssets={
-                form.watch("selectedAssets")?.map((a) => a.symbol) || []
+              form.watch("selectedAssets")?.map((a) => a.symbol) || []
               }
             />
+            </div>
+          <div className="space-y-2">
+          <Label>Popular Assets</Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'TSLA', 'JPM'].map((symbol) => (
+              <Button
+                onMouseDown={(e) => e.preventDefault()}
+                key={symbol}
+                variant="outline"
+                size="sm"
+                className="w-full"
+                type="button"
+                onClick={() => {
+                  (e: { preventDefault: () => any; }) => e.preventDefault()
+                  const currentAssets = form.getValues("selectedAssets") || [];
+                  const assetExists = currentAssets.some(a => a.symbol === symbol);
+                  if (assetExists) {
+                    form.setValue("selectedAssets", currentAssets.filter(a => a.symbol !== symbol));
+                  } else {
+                    form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                  }
+                }}
+                disabled={false}
+              >
+                {symbol}
+              </Button>
+            ))}
           </div>
+          {/* Similar Selection but for cryptocurrency. add high risk warning. */}
+          <Label>Cryptocurrencies</Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {['BTC', 'ETH', 'BNB', 'SOL', 'ADA', 'AVAX', 'DOT', 'DOGE'].map((symbol) => (
+              <Button
+              onMouseDown={(e) => e.preventDefault()}
+                key={symbol}
+                variant="outline"
+                size="sm"
+                className="w-full"
+                type="button"
+                onClick={
+                  () => {
+                    const currentAssets = form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some(a => a.symbol === symbol);
+                    if (assetExists) {
+                      form.setValue("selectedAssets", currentAssets.filter(a => a.symbol !== symbol));
+                    } else {
+                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                    }
+                  }
+                }
+              >
+                {symbol}
+              </Button>
+            ))}
+            </div>
+        </div>
         </CardContent>
+        
 
         <CardFooter className="flex justify-between">
           <Button

@@ -261,6 +261,7 @@ export function Homepage() {
         </div>
       </section>
 
+
       {/* Features Section */}
       <section className="py-12 sm:py-20">
         <div className="container px-4 mx-auto">
@@ -307,13 +308,99 @@ export function Homepage() {
                 asChild
                 size="lg"
                 className="bg-gradient-to-r from-primary to-purple-600"
-              >
+                >
                 <Link to="/signup">Create Free Account</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link to="/login">Sign In</Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Teastimonials Section */}
+      <section className="display:none my-12 hidden"></section>
+        <div className="text-center">
+          <motion.h2
+            className="text-2xl font-bold"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            What Our Users Say
+          </motion.h2>
+          <div className="grid gap-6 mt-8 md:grid-cols-3">
+            {[
+              { name: "Alex", message: "This platform is amazing—highly recommended!" },
+              { name: "Jordan", message: "Excellent support and intuitive features!" },
+              { name: "Taylor", message: "My favorite tool for investment tracking." },
+              { name: "Chris", message: "Great platform for data-driven investing!" },
+              { name: "Morgan", message: "Makes tracking investments so much easier." },
+              { name: "Sam", message: "Best analytics tools I've used for DCA strategy." },
+            ].map((t, i) => (
+              <motion.div
+                key={i}
+                className="p-6 border border-white/10 rounded-xl glass-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <p className="text-muted-foreground">&quot;{t.message}&quot;</p>
+                <p className="mt-2 font-semibold">— {t.name}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-12 sm:py-20">
+        <div className="container px-4 mx-auto">
+          <div className="text-center mb-12">
+            <motion.h2 
+              className="text-2xl sm:text-4xl font-bold"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              Frequently Asked Questions
+            </motion.h2>
+          </div>
+          <div className="grid gap-6 max-w-3xl mx-auto">
+            {[
+              {
+                q: "What is Virgin Fund?",
+                a: "Virgin Fund is a modern investment platform that helps you analyze and optimize your Dollar-Cost Averaging strategy through powerful backtesting tools."
+              },
+              {
+                q: "How does the backtesting work?",
+                a: "Our platform uses historical market data to simulate how your investment strategy would have performed in the past, helping you make better decisions."
+              },
+              {
+                q: "Is my data secure?",
+                a: "Yes, we use industry-standard encryption and security measures to protect your personal and financial information."
+              },
+              {
+                q: "Do you offer a free trial?",
+                a: "Yes, you can create a free account to explore our basic features and upgrade when you're ready."
+              }
+            ].map((faq, i) => (
+              <motion.div
+                key={i}
+                className="p-6 glass-card rounded-xl"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <h3 className="font-semibold text-lg mb-2">{faq.q}</h3>
+                <p className="text-muted-foreground">{faq.a}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>

@@ -6,14 +6,20 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+
+RUN apk add --no-cache python3 make g++
+
+
 # Install dependencies
-RUN npm ci
+RUN npm i -g pnpm
+
+RUN pnpm i
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
 FROM nginx:alpine
@@ -24,8 +30,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

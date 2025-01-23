@@ -11,6 +11,8 @@ import { StrategyBuilder } from "./components/StrategyBuilder";
 import { Dashboard } from "./components/Dashboard";
 import { Homepage } from "./components/Homepage";
 import { Navbar } from "./components/Navbar";
+import { Settings } from "./components/Settings";
+import { Backtest } from "./components/Backtest";
 import { useAuth } from "./hooks/useAuth";
 import { StrategyProvider } from "./context/StrategyContext";
 import { Toaster } from "./components/ui/toaster";
@@ -96,6 +98,22 @@ export default function App() {
                     element={
                       <PrivateRoute>
                         <StrategyBuilder />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <PrivateRoute>
+                        <Settings />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/backtest"
+                    element={
+                      <PrivateRoute>
+                        <Backtest />
                       </PrivateRoute>
                     }
                   />

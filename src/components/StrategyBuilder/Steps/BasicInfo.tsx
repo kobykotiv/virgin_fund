@@ -82,87 +82,338 @@ export default function BasicInfo() {
             />
           </div>
 
-            <div className="space-y-2">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Select Assets (Max 20)</Label>
               <SearchHelpPopover className="text-muted-foreground hover:text-primary transition-colors" />
             </div>
             <StockSearch
               onSelect={(symbol) => {
-              const currentAssets = form.getValues("selectedAssets") || [];
-              const assetExists = currentAssets.some(a => a.symbol === symbol);
-              
-              if (assetExists) {
-                form.setValue("selectedAssets", currentAssets.filter(a => a.symbol !== symbol));
-              } else {
-                form.setValue("selectedAssets", [
-                ...currentAssets,
-                { symbol, name: symbol },
-                ]);
-              }
+                const currentAssets = form.getValues("selectedAssets") || [];
+                const assetExists = currentAssets.some(
+                  (a) => a.symbol === symbol
+                );
+
+                if (assetExists) {
+                  form.setValue(
+                    "selectedAssets",
+                    currentAssets.filter((a) => a.symbol !== symbol)
+                  );
+                } else {
+                  form.setValue("selectedAssets", [
+                    ...currentAssets,
+                    { symbol, name: symbol },
+                  ]);
+                }
               }}
               selectedAssets={
-              form.watch("selectedAssets")?.map((a) => a.symbol) || []
+                form.watch("selectedAssets")?.map((a) => a.symbol) || []
               }
             />
-            </div>
-          <div className="space-y-2">
-          <Label>Popular Assets</Label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'TSLA', 'JPM'].map((symbol) => (
-              <Button
-                onMouseDown={(e) => e.preventDefault()}
-                key={symbol}
-                variant="outline"
-                size="sm"
-                className="w-full"
-                type="button"
-                onClick={() => {
-                  (e: { preventDefault: () => any; }) => e.preventDefault()
-                  const currentAssets = form.getValues("selectedAssets") || [];
-                  const assetExists = currentAssets.some(a => a.symbol === symbol);
-                  if (assetExists) {
-                    form.setValue("selectedAssets", currentAssets.filter(a => a.symbol !== symbol));
-                  } else {
-                    form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
-                  }
-                }}
-                disabled={false}
-              >
-                {symbol}
-              </Button>
-            ))}
           </div>
-          {/* Similar Selection but for cryptocurrency. add high risk warning. */}
-          <Label>Cryptocurrencies</Label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {['BTC', 'ETH', 'BNB', 'SOL', 'ADA', 'AVAX', 'DOT', 'DOGE'].map((symbol) => (
-              <Button
-              onMouseDown={(e) => e.preventDefault()}
-                key={symbol}
-                variant="outline"
-                size="sm"
-                className="w-full"
-                type="button"
-                onClick={
-                  () => {
-                    const currentAssets = form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some(a => a.symbol === symbol);
+          <div className="space-y-2">
+            <Label>Popular Stocks</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[
+                "AAPL",
+                "MSFT",
+                "GOOGL",
+                "AMZN",
+                "META",
+                "NVDA",
+                "TSLA",
+                "NFLX",
+              ].map((symbol) => (
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  key={symbol}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  type="button"
+                  onClick={() => {
+                    const currentAssets =
+                      form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some(
+                      (a) => a.symbol === symbol
+                    );
                     if (assetExists) {
-                      form.setValue("selectedAssets", currentAssets.filter(a => a.symbol !== symbol));
+                      form.setValue(
+                        "selectedAssets",
+                        currentAssets.filter((a) => a.symbol !== symbol)
+                      );
                     } else {
-                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                      form.setValue("selectedAssets", [
+                        ...currentAssets,
+                        { symbol, name: symbol },
+                      ]);
                     }
-                  }
-                }
-              >
-                {symbol}
-              </Button>
-            ))}
+                  }}
+                >
+                  {symbol}
+                </Button>
+              ))}
             </div>
-        </div>
+
+            <Label>Cryptocurrencies</Label>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">
+                  Layer 1 Solutions (Medium Risk)
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                  {[
+                    "BTC",
+                    "ETH",
+                    "SOL",
+                    "BNB",
+                    "ADA",
+                    "TRX",
+                    "AVAX",
+                    "SUI",
+                    "TON",
+                    "HBAR",
+                    "BCH",
+                  ].map((symbol) => (
+                    <Button
+                      onMouseDown={(e) => e.preventDefault()}
+                      key={symbol}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      type="button"
+                      onClick={() => {
+                        const currentAssets =
+                          form.getValues("selectedAssets") || [];
+                        const assetExists = currentAssets.some(
+                          (a) => a.symbol === symbol
+                        );
+                        if (assetExists) {
+                          form.setValue(
+                            "selectedAssets",
+                            currentAssets.filter((a) => a.symbol !== symbol)
+                          );
+                        } else {
+                          form.setValue("selectedAssets", [
+                            ...currentAssets,
+                            { symbol, name: symbol },
+                          ]);
+                        }
+                      }}
+                    >
+                      {symbol}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">
+                  Layer 2 Solutions (Medium Risk)
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                  {[
+                    "MATIC",
+                    "ARB",
+                    "OP",
+                    "IMX",
+                    "STRK",
+                    "CKB",
+                    "LRC",
+                    "METIS",
+                    "ALT",
+                    "PHA",
+                    "TAIKO",
+                    "CTSI",
+                    "BOBA",
+                  ].map((symbol) => (
+                    <Button
+                      onMouseDown={(e) => e.preventDefault()}
+                      key={symbol}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      type="button"
+                      onClick={() => {
+                        const currentAssets =
+                          form.getValues("selectedAssets") || [];
+                        const assetExists = currentAssets.some(
+                          (a) => a.symbol === symbol
+                        );
+                        if (assetExists) {
+                          form.setValue(
+                            "selectedAssets",
+                            currentAssets.filter((a) => a.symbol !== symbol)
+                          );
+                        } else {
+                          form.setValue("selectedAssets", [
+                            ...currentAssets,
+                            { symbol, name: symbol },
+                          ]);
+                        }
+                      }}
+                    >
+                      {symbol}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">
+                  DeFi Tokens (Higher Risk)
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                  {[
+                    "UNI",
+                    "AAVE",
+                    "LINK",
+                    "MKR",
+                    "SNX",
+                    "STETH",
+                    "HYPE",
+                    "DAI",
+                    "JUP",
+                    "ENA",
+                    "RAY",
+                    "INJ",
+                    "BNSOL",
+                    "LDO",
+                    "MSOL",
+                  ].map((symbol) => (
+                    <Button
+                      onMouseDown={(e) => e.preventDefault()}
+                      key={symbol}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      type="button"
+                      onClick={() => {
+                        const currentAssets =
+                          form.getValues("selectedAssets") || [];
+                        const assetExists = currentAssets.some(
+                          (a) => a.symbol === symbol
+                        );
+                        if (assetExists) {
+                          form.setValue(
+                            "selectedAssets",
+                            currentAssets.filter((a) => a.symbol !== symbol)
+                          );
+                        } else {
+                          form.setValue("selectedAssets", [
+                            ...currentAssets,
+                            { symbol, name: symbol },
+                          ]);
+                        }
+                      }}
+                    >
+                      {symbol}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">
+                NFT & Gaming (Extreme Risk)
+              </Label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                {[
+                  "APE",
+                  "SAND",
+                  "MANA",
+                  "AXS",
+                  "RENDER",
+                  "FET",
+                  "IMX",
+                  "GALA",
+                  "ENS",
+                  "FLOW",
+                ].map((symbol) => (
+                  <Button
+                    onMouseDown={(e) => e.preventDefault()}
+                    key={symbol}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    type="button"
+                    onClick={() => {
+                      const currentAssets =
+                        form.getValues("selectedAssets") || [];
+                      const assetExists = currentAssets.some(
+                        (a) => a.symbol === symbol
+                      );
+                      if (assetExists) {
+                        form.setValue(
+                          "selectedAssets",
+                          currentAssets.filter((a) => a.symbol !== symbol)
+                        );
+                      } else {
+                        form.setValue("selectedAssets", [
+                          ...currentAssets,
+                          { symbol, name: symbol },
+                        ]);
+                      }
+                    }}
+                  >
+                    {symbol}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">
+                Meme Coins (Extreme Risk)
+              </Label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                {[
+                  "DOGE",
+                  "SHIB",
+                  "TRUMP",
+                  "PEPE",
+                  "BONK",
+                  "PENGU",
+                  "FARTCOIN",
+                  "WIF",
+                  "FLOKI",
+                  "SPX",
+                  "AI16Z",
+                ].map((symbol) => (
+                  <Button
+                    onMouseDown={(e) => e.preventDefault()}
+                    key={symbol}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    type="button"
+                    onClick={() => {
+                      const currentAssets =
+                        form.getValues("selectedAssets") || [];
+                      const assetExists = currentAssets.some(
+                        (a) => a.symbol === symbol
+                      );
+                      if (assetExists) {
+                        form.setValue(
+                          "selectedAssets",
+                          currentAssets.filter((a) => a.symbol !== symbol)
+                        );
+                      } else {
+                        form.setValue("selectedAssets", [
+                          ...currentAssets,
+                          { symbol, name: symbol },
+                        ]);
+                      }
+                    }}
+                  >
+                    {symbol}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
         </CardContent>
-        
 
         <CardFooter className="flex justify-between">
           <Button

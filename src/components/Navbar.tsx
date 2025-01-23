@@ -16,6 +16,7 @@ import {
   BarChart2,
   Settings,
   LogOut,
+  LineChart,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -56,6 +57,21 @@ export function Navbar() {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link
+                    to="/backtest"
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      "glass-button",
+                      isActive("/backtest") && "bg-primary/20",
+                    )}
+                  >
+                    <LineChart className="w-6 h-6 mr-2" />
+                    Backtest
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
                     to="/learn"
                     className={cn(
                       navigationMenuTriggerStyle(),
@@ -74,15 +90,14 @@ export function Navbar() {
 
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Button
-            variant="outline"
-            className="relative glass-button h-12 w-12 rounded-full"
-            onClick={() => {
-              /* Add settings handler */
-            }}
-          >
-            <Settings className="h-7 w-7" />
-          </Button>
+          <Link to="/settings">
+            <Button
+              variant="outline"
+              className="relative glass-button h-12 w-12 rounded-full"
+            >
+              <Settings className="h-7 w-7" />
+            </Button>
+          </Link>
           <Button
             variant="outline"
             className="relative glass-button h-12 w-12 rounded-full"

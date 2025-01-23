@@ -185,7 +185,7 @@ export function AuthForm({ type }: AuthFormProps) {
                   {...register("password", {
                     required: "Password is required",
                     minLength: {
-                      value: 10,
+                      value: 6,
                       message: "Password must be at least 10 characters",
                     },
                   })}

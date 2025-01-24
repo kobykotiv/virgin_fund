@@ -111,9 +111,12 @@ export default function BasicInfo() {
               }
             />
           </div>
+
+          {/* TODO: Make Tickers Dynamic */}
+
           <div className="space-y-2">
             <Label>Popular Stocks</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
               {[
                 "AAPL",
                 "MSFT",
@@ -155,13 +158,199 @@ export default function BasicInfo() {
               ))}
             </div>
 
-            <Label>Cryptocurrencies</Label>
+            <Label>Popular ETFs</Label>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
+              {["SPY", "QQQ", "DIA", "IWM", "VTI", "VXUS", "BND"].map(
+                (symbol) => (
+                  <Button
+                    onMouseDown={(e) => e.preventDefault()}
+                    key={symbol}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    type="button"
+                    onClick={() => {
+                      const currentAssets =
+                        form.getValues("selectedAssets") || [];
+                      const assetExists = currentAssets.some(
+                        (a) => a.symbol === symbol
+                      );
+                      if (assetExists) {
+                        form.setValue(
+                          "selectedAssets",
+                          currentAssets.filter((a) => a.symbol !== symbol)
+                        );
+                      } else {
+                        form.setValue("selectedAssets", [
+                          ...currentAssets,
+                          { symbol, name: symbol },
+                        ]);
+                      }
+                    }}
+                  >
+                    {symbol}
+                  </Button>
+                )
+              )}
+            </div>
+
+            <Label className="text-sm font-medium">Consumer Discretionary</Label>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+              {["AMZN", "TSLA", "HD", "NKE", "MCD", "SBUX", "LOW", "BKNG"].map((symbol) => (
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  key={symbol}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  type="button"
+                  onClick={() => {
+                    const currentAssets = form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
+                    if (assetExists) {
+                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
+                    } else {
+                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                    }
+                  }}
+                >
+                  {symbol}
+                </Button>
+              ))}
+            </div>
+
+            <Label className="text-sm font-medium">Energy</Label>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+              {["XOM", "CVX", "COP", "SLB", "EOG", "PSX", "VLO", "MPC"].map((symbol) => (
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  key={symbol}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  type="button"
+                  onClick={() => {
+                    const currentAssets = form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
+                    if (assetExists) {
+                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
+                    } else {
+                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                    }
+                  }}
+                >
+                  {symbol}
+                </Button>
+              ))}
+            </div>
+
+            <Label className="text-sm font-medium">Industrials</Label>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+              {["HON", "UNP", "UPS", "BA", "CAT", "GE", "MMM", "LMT"].map((symbol) => (
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  key={symbol}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  type="button"
+                  onClick={() => {
+                    const currentAssets = form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
+                    if (assetExists) {
+                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
+                    } else {
+                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                    }
+                  }}
+                >
+                  {symbol}
+                </Button>
+              ))}
+            </div>
+
+            <Label className="text-sm font-medium">Technology</Label>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+              {["AAPL", "MSFT", "NVDA", "AMD", "INTC", "TSM", "ASML", "AVGO"].map((symbol) => (
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  key={symbol}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  type="button"
+                  onClick={() => {
+                    const currentAssets = form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
+                    if (assetExists) {
+                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
+                    } else {
+                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                    }
+                  }}
+                >
+                  {symbol}
+                </Button>
+              ))}
+            </div>
+
+            <Label className="text-sm font-medium">Healthcare</Label>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+              {["JNJ", "UNH", "PFE", "ABBV", "MRK", "TMO", "DHR", "BMY"].map((symbol) => (
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  key={symbol}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  type="button"
+                  onClick={() => {
+                    const currentAssets = form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
+                    if (assetExists) {
+                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
+                    } else {
+                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                    }
+                  }}
+                >
+                  {symbol}
+                </Button>
+              ))}
+            </div>
+
+            <Label className="text-sm font-medium">Financial</Label>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+              {["JPM", "BAC", "WFC", "GS", "MS", "BLK", "C", "AXP"].map((symbol) => (
+                <Button
+                  onMouseDown={(e) => e.preventDefault()}
+                  key={symbol}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  type="button"
+                  onClick={() => {
+                    const currentAssets = form.getValues("selectedAssets") || [];
+                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
+                    if (assetExists) {
+                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
+                    } else {
+                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
+                    }
+                  }}
+                >
+                  {symbol}
+                </Button>
+              ))}
+            </div>
+
+            <Label>Cryptocurrencies (High Risk)</Label>
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium">
-                  Layer 1 Solutions (Medium Risk)
+                  Layer 1 Solutions (High-Medium Risk)
                 </Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
                   {[
                     "BTC",
                     "ETH",
@@ -209,9 +398,9 @@ export default function BasicInfo() {
 
               <div>
                 <Label className="text-sm font-medium">
-                  Layer 2 Solutions (Medium Risk)
+                  Layer 2 Solutions (High-Medium Risk)
                 </Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
                   {[
                     "MATIC",
                     "ARB",
@@ -261,9 +450,9 @@ export default function BasicInfo() {
 
               <div>
                 <Label className="text-sm font-medium">
-                  DeFi Tokens (Higher Risk)
+                  DeFi Tokens (High-Higher Risk)
                 </Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
                   {[
                     "UNI",
                     "AAVE",
@@ -316,9 +505,9 @@ export default function BasicInfo() {
 
             <div>
               <Label className="text-sm font-medium">
-                NFT & Gaming (Extreme Risk)
+                NFT & Gaming (Nigh-Extreme Risk)
               </Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
                 {[
                   "APE",
                   "SAND",
@@ -365,9 +554,9 @@ export default function BasicInfo() {
 
             <div>
               <Label className="text-sm font-medium">
-                Meme Coins (Extreme Risk)
+                Meme Coins (High-Extreme Risk)
               </Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
                 {[
                   "DOGE",
                   "SHIB",

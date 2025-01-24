@@ -1,5 +1,6 @@
-// import React from 'react';
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { validateStrategyParams, prepareStrategyParams } from "@/lib/strategies/validateStrategy";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -32,6 +33,7 @@ type RiskManagementFormData = z.infer<typeof RiskManagementSchema>;
 export default function RiskManagement() {
   const { state, dispatch } = useStrategy();
   const triggerConfetti = useConfetti();
+  const navigate = useNavigate();
 
   const form = useForm<RiskManagementFormData>({
     resolver: zodResolver(RiskManagementSchema),
@@ -45,10 +47,35 @@ export default function RiskManagement() {
     },
   });
 
-  const onSubmit = (data: RiskManagementFormData) => {
+  const onSubmit = async (data: RiskManagementFormData) => {
+    // Update form data in context
     dispatch({ type: "UPDATE_FORM", payload: data });
+    
+    // Get full strategy data with latest risk management params
+    const strategyData = prepareStrategyParams({
+      ...state.formData,
+      ...data
+    });
+
+    // Validate strategy params
+    const validation = await validateStrategyParams(strategyData);
+    
+    if (!validation.isValid) {
+      console.error("Strategy validation failed:", validation.errors);
+      // Show first error to the user
+      alert(validation.errors[0]);
+      return;
+    }
+
     triggerConfetti();
-    // Navigate to success/review page
+    
+    // Navigate to backtest with validated strategy parameters
+    navigate("/backtest", { 
+      state: { 
+        riskManagement: data.riskManagement,
+        strategy: strategyData
+      }
+    });
   };
 
   const calculateRiskReward = () => {

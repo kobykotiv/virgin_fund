@@ -1,4 +1,3 @@
-// import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,13 +21,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { useStrategy } from "@/context/StrategyContext";
 import { Info } from "lucide-react";
+import { DCAConfigSchema } from "@/types/strategy";
+import type { Frequency } from "@/lib/strategies/dcaStrategy";
 
 const StrategyConfigSchema = z.object({
   strategyType: z.enum(["DCA", "TRADER", "GRID"]),
+  frequency: DCAConfigSchema.shape.frequency,
+  rebalanceFrequency: DCAConfigSchema.shape.rebalanceFrequency,
+  rebalanceThreshold: DCAConfigSchema.shape.rebalanceThreshold,
   strategyConfig: z.object({
     investmentAmount: z.number().min(1),
-    frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]),
-    rebalanceThreshold: z.number().min(1).max(100).optional(),
   }),
 });
 
@@ -40,10 +42,11 @@ export default function StrategyConfig() {
     resolver: zodResolver(StrategyConfigSchema),
     defaultValues: {
       strategyType: state.formData.strategyType || "DCA",
+      frequency: (state.formData.frequency as Frequency) || "monthly",
+      rebalanceFrequency: state.formData.rebalanceFrequency || "monthly",
+      rebalanceThreshold: state.formData.rebalanceThreshold || 5,
       strategyConfig: state.formData.strategyConfig || {
-        investmentAmount: 100,
-        frequency: "monthly",
-        rebalanceThreshold: 5,
+        investmentAmount: 1000,
       },
     },
   });
@@ -52,6 +55,8 @@ export default function StrategyConfig() {
     dispatch({ type: "UPDATE_FORM", payload: data });
     dispatch({ type: "SET_STEP", payload: 3 });
   };
+
+  const showRebalancing = form.watch("strategyType") === "DCA";
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -68,7 +73,7 @@ export default function StrategyConfig() {
             <Label>Strategy Type</Label>
             <Select
               onValueChange={(value) =>
-                form.setValue("strategyType", value as any)
+                form.setValue("strategyType", value as "DCA" | "TRADER" | "GRID")
               }
               defaultValue={form.getValues("strategyType")}
             >
@@ -82,13 +87,13 @@ export default function StrategyConfig() {
                     <Info className="w-4 h-4 text-muted-foreground" />
                   </div>
                 </SelectItem>
-                <SelectItem value="TRADER">
+                <SelectItem value="TRADER" disabled>
                   <div className="flex items-start gap-2">
                     <span>Active Trading</span>
                     <Info className="w-4 h-4 text-muted-foreground" />
                   </div>
                 </SelectItem>
-                <SelectItem value="GRID">
+                <SelectItem value="GRID" disabled>
                   <div className="flex items-start gap-2">
                     <span>Grid Trading</span>
                     <Info className="w-4 h-4 text-muted-foreground" />
@@ -114,9 +119,9 @@ export default function StrategyConfig() {
               <Label>Investment Frequency</Label>
               <Select
                 onValueChange={(value) =>
-                  form.setValue("strategyConfig.frequency", value as any)
+                  form.setValue("frequency", value as Frequency)
                 }
-                defaultValue={form.getValues("strategyConfig.frequency")}
+                defaultValue={form.getValues("frequency")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select frequency" />
@@ -131,18 +136,40 @@ export default function StrategyConfig() {
               </Select>
             </div>
 
-            {form.watch("strategyType") !== "DCA" && (
-              <div className="space-y-2">
-                <Label>Rebalance Threshold (%)</Label>
-                <Input
-                  type="number"
-                  {...form.register("strategyConfig.rebalanceThreshold", {
-                    valueAsNumber: true,
-                  })}
-                  min={1}
-                  max={100}
-                />
-              </div>
+            {showRebalancing && (
+              <>
+                <div className="space-y-2">
+                  <Label>Rebalance Frequency</Label>
+                  <Select
+                    onValueChange={(value) =>
+                      form.setValue("rebalanceFrequency", value as "daily" | "weekly" | "monthly")
+                    }
+                    defaultValue={form.getValues("rebalanceFrequency")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select rebalance frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Rebalance Threshold (%)</Label>
+                  <Input
+                    type="number"
+                    {...form.register("rebalanceThreshold", {
+                      valueAsNumber: true,
+                    })}
+                    min={1}
+                    max={100}
+                    placeholder="5"
+                  />
+                </div>
+              </>
             )}
           </div>
         </CardContent>

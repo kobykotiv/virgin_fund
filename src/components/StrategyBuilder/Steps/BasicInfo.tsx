@@ -1,4 +1,3 @@
-// import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,9 +41,45 @@ export default function BasicInfo() {
   });
 
   const onSubmit = (data: BasicInfoFormData) => {
-    dispatch({ type: "UPDATE_FORM", payload: data });
+    // Extract tickers from selected assets for easier use in backtest
+    const formData = {
+      ...data,
+      tickers: data.selectedAssets.map(asset => asset.symbol)
+    };
+    dispatch({ type: "UPDATE_FORM", payload: formData });
     dispatch({ type: "SET_STEP", payload: 2 });
   };
+
+  const handleAssetSelect = (symbol: string) => {
+    const currentAssets = form.getValues("selectedAssets") || [];
+    const assetExists = currentAssets.some((a) => a.symbol === symbol);
+
+    if (assetExists) {
+      form.setValue(
+        "selectedAssets",
+        currentAssets.filter((a) => a.symbol !== symbol)
+      );
+    } else {
+      form.setValue("selectedAssets", [
+        ...currentAssets,
+        { symbol, name: symbol },
+      ]);
+    }
+  };
+
+  const renderAssetButton = (symbol: string) => (
+    <Button
+      onMouseDown={(e) => e.preventDefault()}
+      key={symbol}
+      variant="outline"
+      size="sm"
+      className="w-full"
+      type="button"
+      onClick={() => handleAssetSelect(symbol)}
+    >
+      {symbol}
+    </Button>
+  );
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -88,517 +123,105 @@ export default function BasicInfo() {
               <SearchHelpPopover className="text-muted-foreground hover:text-primary transition-colors" />
             </div>
             <StockSearch
-              onSelect={(symbol) => {
-                const currentAssets = form.getValues("selectedAssets") || [];
-                const assetExists = currentAssets.some(
-                  (a) => a.symbol === symbol
-                );
-
-                if (assetExists) {
-                  form.setValue(
-                    "selectedAssets",
-                    currentAssets.filter((a) => a.symbol !== symbol)
-                  );
-                } else {
-                  form.setValue("selectedAssets", [
-                    ...currentAssets,
-                    { symbol, name: symbol },
-                  ]);
-                }
-              }}
+              onSelect={handleAssetSelect}
               selectedAssets={
                 form.watch("selectedAssets")?.map((a) => a.symbol) || []
               }
             />
           </div>
 
-          {/* TODO: Make Tickers Dynamic */}
-
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Label>Popular Stocks</Label>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
-              {[
-                "AAPL",
-                "MSFT",
-                "GOOGL",
-                "AMZN",
-                "META",
-                "NVDA",
-                "TSLA",
-                "NFLX",
-              ].map((symbol) => (
-                <Button
-                  onMouseDown={(e) => e.preventDefault()}
-                  key={symbol}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  type="button"
-                  onClick={() => {
-                    const currentAssets =
-                      form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some(
-                      (a) => a.symbol === symbol
-                    );
-                    if (assetExists) {
-                      form.setValue(
-                        "selectedAssets",
-                        currentAssets.filter((a) => a.symbol !== symbol)
-                      );
-                    } else {
-                      form.setValue("selectedAssets", [
-                        ...currentAssets,
-                        { symbol, name: symbol },
-                      ]);
-                    }
-                  }}
-                >
-                  {symbol}
-                </Button>
-              ))}
+              {["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA", "NFLX"].map(renderAssetButton)}
             </div>
 
             <Label>Popular ETFs</Label>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
-              {["SPY", "QQQ", "DIA", "IWM", "VTI", "VXUS", "BND"].map(
-                (symbol) => (
-                  <Button
-                    onMouseDown={(e) => e.preventDefault()}
-                    key={symbol}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    type="button"
-                    onClick={() => {
-                      const currentAssets =
-                        form.getValues("selectedAssets") || [];
-                      const assetExists = currentAssets.some(
-                        (a) => a.symbol === symbol
-                      );
-                      if (assetExists) {
-                        form.setValue(
-                          "selectedAssets",
-                          currentAssets.filter((a) => a.symbol !== symbol)
-                        );
-                      } else {
-                        form.setValue("selectedAssets", [
-                          ...currentAssets,
-                          { symbol, name: symbol },
-                        ]);
-                      }
-                    }}
-                  >
-                    {symbol}
-                  </Button>
-                )
-              )}
+              {["SPY", "QQQ", "DIA", "IWM", "VTI", "VXUS", "BND"].map(renderAssetButton)}
             </div>
 
-            <Label className="text-sm font-medium">Consumer Discretionary</Label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-              {["AMZN", "TSLA", "HD", "NKE", "MCD", "SBUX", "LOW", "BKNG"].map((symbol) => (
-                <Button
-                  onMouseDown={(e) => e.preventDefault()}
-                  key={symbol}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  type="button"
-                  onClick={() => {
-                    const currentAssets = form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
-                    if (assetExists) {
-                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
-                    } else {
-                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
-                    }
-                  }}
-                >
-                  {symbol}
-                </Button>
-              ))}
-            </div>
-
-            <Label className="text-sm font-medium">Energy</Label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-              {["XOM", "CVX", "COP", "SLB", "EOG", "PSX", "VLO", "MPC"].map((symbol) => (
-                <Button
-                  onMouseDown={(e) => e.preventDefault()}
-                  key={symbol}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  type="button"
-                  onClick={() => {
-                    const currentAssets = form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
-                    if (assetExists) {
-                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
-                    } else {
-                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
-                    }
-                  }}
-                >
-                  {symbol}
-                </Button>
-              ))}
-            </div>
-
-            <Label className="text-sm font-medium">Industrials</Label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-              {["HON", "UNP", "UPS", "BA", "CAT", "GE", "MMM", "LMT"].map((symbol) => (
-                <Button
-                  onMouseDown={(e) => e.preventDefault()}
-                  key={symbol}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  type="button"
-                  onClick={() => {
-                    const currentAssets = form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
-                    if (assetExists) {
-                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
-                    } else {
-                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
-                    }
-                  }}
-                >
-                  {symbol}
-                </Button>
-              ))}
-            </div>
-
-            <Label className="text-sm font-medium">Technology</Label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-              {["AAPL", "MSFT", "NVDA", "AMD", "INTC", "TSM", "ASML", "AVGO"].map((symbol) => (
-                <Button
-                  onMouseDown={(e) => e.preventDefault()}
-                  key={symbol}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  type="button"
-                  onClick={() => {
-                    const currentAssets = form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
-                    if (assetExists) {
-                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
-                    } else {
-                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
-                    }
-                  }}
-                >
-                  {symbol}
-                </Button>
-              ))}
-            </div>
-
-            <Label className="text-sm font-medium">Healthcare</Label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-              {["JNJ", "UNH", "PFE", "ABBV", "MRK", "TMO", "DHR", "BMY"].map((symbol) => (
-                <Button
-                  onMouseDown={(e) => e.preventDefault()}
-                  key={symbol}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  type="button"
-                  onClick={() => {
-                    const currentAssets = form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
-                    if (assetExists) {
-                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
-                    } else {
-                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
-                    }
-                  }}
-                >
-                  {symbol}
-                </Button>
-              ))}
-            </div>
-
-            <Label className="text-sm font-medium">Financial</Label>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-              {["JPM", "BAC", "WFC", "GS", "MS", "BLK", "C", "AXP"].map((symbol) => (
-                <Button
-                  onMouseDown={(e) => e.preventDefault()}
-                  key={symbol}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  type="button"
-                  onClick={() => {
-                    const currentAssets = form.getValues("selectedAssets") || [];
-                    const assetExists = currentAssets.some((a) => a.symbol === symbol);
-                    if (assetExists) {
-                      form.setValue("selectedAssets", currentAssets.filter((a) => a.symbol !== symbol));
-                    } else {
-                      form.setValue("selectedAssets", [...currentAssets, { symbol, name: symbol }]);
-                    }
-                  }}
-                >
-                  {symbol}
-                </Button>
-              ))}
-            </div>
-
-            <Label>Cryptocurrencies (High Risk)</Label>
             <div className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">
-                  Layer 1 Solutions (High-Medium Risk)
-                </Label>
+                <Label className="text-sm font-medium">Consumer Discretionary</Label>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-                  {[
-                    "BTC",
-                    "ETH",
-                    "SOL",
-                    "BNB",
-                    "ADA",
-                    "TRX",
-                    "AVAX",
-                    "SUI",
-                    "TON",
-                    "HBAR",
-                    "BCH",
-                  ].map((symbol) => (
-                    <Button
-                      onMouseDown={(e) => e.preventDefault()}
-                      key={symbol}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      type="button"
-                      onClick={() => {
-                        const currentAssets =
-                          form.getValues("selectedAssets") || [];
-                        const assetExists = currentAssets.some(
-                          (a) => a.symbol === symbol
-                        );
-                        if (assetExists) {
-                          form.setValue(
-                            "selectedAssets",
-                            currentAssets.filter((a) => a.symbol !== symbol)
-                          );
-                        } else {
-                          form.setValue("selectedAssets", [
-                            ...currentAssets,
-                            { symbol, name: symbol },
-                          ]);
-                        }
-                      }}
-                    >
-                      {symbol}
-                    </Button>
-                  ))}
+                  {["AMZN", "TSLA", "HD", "NKE", "MCD", "SBUX", "LOW", "BKNG"].map(renderAssetButton)}
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium">
-                  Layer 2 Solutions (High-Medium Risk)
-                </Label>
+                <Label className="text-sm font-medium">Energy</Label>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-                  {[
-                    "MATIC",
-                    "ARB",
-                    "OP",
-                    "IMX",
-                    "STRK",
-                    "CKB",
-                    "LRC",
-                    "METIS",
-                    "ALT",
-                    "PHA",
-                    "TAIKO",
-                    "CTSI",
-                    "BOBA",
-                  ].map((symbol) => (
-                    <Button
-                      onMouseDown={(e) => e.preventDefault()}
-                      key={symbol}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      type="button"
-                      onClick={() => {
-                        const currentAssets =
-                          form.getValues("selectedAssets") || [];
-                        const assetExists = currentAssets.some(
-                          (a) => a.symbol === symbol
-                        );
-                        if (assetExists) {
-                          form.setValue(
-                            "selectedAssets",
-                            currentAssets.filter((a) => a.symbol !== symbol)
-                          );
-                        } else {
-                          form.setValue("selectedAssets", [
-                            ...currentAssets,
-                            { symbol, name: symbol },
-                          ]);
-                        }
-                      }}
-                    >
-                      {symbol}
-                    </Button>
-                  ))}
+                  {["XOM", "CVX", "COP", "SLB", "EOG", "PSX", "VLO", "MPC"].map(renderAssetButton)}
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium">
-                  DeFi Tokens (High-Higher Risk)
-                </Label>
+                <Label className="text-sm font-medium">Industrials</Label>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-                  {[
-                    "UNI",
-                    "AAVE",
-                    "LINK",
-                    "MKR",
-                    "SNX",
-                    "STETH",
-                    "HYPE",
-                    "DAI",
-                    "JUP",
-                    "ENA",
-                    "RAY",
-                    "INJ",
-                    "BNSOL",
-                    "LDO",
-                    "MSOL",
-                  ].map((symbol) => (
-                    <Button
-                      onMouseDown={(e) => e.preventDefault()}
-                      key={symbol}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      type="button"
-                      onClick={() => {
-                        const currentAssets =
-                          form.getValues("selectedAssets") || [];
-                        const assetExists = currentAssets.some(
-                          (a) => a.symbol === symbol
-                        );
-                        if (assetExists) {
-                          form.setValue(
-                            "selectedAssets",
-                            currentAssets.filter((a) => a.symbol !== symbol)
-                          );
-                        } else {
-                          form.setValue("selectedAssets", [
-                            ...currentAssets,
-                            { symbol, name: symbol },
-                          ]);
-                        }
-                      }}
-                    >
-                      {symbol}
-                    </Button>
-                  ))}
+                  {["HON", "UNP", "UPS", "BA", "CAT", "GE", "MMM", "LMT"].map(renderAssetButton)}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Technology</Label>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+                  {["AAPL", "MSFT", "NVDA", "AMD", "INTC", "TSM", "ASML", "AVGO"].map(renderAssetButton)}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Healthcare</Label>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+                  {["JNJ", "UNH", "PFE", "ABBV", "MRK", "TMO", "DHR", "BMY"].map(renderAssetButton)}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Financial</Label>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+                  {["JPM", "BAC", "WFC", "GS", "MS", "BLK", "C", "AXP"].map(renderAssetButton)}
                 </div>
               </div>
             </div>
 
             <div>
-              <Label className="text-sm font-medium">
-                NFT & Gaming (Nigh-Extreme Risk)
-              </Label>
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-                {[
-                  "APE",
-                  "SAND",
-                  "MANA",
-                  "AXS",
-                  "RENDER",
-                  "FET",
-                  "IMX",
-                  "GALA",
-                  "ENS",
-                  "FLOW",
-                ].map((symbol) => (
-                  <Button
-                    onMouseDown={(e) => e.preventDefault()}
-                    key={symbol}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    type="button"
-                    onClick={() => {
-                      const currentAssets =
-                        form.getValues("selectedAssets") || [];
-                      const assetExists = currentAssets.some(
-                        (a) => a.symbol === symbol
-                      );
-                      if (assetExists) {
-                        form.setValue(
-                          "selectedAssets",
-                          currentAssets.filter((a) => a.symbol !== symbol)
-                        );
-                      } else {
-                        form.setValue("selectedAssets", [
-                          ...currentAssets,
-                          { symbol, name: symbol },
-                        ]);
-                      }
-                    }}
-                  >
-                    {symbol}
-                  </Button>
-                ))}
+              <Label>Cryptocurrencies (High Risk)</Label>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Layer 1 Solutions (High-Medium Risk)</Label>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+                    {["BTC", "ETH", "SOL", "BNB", "ADA", "TRX", "AVAX", "SUI", "TON", "HBAR", "BCH"].map(renderAssetButton)}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Layer 2 Solutions (High-Medium Risk)</Label>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+                    {["MATIC", "ARB", "OP", "IMX", "STRK", "CKB", "LRC", "METIS", "ALT", "PHA", "TAIKO", "CTSI", "BOBA"].map(renderAssetButton)}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">DeFi Tokens (High-Higher Risk)</Label>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+                    {["UNI", "AAVE", "LINK", "MKR", "SNX", "STETH", "HYPE", "DAI", "JUP", "ENA", "RAY", "INJ", "BNSOL", "LDO", "MSOL"].map(renderAssetButton)}
+                  </div>
+                </div>
               </div>
             </div>
 
             <div>
-              <Label className="text-sm font-medium">
-                Meme Coins (High-Extreme Risk)
-              </Label>
+              <Label className="text-sm font-medium">NFT & Gaming (High-Extreme Risk)</Label>
               <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
-                {[
-                  "DOGE",
-                  "SHIB",
-                  "TRUMP",
-                  "PEPE",
-                  "BONK",
-                  "PENGU",
-                  "FARTCOIN",
-                  "WIF",
-                  "FLOKI",
-                  "SPX",
-                  "AI16Z",
-                ].map((symbol) => (
-                  <Button
-                    onMouseDown={(e) => e.preventDefault()}
-                    key={symbol}
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    type="button"
-                    onClick={() => {
-                      const currentAssets =
-                        form.getValues("selectedAssets") || [];
-                      const assetExists = currentAssets.some(
-                        (a) => a.symbol === symbol
-                      );
-                      if (assetExists) {
-                        form.setValue(
-                          "selectedAssets",
-                          currentAssets.filter((a) => a.symbol !== symbol)
-                        );
-                      } else {
-                        form.setValue("selectedAssets", [
-                          ...currentAssets,
-                          { symbol, name: symbol },
-                        ]);
-                      }
-                    }}
-                  >
-                    {symbol}
-                  </Button>
-                ))}
+                {["APE", "SAND", "MANA", "AXS", "RENDER", "FET", "IMX", "GALA", "ENS", "FLOW"].map(renderAssetButton)}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">Meme Coins (High-Extreme Risk)</Label>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 mt-1">
+                {["DOGE", "SHIB", "TRUMP", "PEPE", "BONK", "PENGU", "FARTCOIN", "WIF", "FLOKI", "SPX", "AI16Z"].map(renderAssetButton)}
               </div>
             </div>
           </div>

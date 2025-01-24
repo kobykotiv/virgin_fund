@@ -1,3 +1,5 @@
+import type { Asset, Frequency } from '@/lib/strategies/dcaStrategy';
+
 export interface Transaction {
   date: string;
   symbol: string;
@@ -7,13 +9,33 @@ export interface Transaction {
   type: 'buy' | 'sell';
 }
 
+export interface RiskManagementParams {
+  stopLoss: number;
+  takeProfit: number;
+  trailingStop?: number;
+  positionSize: number;
+}
+
 export interface BacktestParams {
   tickers: string[];
   startDate: Date;
   endDate: Date;
-  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'biannual' | 'annual';
+  frequency: Frequency;
   investmentAmount: number;
   benchmark?: 'SPY' | 'BTC' | null;
+  riskManagement: RiskManagementParams;
+  rebalanceFrequency?: 'daily' | 'weekly' | 'monthly';
+  rebalanceThreshold?: number;
+}
+
+export interface DCAPosition extends BacktestPosition {
+  fractionalShares: number;
+  allocation: {
+    symbol: string;
+    ratio: number;
+    shares: number;
+    value: number;
+  }[];
 }
 
 export interface PeriodReturns {

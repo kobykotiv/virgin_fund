@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Line } from "react-chartjs-2";
+import { Line, Pie } from "react-chartjs-2";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardHeader,
@@ -10,8 +11,9 @@ import {
 import { Button } from "../ui/button";
 import { useConfetti } from "../ui/confetti";
 import { TrendingUp, TrendingDown, DollarSign, Activity } from "lucide-react";
-import type { BacktestResult, PeriodReturns } from "@/types/backtest";
+import type { BacktestResult, PeriodReturns, DCAPosition } from "@/types/backtest";
 import type { ChartDatasetWithBorderDashAndYAxis } from "@/types/chart";
+import type { Strategy } from "@/types/strategy";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,6 +24,7 @@ import {
   Tooltip,
   Legend,
   Filler,
+  ArcElement,
 } from "chart.js";
 
 // Register ChartJS components
@@ -33,12 +36,13 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ArcElement
 );
 
 interface BacktestResultsProps {
   results: BacktestResult;
-  onSave: () => void;
+  strategy: Strategy;
   onRetest: () => void;
 }
 
@@ -58,14 +62,15 @@ const PERIOD_LABELS = {
   "1y": "1 Year"
 };
 
-type ChartView = "portfolio" | "technical";
+type ChartView = "portfolio" | "technical" | "allocation";
 
 export function BacktestResults({
   results,
-  onSave,
+  strategy,
   onRetest,
 }: BacktestResultsProps) {
   const [chartView, setChartView] = useState<ChartView>("portfolio");
+  const navigate = useNavigate();
   const triggerConfetti = useConfetti();
   const isPositiveROI = results.metrics.roi > 0;
 
@@ -74,6 +79,39 @@ export function BacktestResults({
       triggerConfetti();
     }
   }, [isPositiveROI, triggerConfetti]);
+
+  const handleSave = async () => {
+    try {
+      // Get stored strategies or initialize empty array
+      const storedStrategies = JSON.parse(localStorage.getItem('savedStrategies') || '[]');
+      
+      // Create strategy entry with results
+      const strategyEntry = {
+        ...strategy,
+        id: `strategy-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        results: {
+          roi: results.metrics.roi,
+          maxDrawdown: results.metrics.maxDrawdown,
+          currentValue: results.metrics.currentValue,
+          totalInvestment: results.metrics.totalInvestment,
+          returns: results.metrics.returns
+        }
+      };
+
+      // Add to stored strategies
+      storedStrategies.push(strategyEntry);
+      
+      // Save back to localStorage
+      localStorage.setItem('savedStrategies', JSON.stringify(storedStrategies));
+
+      // Navigate to dashboard
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('Error saving strategy:', error);
+      alert('Failed to save strategy. Please try again.');
+    }
+  };
 
   const getPortfolioChartData = () => {
     const primaryData = {
@@ -142,7 +180,38 @@ export function BacktestResults({
     };
   };
 
-  const chartOptions = {
+  const getAllocationChartData = () => {
+    const position = (results.metrics.positions[results.metrics.positions.length - 1] as DCAPosition);
+    if (!position.allocation) return null;
+
+    return {
+      labels: position.allocation.map(a => a.symbol),
+      datasets: [{
+        data: position.allocation.map(a => (a.value / position.totalValue) * 100),
+        backgroundColor: CHART_COLORS,
+        label: 'Current Allocation (%)'
+      }]
+    };
+  };
+
+  const chartOptions = chartView === 'allocation' ? {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            return `${label}: ${value.toFixed(2)}%`;
+          }
+        }
+      }
+    }
+  } : {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -234,7 +303,7 @@ export function BacktestResults({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Backtest Results</CardTitle>
+          <CardTitle>Backtest Results - {strategy.name}</CardTitle>
           <CardDescription>
             Strategy performance analysis and metrics
           </CardDescription>
@@ -310,21 +379,34 @@ export function BacktestResults({
               >
                 Technical Indicators
               </Button>
+              <Button
+                variant={chartView === "allocation" ? "default" : "outline"}
+                onClick={() => setChartView("allocation")}
+              >
+                Asset Allocation
+              </Button>
             </div>
           </div>
 
           <div className="h-[400px]">
-            <Line 
-              data={chartView === "portfolio" ? getPortfolioChartData() : getTechnicalChartData()}
-              options={chartOptions}
-            />
+            {chartView === "allocation" ? (
+              <Pie
+                data={getAllocationChartData() || { labels: [], datasets: [] }}
+                options={chartOptions}
+              />
+            ) : (
+              <Line 
+                data={chartView === "portfolio" ? getPortfolioChartData() : getTechnicalChartData()}
+                options={chartOptions}
+              />
+            )}
           </div>
 
           <div className="flex justify-end gap-4 mt-6">
             <Button variant="outline" onClick={onRetest}>
               Edit & Retest
             </Button>
-            <Button onClick={onSave}>Save Strategy</Button>
+            <Button onClick={handleSave}>Save Strategy</Button>
           </div>
         </CardContent>
       </Card>

@@ -1,10 +1,8 @@
-// Ignore vite typescript error
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from "path";
 import dts from 'vite-plugin-dts';
 
-// Adding proper type for the format parameter
 export default defineConfig({
   base: "/",
   plugins: [
@@ -17,6 +15,19 @@ export default defineConfig({
     }),
     dts(),
   ],
+  server: {
+    port: 5173,
+    host: true, // Needed for devcontainer
+    cors: true,
+    proxy: {
+      // Add proxy for yahoo-finance API if needed
+      // '/api/yahoo': {
+      //   target: 'https://query2.finance.yahoo.com',
+      //   changeOrigin: true,
+      //   rewrite: (path) => path.replace(/^\/api\/yahoo/, ''),
+      // },
+    },
+  },
   optimizeDeps: {
     exclude: ["lucide-react"],
   },
@@ -28,10 +39,17 @@ export default defineConfig({
   build: {
     sourcemap: true,
     outDir: "dist",
-    lib: {
-      entry: path.resolve(__dirname, "src/main.tsx"),
-      formats: ["es"] as const,
-      fileName: (format: string) => `main.${format}.js`,
+    // Remove lib configuration to use standard application build
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+      },
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          charts: ['chart.js', 'react-chartjs-2'],
+        },
+      },
     },
   },
 });

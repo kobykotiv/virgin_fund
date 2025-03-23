@@ -283,7 +283,9 @@ export default function LoginPage() {
               New Users
             </Badge>
             <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-            <CardDescription>Join GenEric TraDer and start your trading journey</CardDescription>
+            <CardDescription>
+              Join GenEric TraDer and start your trading journey
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {error && activeTab === "signup" && (
@@ -295,15 +297,31 @@ export default function LoginPage() {
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
-                <Input id="signup-email" name="email" type="email" placeholder="name@example.com" required />
+                <Input
+                  id="signup-email"
+                  name="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-password">Password</Label>
-                <Input id="signup-password" name="password" type="password" required />
+                <Input
+                  id="signup-password"
+                  name="password"
+                  type="password"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input id="confirm-password" name="confirmPassword" type="password" required />
+                <Input
+                  id="confirm-password"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
@@ -323,7 +341,9 @@ export default function LoginPage() {
                   <span className="w-full border-t"></span>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or try a demo</span>
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or try a demo
+                  </span>
                 </div>
               </div>
 
@@ -344,11 +364,17 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col">
             <p className="text-xs text-center text-muted-foreground">
               By signing up, you agree to our{" "}
-              <Link href="/terms" className="underline underline-offset-2 hover:text-primary">
+              <Link
+                href="/terms"
+                className="underline underline-offset-2 hover:text-primary"
+              >
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="underline underline-offset-2 hover:text-primary">
+              <Link
+                href="/privacy"
+                className="underline underline-offset-2 hover:text-primary"
+              >
                 Privacy Policy
               </Link>
             </p>
@@ -362,7 +388,9 @@ export default function LoginPage() {
               Existing Users
             </Badge>
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <CardDescription>Log in to access your GenEric TraDer account</CardDescription>
+            <CardDescription>
+              Log in to access your GenEric TraDer account
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {error && activeTab === "login" && (
@@ -389,7 +417,10 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-primary hover:underline"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -404,7 +435,11 @@ export default function LoginPage() {
                   readOnly={activeDemo !== null && demoAnimation}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading || demoAnimation}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || demoAnimation}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -422,15 +457,25 @@ export default function LoginPage() {
                   <span className="w-full border-t"></span>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                <Button variant="outline" className="w-full" disabled={isLoading || demoAnimation}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading || demoAnimation}
+                >
                   <Github className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" className="w-full" disabled={isLoading || demoAnimation}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading || demoAnimation}
+                >
                   <svg className="h-4 w-4" viewBox="0 0 24 24">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -451,7 +496,11 @@ export default function LoginPage() {
                     <path d="M1 1h22v22H1z" fill="none" />
                   </svg>
                 </Button>
-                <Button variant="outline" className="w-full" disabled={isLoading || demoAnimation}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading || demoAnimation}
+                >
                   <svg className="h-4 w-4" viewBox="0 0 24 24">
                     <path
                       d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"
@@ -479,7 +528,12 @@ export default function LoginPage() {
             <div className="w-full text-center text-sm text-muted-foreground">
               <div className="flex items-center justify-center gap-1">
                 <p>Demo credentials:</p>
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={toggleDemoInfo}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5"
+                  onClick={toggleDemoInfo}
+                >
                   <Info className="h-3 w-3" />
                   <span className="sr-only">Demo Info</span>
                 </Button>
@@ -492,8 +546,9 @@ export default function LoginPage() {
                 <Info className="h-4 w-4" />
                 <AlertDescription>
                   <p className="text-xs">
-                    Demo accounts provide a simulated trading environment with pre-configured portfolios and strategies.
-                    No real money is used, and all data is reset when you log out.
+                    Demo accounts provide a simulated trading environment with
+                    pre-configured portfolios and strategies. No real money is
+                    used, and all data is reset when you log out.
                   </p>
                 </AlertDescription>
               </Alert>
@@ -507,8 +562,12 @@ export default function LoginPage() {
             <Badge className="w-fit mb-2" variant="default">
               Featured
             </Badge>
-            <CardTitle className="text-2xl font-bold">Explore GenEric TraDer</CardTitle>
-            <CardDescription>Discover our advanced trading features</CardDescription>
+            <CardTitle className="text-2xl font-bold">
+              Explore GenEric TraDer
+            </CardTitle>
+            <CardDescription>
+              Discover our advanced trading features
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Feature highlights */}
@@ -531,7 +590,9 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h3 className="font-medium">Automated Bots</h3>
-                  <p className="text-sm text-muted-foreground">Create custom trading bots with no coding required</p>
+                  <p className="text-sm text-muted-foreground">
+                    Create custom trading bots with no coding required
+                  </p>
                 </div>
               </div>
 
@@ -553,7 +614,9 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h3 className="font-medium">Copy Trading</h3>
-                  <p className="text-sm text-muted-foreground">Follow and copy successful traders automatically</p>
+                  <p className="text-sm text-muted-foreground">
+                    Follow and copy successful traders automatically
+                  </p>
                 </div>
               </div>
             </div>
@@ -633,9 +696,21 @@ export default function LoginPage() {
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" />
-                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" />
-                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" />
+                    <path
+                      d="M12 2L2 7L12 12L22 7L12 2Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M2 17L12 22L22 17"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M2 12L12 17L22 12"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
                     <circle cx="12" cy="12" r="3" fill="currentColor" />
                   </svg>
                   <span>Try AI-Powered Trading</span>
@@ -648,18 +723,35 @@ export default function LoginPage() {
             <div className="bg-background/40 p-4 rounded-lg border border-border/50">
               <div className="flex items-center mb-2">
                 <Award className="h-4 w-4 text-yellow-500 mr-2" />
-                <span className="text-sm font-medium">Trader Testimonial</span>
+                <span className="text-sm font-medium">Hey</span>
               </div>
               <p className="text-sm italic mb-2">
-                "GenEric TraDer has transformed my trading strategy. The signals are accurate and the bots execute
-                flawlessly."
+                "GenEric TraDer has transformed my trading strategy. The signals
+                are accurate and the bots execute atomic trades."
               </p>
-              <p className="text-xs text-muted-foreground">— Alex K., Professional Trader</p>
+              <p className="text-xs text-muted-foreground">
+                — Alex K., "Professional Trader"
+              </p>
+            </div>
+
+            <div className="bg-background/40 p-4 rounded-lg border border-border/50">
+              <div className="flex items-center mb-2">
+                <Award className="h-4 w-4 text-green-500 mr-2" />
+                <span className="text-sm font-medium"></span>
+              </div>
+              <p className="text-sm italic mb-2">
+                "GenEric TraDer has transformed my trading strategy. The signals
+                are accurate and the bots execute atomic trades."
+              </p>
+              <p className="text-xs text-muted-foreground">
+                — Alex K., "Professional Trader"
+              </p>
             </div>
           </CardContent>
           <CardFooter>
             <p className="text-xs text-center w-full text-muted-foreground">
-              Self-hostable, isolated environment. Your data stays private.
+              Self-hostable, isolated environment. Autoscale Your data stays
+              private.
             </p>
           </CardFooter>
         </Card>
@@ -668,6 +760,6 @@ export default function LoginPage() {
       {/* Cookie Banner */}
       <CookieBanner />
     </div>
-  )
+  );
 }
 

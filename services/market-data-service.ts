@@ -1,0 +1,252 @@
+// Market data service to fetch data from multiple sources
+import { isDemoMode } from "./demo-service"
+
+// Define the market data interface
+export interface MarketData {
+  symbol: string
+  price: number
+  change: number
+  changePercent: number
+  volume: number
+  high: number
+  low: number
+  open: number
+  previousClose: number
+  marketCap?: number
+  timestamp: string
+}
+
+// Data sources enum
+export enum DataSource {
+  ALPACA = "alpaca",
+  YAHOO_FINANCE = "yahoo",
+  COINGECKO = "coingecko",
+  DEMO = "demo",
+}
+
+// Cache for market data to avoid excessive API calls
+const marketDataCache: Record<string, { data: MarketData; timestamp: number }> = {}
+const CACHE_EXPIRY = 15000 // 15 seconds
+
+// Get market data for a symbol
+export async function getMarketData(symbol: string, forceRefresh = false): Promise<MarketData> {
+  // Check if we're in demo mode
+  if (isDemoMode()) {
+    return getDemoMarketData(symbol)
+  }
+
+  // Check cache first if not forcing refresh
+  const cacheKey = symbol.toUpperCase()
+  const now = Date.now()
+  if (!forceRefresh && marketDataCache[cacheKey] && now - marketDataCache[cacheKey].timestamp < CACHE_EXPIRY) {
+    return marketDataCache[cacheKey].data
+  }
+
+  // Try Alpaca first
+  try {
+    const data = await getAlpacaMarketData(symbol)
+    // Cache the result
+    marketDataCache[cacheKey] = { data, timestamp: now }
+    return data
+  } catch (error) {
+    console.warn(`Alpaca data fetch failed for ${symbol}, trying Yahoo Finance`, error)
+
+    // Try Yahoo Finance as fallback
+    try {
+      const data = await getYahooFinanceMarketData(symbol)
+      // Cache the result
+      marketDataCache[cacheKey] = { data, timestamp: now }
+      return data
+    } catch (yahooError) {
+      console.warn(`Yahoo Finance data fetch failed for ${symbol}, trying CoinGecko`, yahooError)
+
+      // Try CoinGecko as a last resort for crypto
+      if (symbol.includes("-USD") || symbol.includes("BTC") || symbol.includes("ETH")) {
+        try {
+          const data = await getCoinGeckoMarketData(symbol)
+          // Cache the result
+          marketDataCache[cacheKey] = { data, timestamp: now }
+          return data
+        } catch (geckoError) {
+          console.error(`All data sources failed for ${symbol}`, geckoError)
+          throw new Error(`Failed to fetch market data for ${symbol} from all sources`)
+        }
+      } else {
+        console.error(`All data sources failed for ${symbol}`, yahooError)
+        throw new Error(`Failed to fetch market data for ${symbol} from all sources`)
+      }
+    }
+  }
+}
+
+// Get market data for multiple symbols
+export async function getMultipleMarketData(symbols: string[]): Promise<MarketData[]> {
+  return Promise.all(symbols.map((symbol) => getMarketData(symbol)))
+}
+
+// Get market data from Alpaca
+async function getAlpacaMarketData(symbol: string): Promise<MarketData> {
+  // In a real implementation, this would call the Alpaca API
+  // For now, we'll simulate a response
+  const response = await fetch(`/api/alpaca/market?symbol=${symbol}`)
+
+  if (!response.ok) {
+    throw new Error(`Alpaca API error: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+
+  return {
+    symbol: data.symbol,
+    price: data.price,
+    change: data.change,
+    changePercent: data.change, // Alpaca returns percent already
+    volume: data.volume,
+    high: data.high || data.price * 1.02,
+    low: data.low || data.price * 0.98,
+    open: data.open || data.price * 0.99,
+    previousClose: data.previousClose || data.price * 0.995,
+    marketCap: data.marketCap,
+    timestamp: data.timestamp || new Date().toISOString(),
+  }
+}
+
+// Get market data from Yahoo Finance
+async function getYahooFinanceMarketData(symbol: string): Promise<MarketData> {
+  // In a real implementation, this would use the yahoofinance-2 package
+  // For now, we'll simulate a response
+  const response = await fetch(`/api/yahoo/market?symbol=${symbol}`)
+
+  if (!response.ok) {
+    throw new Error(`Yahoo Finance API error: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+
+  return {
+    symbol: data.symbol,
+    price: data.price,
+    change: data.change,
+    changePercent: data.changePercent,
+    volume: data.volume,
+    high: data.high,
+    low: data.low,
+    open: data.open,
+    previousClose: data.previousClose,
+    marketCap: data.marketCap,
+    timestamp: data.timestamp || new Date().toISOString(),
+  }
+}
+
+// Get market data from CoinGecko
+async function getCoinGeckoMarketData(symbol: string): Promise<MarketData> {
+  // In a real implementation, this would call the CoinGecko API
+  // For now, we'll simulate a response
+  const response = await fetch(`/api/coingecko/market?symbol=${symbol}`)
+
+  if (!response.ok) {
+    throw new Error(`CoinGecko API error: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+
+  return {
+    symbol: data.symbol,
+    price: data.price,
+    change: data.change,
+    changePercent: data.changePercent,
+    volume: data.volume,
+    high: data.high,
+    low: data.low,
+    open: data.open,
+    previousClose: data.previousClose,
+    marketCap: data.marketCap,
+    timestamp: data.timestamp || new Date().toISOString(),
+  }
+}
+
+// Get demo market data
+function getDemoMarketData(symbol: string): MarketData {
+  // Generate realistic demo data based on the symbol
+  const basePrice = getBasePrice(symbol)
+  const changePercent = Math.random() * 6 - 3 // -3% to +3%
+  const change = basePrice * (changePercent / 100)
+  const price = basePrice + change
+  const volume = Math.floor(Math.random() * 10000000) + 100000
+
+  return {
+    symbol,
+    price,
+    change,
+    changePercent,
+    volume,
+    high: price * (1 + Math.random() * 0.02), // 0-2% higher than current
+    low: price * (1 - Math.random() * 0.02), // 0-2% lower than current
+    open: price * (1 + (Math.random() * 0.02 - 0.01)), // +/- 1% from current
+    previousClose: price * (1 + (Math.random() * 0.02 - 0.01)), // +/- 1% from current
+    marketCap: symbol === "BTC-USD" || symbol === "ETH-USD" ? undefined : price * getSharesOutstanding(symbol),
+    timestamp: new Date().toISOString(),
+  }
+}
+
+// Helper function to get a base price for a symbol
+function getBasePrice(symbol: string): number {
+  // Return realistic base prices for common stocks
+  switch (symbol) {
+    case "AAPL":
+      return 180 + (Math.random() * 10 - 5)
+    case "MSFT":
+      return 350 + (Math.random() * 15 - 7.5)
+    case "GOOGL":
+      return 130 + (Math.random() * 8 - 4)
+    case "AMZN":
+      return 140 + (Math.random() * 10 - 5)
+    case "TSLA":
+      return 240 + (Math.random() * 20 - 10)
+    case "META":
+      return 320 + (Math.random() * 15 - 7.5)
+    case "NVDA":
+      return 450 + (Math.random() * 25 - 12.5)
+    case "BTC-USD":
+      return 28000 + (Math.random() * 1000 - 500)
+    case "ETH-USD":
+      return 1800 + (Math.random() * 100 - 50)
+    case "SPY":
+      return 450 + (Math.random() * 5 - 2.5)
+    case "QQQ":
+      return 380 + (Math.random() * 8 - 4)
+    case "VTI":
+      return 220 + (Math.random() * 4 - 2)
+    default:
+      return 100 + (Math.random() * 10 - 5)
+  }
+}
+
+// Helper function to get shares outstanding for market cap calculation
+function getSharesOutstanding(symbol: string): number {
+  switch (symbol) {
+    case "AAPL":
+      return 16_500_000_000
+    case "MSFT":
+      return 7_500_000_000
+    case "GOOGL":
+      return 12_800_000_000
+    case "AMZN":
+      return 10_200_000_000
+    case "TSLA":
+      return 3_200_000_000
+    case "META":
+      return 2_600_000_000
+    case "NVDA":
+      return 2_400_000_000
+    case "SPY":
+      return 950_000_000
+    case "QQQ":
+      return 350_000_000
+    case "VTI":
+      return 1_400_000_000
+    default:
+      return 1_000_000_000
+  }
+}
+

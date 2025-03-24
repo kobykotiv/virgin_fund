@@ -12,3 +12,254 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// User Management
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          UserRole  @default(USER)
+  profileImage  String?
+  bio           String?
+  settings      Json?
+  balance       Float     @default(0)
+  apiKeys       ApiKey[]
+  bots          Bot[]
+  signals       Signal[]
+  followers     Follow[]  @relation("Follower")
+  following     Follow[]  @relation("Following")
+  createdProducts MarketProduct[]
+  subscriptions Subscription[]
+  portfolios    Portfolio[]
+  rentedBots    BotRental[]
+  comments      Comment[]
+  sharedPositions SharedPosition[]
+}
+
+enum UserRole {
+  USER
+  PROVIDER
+  ADMIN
+}
+
+// API Keys for Trading Platforms
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String
+  platform  String
+  apiKey    String
+  secretKey String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// Trading Bots
+model Bot {
+  id          String    @id @default(cuid())
+  name        String
+  userId      String
+  type        BotType
+  config      Json
+  status      BotStatus @default(INACTIVE)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+  signals     Signal[]
+  performance Performance[]
+  rentalPrice Float?    // Hourly rental price
+  rentals     BotRental[]
+}
+
+enum BotType {
+  SIGNAL
+  AUTOMATED
+  COPY_TRADING
+}
+
+enum BotStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+}
+
+// Trading Signals
+model Signal {
+  id          String    @id @default(cuid())
+  botId       String?
+  userId      String
+  symbol      String
+  type        SignalType
+  direction   Direction
+  price       Float
+  timestamp   DateTime  @default(now())
+  metadata    Json?
+  bot         Bot?      @relation(fields: [botId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+enum SignalType {
+  ENTRY
+  EXIT
+  ALERT
+}
+
+enum Direction {
+  LONG
+  SHORT
+  NEUTRAL
+}
+
+// Performance Tracking
+model Performance {
+  id          String    @id @default(cuid())
+  botId       String
+  timestamp   DateTime  @default(now())
+  metrics     Json
+  bot         Bot       @relation(fields: [botId], references: [id])
+}
+
+// Copy Trading
+model Follow {
+  id          String    @id @default(cuid())
+  followerId  String
+  providerId  String
+  status      FollowStatus
+  settings    Json?
+  createdAt   DateTime  @default(now())
+  follower    User      @relation("Follower", fields: [followerId], references: [id])
+  provider    User      @relation("Following", fields: [providerId], references: [id])
+}
+
+enum FollowStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+// Marketplace
+model MarketProduct {
+  id          String    @id @default(cuid())
+  userId      String
+  type        ProductType
+  name        String
+  description String?
+  price       Float
+  status      ProductStatus @default(DRAFT)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  creator     User      @relation(fields: [userId], references: [id])
+  subscriptions Subscription[]
+}
+
+enum ProductType {
+  SIGNAL
+  BOT
+  STRATEGY
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// Subscriptions
+model Subscription {
+  id          String    @id @default(cuid())
+  userId      String
+  productId   String
+  status      SubStatus
+  startDate   DateTime  @default(now())
+  endDate     DateTime?
+  user        User      @relation(fields: [userId], references: [id])
+  product     MarketProduct @relation(fields: [productId], references: [id])
+}
+
+enum SubStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+// Add BotRental model for bot rentals
+model BotRental {
+  id          String    @id @default(cuid())
+  botId       String
+  renterId    String
+  startTime   DateTime
+  endTime     DateTime
+  status      RentalStatus @default(PENDING)
+  totalCost   Float
+  settings    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bot         Bot       @relation(fields: [botId], references: [id])
+  renter      User      @relation(fields: [renterId], references: [id])
+}
+
+enum RentalStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// Add Portfolio model for unlimited portfolios
+model Portfolio {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  positions   Position[]
+  user        User      @relation(fields: [userId], references: [id])
+  sharedPositions SharedPosition[]
+}
+
+// Add Position model for tracking individual positions
+model Position {
+  id          String    @id @default(cuid())
+  portfolioId String
+  symbol      String
+  entryPrice  Float
+  quantity    Float
+  direction   Direction
+  openedAt    DateTime  @default(now())
+  closedAt    DateTime?
+  pnl         Float?
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id])
+}
+
+// Add SharedPosition model for position sharing
+model SharedPosition {
+  id          String    @id @default(cuid())
+  portfolioId String
+  positionId  String?
+  userId      String
+  symbol      String
+  entryPrice  Float
+  direction   Direction
+  reasoning   String?
+  likes       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  comments    Comment[]
+}
+
+// Add Comment model for social interactions
+model Comment {
+  id              String        @id @default(cuid())
+  sharedPositionId String
+  userId          String
+  content         String
+  createdAt       DateTime      @default(now())
+  sharedPosition  SharedPosition @relation(fields: [sharedPositionId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+}

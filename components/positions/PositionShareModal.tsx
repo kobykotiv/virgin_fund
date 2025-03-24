@@ -24,10 +24,12 @@ const PositionShareModal: React.FC<PositionShareModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!reasoning.trim()) {
       setError('Please provide your trading thesis');
       return;
     }
+    
     onSubmit({ reasoning });
     setReasoning('');
     setError('');
@@ -45,6 +47,7 @@ const PositionShareModal: React.FC<PositionShareModalProps> = ({
               </svg>
             </button>
           </div>
+          
           <div className="bg-gray-50 p-4 rounded-md mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-700 font-medium">{position.symbol}</span>
@@ -61,6 +64,7 @@ const PositionShareModal: React.FC<PositionShareModalProps> = ({
               <span className="text-gray-800 font-medium">${position.entryPrice.toFixed(2)}</span>
             </div>
           </div>
+          
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label htmlFor="reasoning" className="block text-sm font-medium text-gray-700 mb-1">
@@ -76,6 +80,7 @@ const PositionShareModal: React.FC<PositionShareModalProps> = ({
               />
               {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
             </div>
+            
             <div className="flex justify-end space-x-3">
               <button
                 type="button"

@@ -155,9 +155,13 @@ const PortfolioDetailPage = () => {
   };
 
   const handleSharePosition = async (positionId: string) => {
-    const position = portfolio!.positions.find(p => p.id === positionId)!;
-    setSelectedPosition(position);
-    setShowShareModal(true);
+    try {
+      const position = portfolio!.positions.find(p => p.id === positionId)!;
+      setSelectedPosition(position);
+      setShowShareModal(true);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleShareSubmit = async ({ reasoning }: { reasoning: string }) => {

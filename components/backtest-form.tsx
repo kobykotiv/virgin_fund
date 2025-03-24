@@ -16,11 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import type { Bot } from "@/types/bot"
+import type { Bot, BotConfig } from "@/types/bot"
 import type { BacktestParams } from "@/lib/backtest-service"
 
 interface BacktestFormProps {
-  bots: Bot[]
+  bot: Bot
   onSubmit: (params: BacktestParams) => void
   onOptimize?: (botId: string, paramToOptimize: string, rangeStart: number, rangeEnd: number, steps: number) => void
   isLoading: boolean

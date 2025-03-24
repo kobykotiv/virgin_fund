@@ -1,0 +1,157 @@
+[
+  {
+    "name": "DCA Bitcoin Weekly",
+    "type": "dca",
+    "allocation": 10,
+    "config": {
+      "dca": {
+        "asset": "BTC-USD",
+        "frequency": "weekly",
+        "amount": 100,
+        "dayOfWeek": 1,
+        "endCondition": "none"
+      }
+    },
+    "riskControls": {
+      "maxDrawdown": 30,
+      "pauseConditions": {
+        "rsiOverbought": 80,
+        "volatilityThreshold": 100,
+        "resumeAfter": "7d"
+      },
+      "dollarCostAveraging": {
+        "increasePurchaseOn": {
+          "dropPercent": 20,
+          "multiplier": 1.5
+        },
+        "skipPurchaseOn": {
+          "rsiAbove": 75,
+          "priceAboveSMA": 200
+        }
+      }
+    }
+  },
+  {
+    "name": "Quarterly Index Rebalance",
+    "type": "auto_rebalance",
+    "allocation": 15,
+    "config": {
+      "auto_rebalance": {
+        "frequency": "quarterly",
+        "threshold": 5,
+        "assets": [
+          { "symbol": "SPY", "allocation": 40 },
+          { "symbol": "QQQ", "allocation": 30 },
+          { "symbol": "IWM", "allocation": 20 },
+          { "symbol": "AGG", "allocation": 10 }
+        ]
+      }
+    }
+  },
+{
+    "name": "Monthly Crypto Index",
+    "type": "auto_rebalance",
+    "allocation": 10,
+    "config": {
+        "auto_rebalance": {
+            "frequency": "monthly",
+            "threshold": 8,
+            "assets": [
+                { "symbol": "BTC-USD", "allocation": 50 },
+                { "symbol": "ETH-USD", "allocation": 30 },
+                { "symbol": "SOL-USD", "allocation": 20 }
+            ]
+        }
+    }
+},
+{
+    "name": "Weekly ETF DCA",
+    "type": "dca",
+    "allocation": 10,
+    "config": {
+        "dca": {
+            "asset": "VOO",
+            "frequency": "weekly",
+            "amount": 200,
+            "dayOfWeek": 3,
+            "endCondition": "none"
+        }
+    }
+},
+{
+    "name": "Monthly Gold Rebalance",
+    "type": "auto_rebalance",
+    "allocation": 5,
+    "config": {
+        "auto_rebalance": {
+            "frequency": "monthly",
+            "threshold": 3,
+            "assets": [
+                { "symbol": "GLD", "allocation": 50 },
+                { "symbol": "IAU", "allocation": 30 },
+                { "symbol": "SGOL", "allocation": 20 }
+            ]
+        }
+    }
+},
+{
+    "name": "Annual Bond Ladder",
+    "type": "bond_ladder",
+    "allocation": 5,
+    "config": {
+        "bond_ladder": {
+            "assets": [
+                { "symbol": "TLT", "allocation": 40 },
+                { "symbol": "SHY", "allocation": 30 },
+                { "symbol": "BIL", "allocation": 30 }
+            ],
+            "maturityDates": [
+                { "date": "2024-01-01", "allocation": 20 },
+                { "date": "2025-01-01", "allocation": 30 },
+                { "date": "2026-01-01", "allocation": 50 }
+            ]
+        }
+    }
+},
+{
+    "name": "Monthly Dividend Reinvest",
+    "type": "dca",
+    "allocation": 5,
+    "config": {
+        "dca": {
+            "asset": "VIG",
+            "frequency": "monthly",
+            "amount": 150,
+            "dayOfWeek": 5,
+            "endCondition": "none"
+        }
+    }   
+},
+  {
+    "name": "60-40 Portfolio",
+    "type": "auto_rebalance",
+    "allocation": 5,
+    "config": {
+      "auto_rebalance": {
+        "frequency": "quarterly",
+        "threshold": 5,
+        "assets": [
+          { "symbol": "VTI", "allocation": 60 },
+          { "symbol": "BND", "allocation": 40 }
+        ]
+      }
+    },
+    "riskControls": {
+      "rebalancing": {
+        "driftTolerance": 5,
+        "volBasedThreshold": true,
+        "minTradeSize": 1000
+      },
+      "drawdownProtection": {
+        "threshold": 10,
+        "action": "rebalance",
+        "defensiveAsset": "BIL"
+      }
+    }
+  }
+]

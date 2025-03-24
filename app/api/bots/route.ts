@@ -1,23 +1,46 @@
-import { NextResponse } from 'next/server'
-import { initDB } from '@/lib/db'
+import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 
-export async function GET() {
+export async function POST(req: Request) {
   try {
-    const db = await initDB()
-    const bots = await db.getAll('bots')
-    return NextResponse.json({ data: bots })
+    const session = await auth()
+    if (!session?.user?.id) {
+      return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    const data = await req.json()
+    const bot = await prisma.bot.create({
+      data: {
+        name: data.name,
+        config: data,
+        userId: session.user.id,
+        strategyId: data.rules[0]?.action.strategyId || "",
+      }
+    })
+
+    return NextResponse.json(bot)
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch bots' }, { status: 500 })
+    console.error("Error creating bot:", error)
+    return new NextResponse("Internal error", { status: 500 })
   }
 }
 
-export async function POST(request: Request) {
+export async function GET(req: Request) {
   try {
-    const body = await request.json()
-    const db = await initDB()
-    await db.add('bots', body)
-    return NextResponse.json({ success: true })
+    const session = await auth()
+    if (!session?.user?.id) {
+      return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    const bots = await prisma.bot.findMany({
+      where: { userId: session.user.id },
+      include: { strategy: true }
+    })
+
+    return NextResponse.json(bots)
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to add bot' }, { status: 500 })
+    console.error("Error fetching bots:", error)
+    return new NextResponse("Internal error", { status: 500 })
   }
 }

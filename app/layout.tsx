@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import ClientLayout from "./ClientLayout"
+import { AlpacaProvider } from "@/context/alpaca-context";
 
 export const metadata: Metadata = {
   title: "GenEric TraDer - Advanced Trading Platform",
@@ -29,9 +30,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <ClientLayout>{children}</ClientLayout>
+  return (
+    <html lang="en">
+      <body>
+        <AlpacaProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </AlpacaProvider>
+      </body>
+    </html>
+  );
 }
-
-
 
 import './globals.css'

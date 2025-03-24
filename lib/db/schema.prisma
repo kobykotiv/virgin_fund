@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  strategies    Strategy[]
+  bots          Bot[]
+  apiKeys       ApiKey[]
+  isGuest       Boolean   @default(false) // Add isGuest field
+  portfolios    Portfolio[] // Add portfolios relation
+  feedback      Feedback[]
+}
+
+model Strategy {
+  id            String    @id @default(cuid())
+  name          String
+  version       String
+  config        Json
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  bots          Bot[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Bot {
+  id            String    @id @default(cuid())
+  name          String
+  status        String    @default("inactive")
+  config        Json
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  strategyId    String
+  strategy      Strategy   @relation(fields: [strategyId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ApiKey {
+  id            String    @id @default(cuid())
+  name          String
+  key           String    
+  secret        String
+  provider      String
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, provider])
+}
+
+model Portfolio {
+  id        String   @id @default(cuid())
+  currency  String   // e.g., "USD", "EUR", "BTC"
+  amount    Float    // Amount of the currency
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Feedback {
+  id          String    @id @default(cuid())
+  content     String
+  type        String    // e.g., "bug", "feature", "general"
+  status      String    @default("pending") // "pending", "reviewed", "implemented", etc.
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

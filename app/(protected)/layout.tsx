@@ -1,27 +1,22 @@
 import type React from "react"
 import { MainNav } from "@/components/main-nav"
-import { UserNav } from "@/components/user-nav"
-import { AuthDebug } from "@/components/auth-debug"
+import { Toaster } from "@/components/ui/toaster"
+import { redirect } from "next/navigation"
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  // In a real app, you would check if the user is authenticated here
+  // and redirect to login if not
+  const isAuthenticated = true // This would be a real auth check
+
+  if (!isAuthenticated) {
+    redirect("/home")
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
-      <div className="border-b">
-        <div className="flex h-16 items-center px-4">
-          <MainNav className="mx-6" />
-          <div className="ml-auto flex items-center space-x-4">
-            <UserNav />
-          </div>
-        </div>
-      </div>
-      <div className="flex-1 space-y-4 p-8 pt-6">{children}</div>
-
-      {/* Auth debugging tool */}
-      <AuthDebug />
+      <MainNav />
+      <main className="flex-1">{children}</main>
+      <Toaster />
     </div>
   )
 }

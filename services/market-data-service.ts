@@ -126,7 +126,7 @@ async function getYahooFinanceMarketData(symbol: string): Promise<MarketData> {
   return {
     symbol: data.symbol,
     price: data.price,
-    change: data.change,
+    change: data.changePercent,
     changePercent: data.changePercent,
     volume: data.volume,
     high: data.high,
@@ -247,6 +247,112 @@ function getSharesOutstanding(symbol: string): number {
       return 1_400_000_000
     default:
       return 1_000_000_000
+  }
+}
+
+// Fetch historical market data for a symbol
+export async function fetchHistoricalData(
+  symbol: string,
+  timeframe = "1D",
+  limit = 30,
+): Promise<{ date: string; value: number }[]> {
+  // Check if we're in demo mode
+  if (isDemoMode()) {
+    return getDemoHistoricalData(symbol, timeframe, limit)
+  }
+
+  try {
+    // In a real implementation, this would call the appropriate API
+    const response = await fetch(`/api/alpaca/historical?symbol=${symbol}&timeframe=${timeframe}&limit=${limit}`)
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.map((item: any) => ({
+      date: new Date(item.timestamp).toISOString().split("T")[0],
+      value: item.close,
+    }))
+  } catch (error) {
+    console.error(`Failed to fetch historical data for ${symbol}`, error)
+    // Return demo data as fallback
+    return getDemoHistoricalData(symbol, timeframe, limit)
+  }
+}
+
+// Generate demo historical data
+function getDemoHistoricalData(symbol: string, timeframe: string, limit: number): { date: string; value: number }[] {
+  const basePrice = getBasePrice(symbol)
+  const result = []
+  const now = new Date()
+
+  // Generate data points
+  for (let i = limit - 1; i >= 0; i--) {
+    const date = new Date(now)
+    date.setDate(date.getDate() - i)
+
+    // Create some realistic price movement
+    const volatility = getVolatility(symbol)
+    const trend = getTrend(symbol)
+    const randomWalk = (Math.random() - 0.5) * volatility
+    const trendFactor = ((trend / 100) * (limit - i)) / limit
+
+    // Calculate price with some randomness but following a trend
+    const value = basePrice * (1 + trendFactor + randomWalk)
+
+    result.push({
+      date: date.toISOString().split("T")[0],
+      value: Number.parseFloat(value.toFixed(2)),
+    })
+  }
+
+  return result
+}
+
+// Helper function to get volatility for a symbol
+function getVolatility(symbol: string): number {
+  switch (symbol) {
+    case "TSLA":
+    case "NVDA":
+    case "BTC-USD":
+    case "ETH-USD":
+      return 0.04 // 4% daily volatility for high volatility assets
+    case "AAPL":
+    case "MSFT":
+    case "GOOGL":
+    case "AMZN":
+      return 0.02 // 2% for medium volatility
+    case "SPY":
+    case "QQQ":
+    case "VTI":
+      return 0.01 // 1% for low volatility
+    default:
+      return 0.025 // 2.5% default
+  }
+}
+
+// Helper function to get trend for a symbol (percentage over the period)
+function getTrend(symbol: string): number {
+  switch (symbol) {
+    case "NVDA":
+    case "MSFT":
+      return 15 // 15% uptrend
+    case "TSLA":
+    case "BTC-USD":
+      return -5 // 5% downtrend
+    case "AAPL":
+    case "GOOGL":
+    case "AMZN":
+      return 8 // 8% uptrend
+    case "ETH-USD":
+      return 10 // 10% uptrend
+    case "SPY":
+    case "QQQ":
+    case "VTI":
+      return 5 // 5% uptrend
+    default:
+      return Math.random() * 20 - 10 // Random trend between -10% and +10%
   }
 }
 

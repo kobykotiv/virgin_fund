@@ -1,5 +1,7 @@
 "use client"
 
+import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -26,6 +28,13 @@ import {
   UserCircle,
   Users,
   X,
+  Shield,
+  Bitcoin,
+  TrendingUp,
+  Search,
+  Upload,
+  Activity,
+  RefreshCw,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -33,7 +42,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/providers/auth-provider"
@@ -138,10 +146,10 @@ export function MainNav() {
   // Dashboard navigation items when logged in
   const dashboardNavItems = [
     {
-      href: "/dashboard",
+      href: "/home",
       label: "Dashboard",
       icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
-      active: pathname === "/dashboard",
+      active: pathname === "/home",
     },
     {
       href: "/bots",
@@ -173,6 +181,7 @@ export function MainNav() {
       icon: <UserCircle className="h-4 w-4 mr-2" />,
       active: pathname === "/profile",
     },
+    { href: "/pricing", label: "Pricing" },
   ]
 
   // Determine if we're on the landing page or dashboard
@@ -192,9 +201,9 @@ export function MainNav() {
     >
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={user ? "/home" : "/"} className="flex items-center gap-2">
             <Robot className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">GenEric TraDer</span>
+            <span className="text-xl font-bold">Virgin Fund : GenEric TraDer AI</span>
           </Link>
           {isDemoMode && (
             <Badge
@@ -212,21 +221,23 @@ export function MainNav() {
           {isLandingPage ? (
             // Landing page navigation with dropdowns
             <>
-              {mainNavItems.map((item) =>
-                item.children ? (
-                  <DropdownMenu key={item.title}>
+              {mainNavItems.map((item) => {
+                const { title, href, icon, children } = item
+
+                return item.children ? (
+                  <DropdownMenu key={title}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="flex items-center gap-1 h-9 px-2">
-                        {item.icon}
-                        {item.title}
+                        {icon}
+                        {title}
                         <ChevronDown className="h-4 w-4 ml-1" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="center" className="w-56">
-                      <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
+                      <DropdownMenuLabel>{title}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                        {item.children.map((child) => (
+                        {children.map((child) => (
                           <DropdownMenuItem key={child.title} asChild>
                             <Link href={child.href} className="flex items-center cursor-pointer">
                               {child.icon}
@@ -239,18 +250,18 @@ export function MainNav() {
                   </DropdownMenu>
                 ) : (
                   <Link
-                    key={item.title}
-                    href={item.href}
+                    key={title}
+                    href={href}
                     className={cn(
                       "flex items-center text-sm font-medium transition-colors hover:text-primary",
-                      pathname === item.href ? "text-primary" : "text-muted-foreground",
+                      pathname === href ? "text-primary" : "text-muted-foreground",
                     )}
                   >
-                    {item.icon}
-                    {item.title}
+                    {icon}
+                    {title}
                   </Link>
-                ),
-              )}
+                )
+              })}
             </>
           ) : (
             // Dashboard navigation
@@ -323,7 +334,7 @@ export function MainNav() {
                   Log In
                 </Button>
               </Link>
-              <Link href="/dashboard">
+              <Link href="/home">
                 <Button size="sm">Dashboard</Button>
               </Link>
             </>
@@ -479,144 +490,5 @@ export function MainNav() {
   )
 }
 
-// Missing icons
-function Shield(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-    </svg>
-  )
-}
-
-function Bitcoin(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.155-6.2L8.29 4.26m5.908 1.042.348-1.97M7.48 20.364l3.126-17.727" />
-    </svg>
-  )
-}
-
-function TrendingUp(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-      <polyline points="17 6 23 6 23 12" />
-    </svg>
-  )
-}
-
-function Search(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
-  )
-}
-
-function Upload(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" x2="12" y1="3" y2="15" />
-    </svg>
-  )
-}
-
-function Activity(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-    </svg>
-  )
-}
-
-function RefreshCw(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 2v6h6" />
-      <path d="M21 12A9 9 0 0 0 6 5.3L3 8" />
-      <path d="M21 22v-6h-6" />
-      <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7" />
-    </svg>
-  )
-}
+export { Shield, Bitcoin, TrendingUp, Search, Upload, Activity, RefreshCw }
 

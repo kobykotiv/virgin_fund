@@ -13,6 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { X, Plus, Info } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+// Add subscription tier check to the BotForm component
+// Import the useSubscription hook at the top of the file
+import { useSubscription } from "@/providers/subscription-provider"
 
 interface BotFormProps {
   initialBot: Bot | null
@@ -60,6 +63,12 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
   const [newAllocationValue, setNewAllocationValue] = useState(0)
   const [activeTab, setActiveTab] = useState<string>(formData.type || "indicator")
 
+  // Add this inside the BotForm function, after the existing useState declarations
+  const { canCreateBot, tierLimits } = useSubscription()
+
+  // Add this after the activeTab state declaration
+  const [tierError, setTierError] = useState<string | null>(null)
+
   // New state for tracking the current step in presentation mode
   const [currentStep, setCurrentStep] = useState(0)
 
@@ -91,7 +100,16 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
     })
   }
 
+  // Modify the handleTypeChange function to check if the bot type is allowed
   const handleTypeChange = (type: BotType) => {
+    if (!canCreateBot(type)) {
+      setTierError(
+        `Your current subscription plan doesn't support ${type} trading. Please upgrade to access this feature.`,
+      )
+      return
+    }
+
+    setTierError(null)
     setFormData({
       ...formData,
       type,
@@ -195,6 +213,32 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
 
   // If not in presentation mode, render the original form
   if (!presentationMode) {
+    // Add this right before the return statement in the non-presentation mode form
+    // (inside the if (!presentationMode) block)
+    if (tierError) {
+      return (
+        <div className="p-6 space-y-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Subscription Limit Reached</h2>
+            <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-8 w-8 p-0 rounded-full">
+              <span className="sr-only">Close</span>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-amber-800">
+            <p className="mb-4">{tierError}</p>
+            <Button
+              onClick={() => (window.location.href = "/pricing")}
+              variant="outline"
+              className="bg-amber-100 hover:bg-amber-200 border-amber-300"
+            >
+              View Pricing Plans
+            </Button>
+          </div>
+        </div>
+      )
+    }
     return (
       <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh]">
         <div className="flex justify-between items-center mb-4">
@@ -218,6 +262,8 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
             />
           </div>
 
+          {/* Modify the Select component for bot type to show which types are restricted
+          // Find the Select for bot type and replace it with this: */}
           <div className="space-y-2">
             <Label htmlFor="type">Bot Type</Label>
             <Select value={formData.type} onValueChange={(value) => handleTypeChange(value as BotType)}>
@@ -225,10 +271,18 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
                 <SelectValue placeholder="Select bot type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="basket">Basket Trading</SelectItem>
+                <SelectItem value="basket">
+                  Basket Trading{" "}
+                  {!canCreateBot("basket") && <span className="ml-2 text-xs text-amber-600">(Upgrade Required)</span>}
+                </SelectItem>
                 <SelectItem value="grid">Grid Trading (1%)</SelectItem>
                 <SelectItem value="dca">Dollar Cost Averaging</SelectItem>
-                <SelectItem value="indicator">Indicator-Based Trading</SelectItem>
+                <SelectItem value="indicator">
+                  Indicator-Based Trading{" "}
+                  {!canCreateBot("indicator") && (
+                    <span className="ml-2 text-xs text-amber-600">(Upgrade Required)</span>
+                  )}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -776,24 +830,109 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
                 </div>
 
                 <div className="mt-8 p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-2">Popular Assets</h4>
+                  <h4 className="font-medium mb-4">Portfolio Templates</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Stock Categories</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "FAANG (FB,AAPL,AMZN,NFLX,GOOG)",
+                          "Growth Stocks",
+                          "Value Stocks",
+                          "Dividend Aristocrats",
+                          "Internet Stocks",
+                          "WSB Favorites",
+                        ].map((category) => (
+                          <Button
+                            key={category}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              // Set form values based on category
+                              const symbols = getSymbolsByCategory(category)
+                              setFormData({
+                                ...formData,
+                                assets: symbols,
+                              })
+                            }}
+                          >
+                            {category}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Crypto Portfolios</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "BTC:ETH:SOL:DOGE:ADA (Equal)",
+                          "BTC:ETH:SOL:DOGE:ADA (Market Cap)",
+                          "BTC:ETH:SOL:DOGE:ADA (Inverse Cap)",
+                          "BTC:ETH (3:5)",
+                          "Blue Chip Crypto",
+                          "DeFi Tokens",
+                        ].map((category) => (
+                          <Button
+                            key={category}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              // Set form values based on category
+                              const symbols = getCryptoByPortfolio(category)
+                              setFormData({
+                                ...formData,
+                                assets: symbols,
+                              })
+                            }}
+                          >
+                            {category}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <h5 className="text-sm font-medium mb-2">Popular Individual Assets</h5>
                   <div className="flex flex-wrap gap-2">
-                    {["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "BTC", "ETH"].map((symbol) => (
-                      <Badge
+                    {[
+                      "AAPL",
+                      "MSFT",
+                      "GOOGL",
+                      "AMZN",
+                      "TSLA",
+                      "META",
+                      "NVDA",
+                      "BTC",
+                      "ETH",
+                      "SOL",
+                      "DOGE",
+                      "ADA",
+                      "SPY",
+                      "QQQ",
+                      "VTI",
+                    ].map((symbol) => (
+                      <Button
                         key={symbol}
                         variant="outline"
-                        className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                        size="sm"
+                        className="text-xs"
                         onClick={() => {
-                          if (!formData.assets?.includes(symbol)) {
+                          const currentSymbols = formData.assets || []
+
+                          if (!currentSymbols.includes(symbol)) {
                             setFormData({
                               ...formData,
-                              assets: [...(formData.assets || []), symbol],
+                              assets: [...currentSymbols, symbol],
                             })
                           }
                         }}
                       >
                         {symbol}
-                      </Badge>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -1386,5 +1525,45 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
       </div>
     </form>
   )
+}
+
+// Add these helper functions after the return statement in the component
+
+function getSymbolsByCategory(category: string): string[] {
+  switch (category) {
+    case "FAANG (FB,AAPL,AMZN,NFLX,GOOG)":
+      return ["META", "AAPL", "AMZN", "NFLX", "GOOGL"]
+    case "Growth Stocks":
+      return ["TSLA", "NVDA", "AMD", "SHOP", "SQ"]
+    case "Value Stocks":
+      return ["BRK.B", "JPM", "JNJ", "PG", "KO"]
+    case "Dividend Aristocrats":
+      return ["JNJ", "PG", "KO", "XOM", "MMM"]
+    case "Internet Stocks":
+      return ["AMZN", "GOOGL", "META", "NFLX", "BABA"]
+    case "WSB Favorites":
+      return ["GME", "AMC", "PLTR", "BB", "WISH"]
+    default:
+      return []
+  }
+}
+
+function getCryptoByPortfolio(portfolio: string): string[] {
+  switch (portfolio) {
+    case "BTC:ETH:SOL:DOGE:ADA (Equal)":
+      return ["BTC", "ETH", "SOL", "DOGE", "ADA"]
+    case "BTC:ETH:SOL:DOGE:ADA (Market Cap)":
+      return ["BTC", "ETH", "SOL", "DOGE", "ADA"]
+    case "BTC:ETH:SOL:DOGE:ADA (Inverse Cap)":
+      return ["BTC", "ETH", "SOL", "DOGE", "ADA"]
+    case "BTC:ETH (3:5)":
+      return ["BTC", "ETH"]
+    case "Blue Chip Crypto":
+      return ["BTC", "ETH", "BNB", "XRP", "ADA"]
+    case "DeFi Tokens":
+      return ["UNI", "AAVE", "COMP", "MKR", "SUSHI"]
+    default:
+      return []
+  }
 }
 

@@ -1,103 +1,91 @@
-import { useState } from "react"
-import { SignalCard } from "@/components/signal/signal-card"
-import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlusCircle, LineChart, Code, Zap } from "lucide-react"
 
-interface CustomSignalsTabProps {
-  onSelectSignal: (signal: any) => void
-}
-
-export default function CustomSignalsTab({ onSelectSignal }: CustomSignalsTabProps) {
-  const [signals, setSignals] = useState([
-    {
-      id: 1,
-      title: "RSI Crossover",
-      description: "Custom signal based on RSI crossing specific thresholds",
-      type: "Formula",
-      lastUpdated: "2 days ago",
-      performance: "+12.5%",
-    },
-    {
-      id: 2,
-      title: "MACD Divergence",
-      description: "Detects bullish and bearish divergences in MACD",
-      type: "Script",
-      lastUpdated: "1 week ago",
-      performance: "+8.3%",
-    },
-    {
-      id: 3,
-      title: "Volume Spike",
-      description: "Identifies unusual volume activity",
-      type: "Formula",
-      lastUpdated: "3 days ago",
-      performance: "+5.7%",
-    },
-  ])
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newSignal, setNewSignal] = useState({ title: "", description: "", type: "Formula" })
-
-  const handleCreateSignal = () => {
-    setSignals([
-      ...signals,
-      {
-        id: signals.length + 1,
-        ...newSignal,
-        lastUpdated: "Just now",
-        performance: "N/A",
-      },
-    ])
-    setNewSignal({ title: "", description: "", type: "Formula" })
-    setIsModalOpen(false)
-  }
-
-  const handleDeleteSignal = (id: number) => {
-    setSignals(signals.filter((signal) => signal.id !== id))
-  }
-
+export default function CustomSignalsTab() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Custom Signals</h2>
-        <Button onClick={() => setIsModalOpen(true)}>Create New Signal</Button>
+        <h2 className="text-2xl font-bold">Custom Signals</h2>
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Create New Signal
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {signals.map((signal) => (
-          <SignalCard
-            key={signal.id}
-            title={signal.title}
-            description={signal.description}
-            type={signal.type}
-            lastUpdated={signal.lastUpdated}
-            performance={signal.performance}
-            onDelete={() => handleDeleteSignal(signal.id)}
-            onClick={() => onSelectSignal(signal)}
-          />
-        ))}
-      </div>
+      <Tabs defaultValue="all" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="all">All Signals</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="backtest">Backtest Results</TabsTrigger>
+        </TabsList>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold">Create New Signal</h3>
-          <Input
-            placeholder="Signal Title"
-            value={newSignal.title}
-            onChange={(e) => setNewSignal({ ...newSignal, title: e.target.value })}
-          />
-          <Textarea
-            placeholder="Signal Description"
-            value={newSignal.description}
-            onChange={(e) => setNewSignal({ ...newSignal, description: e.target.value })}
-          />
-          <Button onClick={handleCreateSignal}>Create Signal</Button>
-        </div>
-      </Modal>
+        <TabsContent value="all" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Sample Signal Cards */}
+            <SignalCard
+              title="RSI Crossover"
+              description="Custom signal based on RSI crossing specific thresholds"
+              type="Formula"
+              lastUpdated="2 days ago"
+              performance="+12.5%"
+            />
+            <SignalCard
+              title="MACD Divergence"
+              description="Detects bullish and bearish divergences in MACD"
+              type="Script"
+              lastUpdated="1 week ago"
+              performance="+8.3%"
+            />
+            <SignalCard
+              title="Volume Spike"
+              description="Identifies unusual volume activity"
+              type="Formula"
+              lastUpdated="3 days ago"
+              performance="+5.7%"
+            />
+            <Card className="border-dashed border-2 hover:border-primary/50 cursor-pointer">
+              <CardContent className="flex flex-col items-center justify-center h-[200px]">
+                <PlusCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">Create New Signal</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="active" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <SignalCard
+              title="RSI Crossover"
+              description="Custom signal based on RSI crossing specific thresholds"
+              type="Formula"
+              lastUpdated="2 days ago"
+              performance="+12.5%"
+            />
+            <SignalCard
+              title="Volume Spike"
+              description="Identifies unusual volume activity"
+              type="Formula"
+              lastUpdated="3 days ago"
+              performance="+5.7%"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="backtest" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <SignalCard
+              title="MACD Divergence"
+              description="Detects bullish and bearish divergences in MACD"
+              type="Script"
+              lastUpdated="1 week ago"
+              performance="+8.3%"
+              backtest={true}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
@@ -109,12 +97,11 @@ interface SignalCardProps {
   lastUpdated: string
   performance: string
   backtest?: boolean
-  onClick?: () => void
 }
 
-function SignalCard({ title, description, type, lastUpdated, performance, backtest, onClick }: SignalCardProps) {
+function SignalCard({ title, description, type, lastUpdated, performance, backtest }: SignalCardProps) {
   return (
-    <Card onClick={onClick}>
+    <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{title}</CardTitle>

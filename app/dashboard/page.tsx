@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RefreshCw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { LiveTicker } from "@/components/live-ticker"
 
 export default function DashboardPage() {
   const [bots, setBots] = useState<Bot[]>([])
@@ -257,7 +258,25 @@ export default function DashboardPage() {
           )}
 
           <TabsContent value="dashboard" className="mt-0 h-full">
-            {apiConfigured && <Dashboard bots={bots} apiConfig={apiConfig} />}
+            {apiConfigured && (
+              <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+                <div className="flex items-center justify-between space-y-2">
+                  <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                </div>
+
+                {/* Market Overview Section */}
+                <div className="grid gap-4">
+                  <LiveTicker
+                    symbols={["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "BTC-USD", "ETH-USD"]}
+                    refreshInterval={10000}
+                    showCharts={true}
+                  />
+                </div>
+
+                {/* Rest of your dashboard content */}
+                <Dashboard bots={bots} apiConfig={apiConfig} />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="bots" className="mt-0 h-full">

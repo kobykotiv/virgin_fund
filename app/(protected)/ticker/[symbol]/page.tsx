@@ -10,6 +10,13 @@ import { TickerNews } from "@/components/ticker-news"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ArrowUp, ArrowDown, RefreshCw, LineChart, BarChart2, Newspaper } from "lucide-react"
 import { fetchMarketData } from "@/lib/bot-api"
+import dynamic from 'next/dynamic'
+
+// Dynamically import TradingView widget
+const TradingViewWidget = dynamic(
+  () => import('react-tradingview-widget').then((mod) => mod.default),
+  { ssr: false }
+)
 
 export default function TickerPage() {
   const params = useParams()
@@ -111,11 +118,23 @@ export default function TickerPage() {
                 </div>
               </div>
 
-              <div className="h-64 border rounded-md flex items-center justify-center bg-muted/20">
-                <div className="text-center">
-                  <LineChart className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">Price chart would appear here</p>
-                </div>
+              <div className="h-[400px] border rounded-md overflow-hidden">
+                <TradingViewWidget
+                  symbol={symbol}
+                  theme="light"
+                  autosize
+                  interval="D"
+                  timezone="Etc/UTC"
+                  style="1"
+                  locale="en"
+                  toolbar_bg="#f1f3f6"
+                  enable_publishing={false}
+                  hide_side_toolbar={false}
+                  allow_symbol_change={true}
+                  details={true}
+                  hotlist={true}
+                  calendar={true}
+                />
               </div>
             </CardContent>
           </Card>
@@ -329,12 +348,39 @@ export default function TickerPage() {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Related Symbols</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LiveTicker 
+                symbols={getRelatedSymbols(symbol)} 
+                refreshInterval={10000}
+                showCharts={false}
+              />
+            </CardContent>
+          </Card>
+          
           <TickerNews ticker={symbol} limit={5} />
-
-          {/* Additional widgets could go here */}
         </div>
       </div>
     </div>
   )
+}
+
+// Helper function to get related symbols
+function getRelatedSymbols(symbol: string): string[] {
+  const relatedMap: Record<string, string[]> = {
+    'AAPL': ['MSFT', 'GOOGL', 'META'],
+    'MSFT': ['AAPL', 'GOOGL', 'AMZN'],
+    'GOOGL': ['AAPL', 'MSFT', 'META'],
+    'AMZN': ['MSFT', 'GOOGL', 'TSLA'],
+    'TSLA': ['RIVN', 'GM', 'F'],
+    'META': ['GOOGL', 'SNAP', 'PINS'],
+    'BTC-USD': ['ETH-USD', 'SOL-USD', 'BNB-USD'],
+    'ETH-USD': ['BTC-USD', 'SOL-USD', 'ADA-USD'],
+  };
+
+  return relatedMap[symbol] || ['AAPL', 'MSFT', 'GOOGL'];
 }
 

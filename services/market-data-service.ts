@@ -356,3 +356,119 @@ function getTrend(symbol: string): number {
   }
 }
 
+export class MarketDataService {
+  private ws: WebSocket | null = null;
+  private subscribers = new Map<string, Set<(data: MarketData) => void>>();
+
+  constructor(private apiKey: string, private secretKey: string) {}
+
+  connect() {
+    this.ws = new WebSocket('wss://stream.data.alpaca.markets/v2/iex');
+
+    this.ws.onopen = () => {
+      this.authenticate();
+    };
+
+    this.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.data) {
+        data.data.forEach((update: any) => {
+          const marketData: MarketData = {
+            symbol: update.S,
+            price: parseFloat(update.p),
+            change: parseFloat(update.P),
+            changePercent: parseFloat(update.P),
+            volume: parseInt(update.v),
+            high: parseFloat(update.h),
+            low: parseFloat(update.l),
+            open: parseFloat(update.o),
+            previousClose: parseFloat(update.c),
+            timestamp: update.t
+          };
+
+          this.notifySubscribers(marketData);
+        });
+      }
+    };
+
+    this.ws.onclose = () => {
+      setTimeout(() => this.connect(), 5000);
+    };
+  }
+
+  private authenticate() {
+    if (!this.ws) return;
+    
+    this.ws.send(JSON.stringify({
+      action: 'auth',
+      key: this.apiKey,
+      secret: this.secretKey
+    }));
+
+    // Subscribe to all symbols that have subscribers
+    this.subscribeToSymbols([...this.subscribers.keys()]);
+  }
+
+  private subscribeToSymbols(symbols: string[]) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+    this.ws.send(JSON.stringify({
+      action: 'subscribe',
+      trades: symbols,
+      quotes: symbols
+    }));
+  }
+
+  private notifySubscribers(data: MarketData) {
+    const subscribers = this.subscribers.get(data.symbol);
+    if (subscribers) {
+      subscribers.forEach(callback => callback(data));
+    }
+  }
+
+  subscribe(symbol: string, callback: (data: MarketData) => void) {
+    if (!this.subscribers.has(symbol)) {
+      this.subscribers.set(symbol, new Set());
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.subscribeToSymbols([symbol]);
+      }
+    }
+    this.subscribers.get(symbol)?.add(callback);
+  }
+
+  unsubscribe(symbol: string, callback: (data: MarketData) => void) {
+    const subscribers = this.subscribers.get(symbol);
+    if (subscribers) {
+      subscribers.delete(callback);
+      if (subscribers.size === 0) {
+        this.subscribers.delete(symbol);
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({
+            action: 'unsubscribe',
+            trades: [symbol],
+            quotes: [symbol]
+          }));
+        }
+      }
+    }
+  }
+
+  disconnect() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+}
+
+// Export a singleton instance
+let marketDataService: MarketDataService | null = null;
+
+export function getMarketDataService(apiKey: string, secretKey: string) {
+  if (!marketDataService) {
+    marketDataService = new MarketDataService(apiKey, secretKey);
+  }
+  return marketDataService;
+}
+

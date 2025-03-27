@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://virgin-fund.com",
+    url: "https://virgin-fund.vercel.app",
     title: "Virgin Fund : GenEric TraDer AI",
     description: "Self-hostable finance application bridging bot-based trading and copy trading",
     siteName: "Virgin Fund : GenEric TraDer AI",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     title: "Virgin Fund : GenEric TraDer AI",
     description: "Self-hostable finance application bridging bot-based trading and copy trading",
   },
-    generator: 'v0.dev'
+    // generator: 'v0.dev'
 }
 
 export default function RootLayout({

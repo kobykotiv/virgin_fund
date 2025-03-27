@@ -1785,9 +1785,6 @@ video {
 .bg-muted {
   background-color: hsl(var(--muted));
 }
-.bg-muted\/20 {
-  background-color: hsl(var(--muted) / 0.2);
-}
 .bg-muted\/30 {
   background-color: hsl(var(--muted) / 0.3);
 }
@@ -3966,6 +3963,10 @@ video {
 
   .md\:p-6 {
     padding: 1.5rem;
+  }
+
+  .md\:p-8 {
+    padding: 2rem;
   }
 
   .md\:px-6 {

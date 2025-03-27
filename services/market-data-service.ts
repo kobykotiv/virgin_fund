@@ -86,29 +86,52 @@ export async function getMultipleMarketData(symbols: string[]): Promise<MarketDa
 
 // Get market data from Alpaca
 async function getAlpacaMarketData(symbol: string): Promise<MarketData> {
-  // In a real implementation, this would call the Alpaca API
-  // For now, we'll simulate a response
-  const response = await fetch(`/api/alpaca/market?symbol=${symbol}`)
+  // First try to get latest trade data
+  const tradeResponse = await fetch(`${process.env.NEXT_PUBLIC_ALPACA_BASE_URL}/v2/stocks/${symbol}/trades/latest`, {
+    headers: {
+      'APCA-API-KEY-ID': process.env.NEXT_PUBLIC_ALPACA_KEY_ID || '',
+      'APCA-API-SECRET-KEY': process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY || ''
+    }
+  });
 
-  if (!response.ok) {
-    throw new Error(`Alpaca API error: ${response.statusText}`)
+  if (!tradeResponse.ok) {
+    throw new Error(`Alpaca API error: ${tradeResponse.statusText}`);
   }
 
-  const data = await response.json()
+  const tradeData = await tradeResponse.json();
+
+  // Get the day's snapshot for additional data
+  const snapshotResponse = await fetch(`${process.env.NEXT_PUBLIC_ALPACA_BASE_URL}/v2/stocks/${symbol}/snapshot`, {
+    headers: {
+      'APCA-API-KEY-ID': process.env.NEXT_PUBLIC_ALPACA_KEY_ID || '',
+      'APCA-API-SECRET-KEY': process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY || ''
+    }
+  });
+
+  if (!snapshotResponse.ok) {
+    throw new Error(`Alpaca API error: ${snapshotResponse.statusText}`);
+  }
+
+  const snapshotData = await snapshotResponse.json();
+
+  const prevClose = snapshotData.dailyBar?.c || snapshotData.prevDailyBar?.c;
+  const currentPrice = tradeData.price;
+  const change = prevClose ? currentPrice - prevClose : 0;
+  const changePercent = prevClose ? (change / prevClose) * 100 : 0;
 
   return {
-    symbol: data.symbol,
-    price: data.price,
-    change: data.change,
-    changePercent: data.change, // Alpaca returns percent already
-    volume: data.volume,
-    high: data.high || data.price * 1.02,
-    low: data.low || data.price * 0.98,
-    open: data.open || data.price * 0.99,
-    previousClose: data.previousClose || data.price * 0.995,
-    marketCap: data.marketCap,
-    timestamp: data.timestamp || new Date().toISOString(),
-  }
+    symbol,
+    price: currentPrice,
+    change,
+    changePercent,
+    volume: snapshotData.dailyBar?.v || 0,
+    high: snapshotData.dailyBar?.h || currentPrice,
+    low: snapshotData.dailyBar?.l || currentPrice,
+    open: snapshotData.dailyBar?.o || currentPrice,
+    previousClose: prevClose || currentPrice,
+    marketCap: undefined, // Alpaca doesn't provide market cap directly
+    timestamp: tradeData.t
+  };
 }
 
 // Get market data from Yahoo Finance
@@ -184,7 +207,7 @@ function getDemoMarketData(symbol: string): MarketData {
     low: price * (1 - Math.random() * 0.02), // 0-2% lower than current
     open: price * (1 + (Math.random() * 0.02 - 0.01)), // +/- 1% from current
     previousClose: price * (1 + (Math.random() * 0.02 - 0.01)), // +/- 1% from current
-    marketCap: symbol === "BTC-USD" || symbol === "ETH-USD" ? undefined : price * getSharesOutstanding(symbol),
+    marketCap: symbol === "BTC-USD" || symbol === "ETH-USD" ? undefined : price * getDefaultShares(symbol),
     timestamp: new Date().toISOString(),
   }
 }
@@ -223,91 +246,91 @@ function getBasePrice(symbol: string): number {
 }
 
 // Helper function to get shares outstanding for market cap calculation
-function getSharesOutstanding(symbol: string): number {
+function getDefaultShares(symbol: string): number {
   switch (symbol) {
-    case "AAPL":
-      return 16_500_000_000
-    case "MSFT":
-      return 7_500_000_000
-    case "GOOGL":
-      return 12_800_000_000
-    case "AMZN":
-      return 10_200_000_000
-    case "TSLA":
-      return 3_200_000_000
-    case "META":
-      return 2_600_000_000
-    case "NVDA":
-      return 2_400_000_000
-    case "SPY":
-      return 950_000_000
-    case "QQQ":
-      return 350_000_000
-    case "VTI":
-      return 1_400_000_000
-    default:
-      return 1_000_000_000
+    case "AAPL": return 16.7e9;
+    case "MSFT": return 7.6e9;
+    case "GOOGL": return 680e6;
+    case "AMZN": return 500e6;
+    case "TSLA": return 1.0e9;
+    case "META": return 1.2e9;
+    case "NVDA": return 600e6;
+    default: return 1.0e9;
   }
 }
 
-// Fetch historical market data for a symbol
+async function getSharesOutstanding(symbol: string): Promise<number> {
+  try {
+    const response = await fetch(`/api/alpaca/shares?symbol=${symbol}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch shares outstanding for ${symbol}`);
+    }
+    const data = await response.json();
+    return data.sharesOutstanding;
+  } catch (error) {
+    console.warn(`Failed to fetch shares outstanding for ${symbol}`, error);
+    return getDefaultShares(symbol);
+  }
+}
+
 export async function fetchHistoricalData(
   symbol: string,
   timeframe = "1D",
-  limit = 30,
+  limit = 30
 ): Promise<{ date: string; value: number }[]> {
   // Check if we're in demo mode
   if (isDemoMode()) {
-    return getDemoHistoricalData(symbol, timeframe, limit)
+    return getDemoHistoricalData(symbol, timeframe, limit);
   }
 
   try {
-    // In a real implementation, this would call the appropriate API
-    const response = await fetch(`/api/alpaca/historical?symbol=${symbol}&timeframe=${timeframe}&limit=${limit}`)
-
+    const response = await fetch(`/api/alpaca/historical?symbol=${symbol}&timeframe=${timeframe}&limit=${limit}`);
     if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`)
+      throw new Error(`API error: ${response.statusText}`);
     }
 
-    const data = await response.json()
+    const data = await response.json();
     return data.map((item: any) => ({
       date: new Date(item.timestamp).toISOString().split("T")[0],
-      value: item.close,
-    }))
+      value: item.close
+    }));
   } catch (error) {
-    console.error(`Failed to fetch historical data for ${symbol}`, error)
+    console.error("Failed to fetch historical data for", symbol, error);
     // Return demo data as fallback
-    return getDemoHistoricalData(symbol, timeframe, limit)
+    return getDemoHistoricalData(symbol, timeframe, limit);
   }
 }
 
 // Generate demo historical data
-function getDemoHistoricalData(symbol: string, timeframe: string, limit: number): { date: string; value: number }[] {
-  const basePrice = getBasePrice(symbol)
-  const result = []
-  const now = new Date()
+function getDemoHistoricalData(
+  symbol: string,
+  timeframe: string,
+  limit: number
+): { date: string; value: number }[] {
+  const basePrice = getBasePrice(symbol);
+  const result = [];
+  const now = new Date();
 
   // Generate data points
   for (let i = limit - 1; i >= 0; i--) {
-    const date = new Date(now)
-    date.setDate(date.getDate() - i)
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
 
     // Create some realistic price movement
-    const volatility = getVolatility(symbol)
-    const trend = getTrend(symbol)
-    const randomWalk = (Math.random() - 0.5) * volatility
-    const trendFactor = ((trend / 100) * (limit - i)) / limit
+    const volatility = getVolatility(symbol);
+    const trend = getTrend(symbol);
+    const randomWalk = (Math.random() - 0.5) * volatility;
+    const trendFactor = ((trend / 100) * (limit - i)) / limit;
 
     // Calculate price with some randomness but following a trend
-    const value = basePrice * (1 + trendFactor + randomWalk)
-
+    const value = basePrice * (1 + trendFactor + randomWalk);
     result.push({
       date: date.toISOString().split("T")[0],
-      value: Number.parseFloat(value.toFixed(2)),
-    })
+      value: Number.parseFloat(value.toFixed(2))
+    });
   }
 
-  return result
+  return result;
 }
 
 // Helper function to get volatility for a symbol
@@ -364,14 +387,12 @@ export class MarketDataService {
 
   connect() {
     this.ws = new WebSocket('wss://stream.data.alpaca.markets/v2/iex');
-
     this.ws.onopen = () => {
       this.authenticate();
     };
 
     this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
       if (data.data) {
         data.data.forEach((update: any) => {
           const marketData: MarketData = {
@@ -384,7 +405,7 @@ export class MarketDataService {
             low: parseFloat(update.l),
             open: parseFloat(update.o),
             previousClose: parseFloat(update.c),
-            timestamp: update.t
+            timestamp: update.t,
           };
 
           this.notifySubscribers(marketData);
@@ -399,7 +420,6 @@ export class MarketDataService {
 
   private authenticate() {
     if (!this.ws) return;
-    
     this.ws.send(JSON.stringify({
       action: 'auth',
       key: this.apiKey,
@@ -412,7 +432,6 @@ export class MarketDataService {
 
   private subscribeToSymbols(symbols: string[]) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-
     this.ws.send(JSON.stringify({
       action: 'subscribe',
       trades: symbols,
@@ -464,11 +483,9 @@ export class MarketDataService {
 
 // Export a singleton instance
 let marketDataService: MarketDataService | null = null;
-
 export function getMarketDataService(apiKey: string, secretKey: string) {
   if (!marketDataService) {
     marketDataService = new MarketDataService(apiKey, secretKey);
   }
   return marketDataService;
 }
-

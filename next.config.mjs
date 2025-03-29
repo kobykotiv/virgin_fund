@@ -21,6 +21,7 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  output: 'standalone', // Enable Docker optimization
 }
 
 mergeConfig(nextConfig, userConfig)

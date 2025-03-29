@@ -1,23 +1,38 @@
 import type React from "react"
-import { MainNav } from "@/components/main-nav"
-import { Toaster } from "@/components/ui/toaster"
+import { DashboardNav } from "@/components/dashboard-nav"
+import { DashboardHeader } from "@/components/dashboard-header"
+import { ThemeProvider } from "@/components/theme-provider"
 import { redirect } from "next/navigation"
+import { useAuth } from "@/providers/auth-provider"
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  // In a real app, you would check if the user is authenticated here
-  // and redirect to login if not
-  const isAuthenticated = true // This would be a real auth check
+  const { isAuthenticated } = useAuth()
 
   if (!isAuthenticated) {
-    redirect("/home")
+    redirect("/login")
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <MainNav />
-      <main className="flex-1">{children}</main>
-      <Toaster />
-    </div>
+    <ThemeProvider 
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+    >
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <aside className="hidden md:flex w-64 flex-col fixed inset-y-0">
+          <DashboardNav />
+        </aside>
+
+        {/* Main content */}
+        <div className="md:pl-64 flex-1">
+          <DashboardHeader />
+          <main className="p-8">
+            {children}
+          </main>
+        </div>
+      </div>
+    </ThemeProvider>
   )
 }
 

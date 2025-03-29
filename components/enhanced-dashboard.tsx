@@ -39,7 +39,7 @@ import {
 } from "lucide-react"
 import { LiveTicker } from "@/components/live-ticker"
 import { fetchPortfolio } from "@/services/portfolio-service"
-import { fetchBots } from "@/services/bot-service"
+import { BotService } from "@/services/bot-service"
 import { fetchOrders } from "@/services/order-service"
 import { getMultipleMarketData } from "@/services/market-data-service"
 import { useToast } from "@/components/ui/use-toast"

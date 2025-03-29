@@ -1,12 +1,15 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import { ThemeProvider } from "@/components/theme-provider"
 import ClientLayout from "./ClientLayout"
 import './globals.css'
 
+const inter = Inter({ subsets: ["latin"] })
+
 export const metadata: Metadata = {
-  title: "Virgin Fund : GenEric TraDer AI",
-  description:
-    "Self-hostable finance application bridging bot-based trading and copy trading in an isolated environment",
+  title: "Virgin Fund",
+  description: "Your investment platform",
   keywords: "trading, finance, bot trading, copy trading, automated trading, signals, prediction markets, AI",
   authors: [{ name: "Virgin Fund Team" }],
   openGraph: {
@@ -31,9 +34,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>
-        <ClientLayout>{children}</ClientLayout>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </ThemeProvider>
       </body>
     </html>
   )

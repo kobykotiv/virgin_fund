@@ -1,53 +1,141 @@
-// Portfolio service to handle portfolio operations with demo mode support
 import { isDemoMode, DEMO_PORTFOLIO_KEY } from "./demo-service"
+import { DatabaseService } from './database-service'
 
-export interface Position {
-  symbol: string
-  quantity: number
-  averagePrice: number
-  currentPrice: number
-  marketValue: number
-  unrealizedPnL: number
-  percentChange: number
+interface Position {
+  symbol: string;
+  quantity: number;
+  averageEntryPrice: number;
+  currentPrice: number;
+  marketValue: number;
+  unrealizedPL: number;
+  unrealizedPLPercent: number;
 }
 
-export interface Portfolio {
-  totalValue: number
-  cashBalance: number
-  positions: Position[]
+interface Portfolio {
+  _id?: string;
+  userId: string;
+  totalValue: number;
+  cashBalance: number;
+  positions: Position[];
+  performance: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+    yearly: number;
+    allTime: number;
+  };
+  lastUpdated: Date;
 }
 
-// Fetch portfolio
-export async function fetchPortfolio(): Promise<Portfolio> {
-  if (isDemoMode()) {
-    return fetchDemoPortfolio()
-  } else {
-    // In a real app, this would call the API
-    return fetchRealPortfolio()
+export class PortfolioService extends DatabaseService {
+  private collection = this.getCollection<Portfolio>('portfolios');
+
+  async getPortfolio(userId?: string): Promise<Portfolio | null> {
+    // Handle demo mode
+    if (!userId && isDemoMode()) {
+      if (typeof window !== "undefined") {
+        const demoPortfolio = localStorage.getItem(DEMO_PORTFOLIO_KEY);
+        return demoPortfolio ? JSON.parse(demoPortfolio) : null;
+      }
+      return null;
+    }
+
+    // Use database when userId is provided
+    if (userId) {
+      const col = await this.collection;
+      return col.findOne({ userId });
+    }
+
+    return null;
+  }
+
+  async createPortfolio(userId: string, initialCash: number): Promise<Portfolio> {
+    const portfolio: Omit<Portfolio, '_id'> = {
+      userId,
+      totalValue: initialCash,
+      cashBalance: initialCash,
+      positions: [],
+      performance: {
+        daily: 0,
+        weekly: 0,
+        monthly: 0,
+        yearly: 0,
+        allTime: 0
+      },
+      lastUpdated: new Date()
+    };
+
+    const col = await this.collection;
+    const result = await col.insertOne(portfolio);
+    return { ...portfolio, _id: result.insertedId.toString() };
+  }
+
+  async updatePortfolio(userId: string, updates: Partial<Portfolio>): Promise<Portfolio | null> {
+    const col = await this.collection;
+    const result = await col.findOneAndUpdate(
+      { userId },
+      { 
+        $set: { 
+          ...updates,
+          lastUpdated: new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    );
+    return result;
+  }
+
+  async addPosition(userId: string, position: Position): Promise<Portfolio | null> {
+    const col = await this.collection;
+    const result = await col.findOneAndUpdate(
+      { userId },
+      { 
+        $push: { positions: position },
+        $set: { lastUpdated: new Date() }
+      },
+      { returnDocument: 'after' }
+    );
+    return result;
+  }
+
+  async updatePosition(userId: string, symbol: string, updates: Partial<Position>): Promise<Portfolio | null> {
+    const col = await this.collection;
+    const result = await col.findOneAndUpdate(
+      { 
+        userId,
+        'positions.symbol': symbol
+      },
+      { 
+        $set: { 
+          'positions.$.currentPrice': updates.currentPrice,
+          'positions.$.marketValue': updates.marketValue,
+          'positions.$.unrealizedPL': updates.unrealizedPL,
+          'positions.$.unrealizedPLPercent': updates.unrealizedPLPercent,
+          lastUpdated: new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    );
+    return result;
   }
 }
 
-// Demo mode implementations
-function fetchDemoPortfolio(): Promise<Portfolio> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const portfolio = JSON.parse(localStorage.getItem(DEMO_PORTFOLIO_KEY) || "{}")
-      resolve(portfolio)
-    }, 500)
-  })
-}
+// Singleton instance for reuse
+export const portfolioService = new PortfolioService();
 
-// Real API implementations (placeholders)
-function fetchRealPortfolio(): Promise<Portfolio> {
-  return new Promise((resolve) => {
-    // In a real app, this would call the API
-    setTimeout(() => {
-      resolve({
-        totalValue: 0,
-        cashBalance: 0,
-        positions: [],
-      })
-    }, 500)
-  })
+// Fetch portfolio data for a user
+export async function fetchPortfolio(userId?: string): Promise<Portfolio | null> {
+  // If no userId provided and in demo mode, return demo portfolio
+  if (!userId && isDemoMode()) {
+    const demoPortfolio = localStorage.getItem(DEMO_PORTFOLIO_KEY);
+    return demoPortfolio ? JSON.parse(demoPortfolio) : null;
+  }
+
+  // Use the actual service when userId is provided
+  if (userId) {
+    return portfolioService.getPortfolio(userId);
+  }
+
+  return null;
 }
 

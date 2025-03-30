@@ -3,29 +3,14 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import ClientLayout from "./ClientLayout"
-import './globals.css'
+import '../styles/globals.css'
+import { AuthProvider } from '../contexts/auth-context';
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Virgin Fund",
-  description: "Your investment platform",
-  keywords: "trading, finance, bot trading, copy trading, automated trading, signals, prediction markets, AI",
-  authors: [{ name: "Virgin Fund Team" }],
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://virgin-fund.vercel.app",
-    title: "Virgin Fund : GenEric TraDer AI",
-    description: "Self-hostable finance application bridging bot-based trading and copy trading",
-    siteName: "Virgin Fund : GenEric TraDer AI",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Virgin Fund : GenEric TraDer AI",
-    description: "Self-hostable finance application bridging bot-based trading and copy trading",
-  },
-    // generator: 'v0.dev'
+  title: 'Virgin Fund - Portfolio Management',
+  description: 'Track and manage your investment portfolios',
 }
 
 export default function RootLayout({
@@ -37,7 +22,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
-          <ClientLayout>{children}</ClientLayout>
+          <AuthProvider>
+            <ClientLayout>{children}</ClientLayout>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

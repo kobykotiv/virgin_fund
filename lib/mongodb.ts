@@ -1,50 +1,100 @@
-import { MongoClient, MongoClientOptions } from 'mongodb'
+import { MongoClient, Db } from 'mongodb';
 
-// Connection URI from environment variables
-const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017'
-const dbName = process.env.MONGODB_DB || 'virgin_fund'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/virgin_fund';
+const MONGODB_DB = process.env.MONGODB_DB || 'virgin_fund';
 
-// Connection options
-const options: MongoClientOptions = {
-  minPoolSize: 5,
-  maxPoolSize: 50,
-  connectTimeoutMS: 10000
+let cachedClient: MongoClient | null = null;
+let cachedDb: Db | null = null;
+
+export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
+  // If we have cached values, use them
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  // Connect to the MongoDB instance
+  const client = await MongoClient.connect(MONGODB_URI);
+  const db = client.db(MONGODB_DB);
+
+  // Cache the client and db for reuse
+  cachedClient = client;
+  cachedDb = db;
+
+  return { client, db };
 }
 
-// Cache client promise to reuse connections
-let clientPromise: Promise<MongoClient>
-
-// Initialize global mongo client
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable to maintain connection across hot-reloads
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>
-  }
-  
-  if (!globalWithMongo._mongoClientPromise) {
-    globalWithMongo._mongoClientPromise = new MongoClient(uri, options).connect()
-  }
-  
-  clientPromise = globalWithMongo._mongoClientPromise
-} else {
-  // In production, create a new client for each connection
-  clientPromise = new MongoClient(uri, options).connect()
+// Define collection names as constants to avoid typos
+export const COLLECTIONS = {
+  PORTFOLIOS: 'portfolios',
+  POSITIONS: 'positions',
+  TRANSACTIONS: 'transactions',
+  TRADES: 'trades', 
+  REBALANCES: 'rebalances',
+  SETTINGS: 'settings',
+  USERS: 'users'
 }
 
-// Helper function to get database connection
-export async function connectToDatabase() {
-  const client = await clientPromise
-  return client.db(dbName)
+// Initialize database collections
+export async function initializeCollections() {
+  const { db } = await connectToDatabase()
+  
+  // Create collections if they don't exist
+  for (const collection of Object.values(COLLECTIONS)) {
+    const collections = await db.listCollections({name: collection}).toArray()
+    if (collections.length === 0) {
+      await db.createCollection(collection)
+      console.log(`Created collection: ${collection}`)
+    }
+  }
+  
+  // Create indexes
+  await db.collection(COLLECTIONS.USERS).createIndex({ email: 1 }, { unique: true })
+  await db.collection(COLLECTIONS.PORTFOLIOS).createIndex({ userId: 1 })
+  await db.collection(COLLECTIONS.POSITIONS).createIndex({ portfolioId: 1 })
+  await db.collection(COLLECTIONS.TRANSACTIONS).createIndex({ portfolioId: 1 })
+  await db.collection(COLLECTIONS.TRADES).createIndex({ portfolioId: 1 })
+  await db.collection(COLLECTIONS.REBALANCES).createIndex({ portfolioId: 1 })
+  
+  console.log('Database collections initialized')
 }
 
 // Specific collection helpers
 export async function getCollection(collectionName: string) {
-  const db = await connectToDatabase()
+  const { db } = await connectToDatabase()
   return db.collection(collectionName)
 }
 
-// Helper to check if ObjectId is valid
-export function isValidObjectId(id: string): boolean {
-  const objectIdPattern = /^[0-9a-fA-F]{24}$/
-  return objectIdPattern.test(id)
+// Collection-specific helper functions
+export async function getPortfoliosCollection() {
+  return getCollection(COLLECTIONS.PORTFOLIOS)
 }
+
+export async function getPositionsCollection() {
+  return getCollection(COLLECTIONS.POSITIONS)
+}
+
+export async function getTransactionsCollection() {
+  return getCollection(COLLECTIONS.TRANSACTIONS)
+}
+
+export async function getTradesCollection() {
+  return getCollection(COLLECTIONS.TRADES)
+}
+
+export async function getRebalancesCollection() {
+  return getCollection(COLLECTIONS.REBALANCES)
+}
+
+export async function getSettingsCollection() {
+  return getCollection(COLLECTIONS.SETTINGS)
+}
+
+export async function getUsersCollection() {
+  return getCollection(COLLECTIONS.USERS)
+}
+
+// Helper to check if ObjectId is valid
+export const isValidObjectId = ObjectId.isValid
+
+// Export a module-scoped MongoClient promise
+export { ObjectId }

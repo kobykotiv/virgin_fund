@@ -4,17 +4,24 @@ services:
   app:
     build:
       context: .
-      target: development
+      dockerfile: Dockerfile.dev
+    container_name: virgin-fund-app
     ports:
       - "3000:3000"
-    environment:
-      - MONGODB_URI=mongodb://mongodb:27017/virgin_fund
-      - MONGODB_DB=virgin_fund
     volumes:
-      - .:/app
+      - ./:/app
       - /app/node_modules
-    depends_on:
-      - mongodb
+    environment:
+      - NODE_ENV=development
+    
+  api-mock:
+    image: stoplight/prism:latest
+    container_name: virgin-fund-api-mock
+    ports:
+      - "4010:4010"
+    command: mock -h 0.0.0.0 /api/openapi.yaml
+    volumes:
+      - ./api:/api
 
   mongodb:
     image: mongo:latest

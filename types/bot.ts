@@ -1,11 +1,11 @@
 export type BotType = "indicator" | "grid" | "dca" | "basket"
-export type BotStatus = "active" | "paused" | "error" | "backtest"
+export type BotStatus = "active" | "paused" | "error"
 
 export type Timeframe = "1min" | "5min" | "15min" | "30min" | "1hour" | "2hour" | "4hour" | "1day" | "1week" | "1month"
 
 export interface IndicatorConfig {
   type: "rsi" | "macd" | "bollinger"
-  timeframe: "1min" | "5min" | "15min" | "30min" | "1hour" | "4hour" | "1day" | "1week"
+  timeframe: string
   entryThreshold: number
   exitThreshold: number
 }
@@ -24,7 +24,7 @@ export interface DCAConfig {
 }
 
 export interface BasketConfig {
-  rebalancePeriod: string // Cron expression for rebalancing
+  rebalancePeriod?: string // Cron expression for rebalancing
   targetAllocation: Record<string, number> // Symbol to decimal percentage map
 }
 
@@ -40,26 +40,24 @@ export interface Bot {
   id: string
   name: string
   type: BotType
-  status: BotStatus
-  assets: string[] // Array of trading symbols (e.g., ["AAPL", "MSFT", "BTC-USD"])
+  status: "active" | "paused" | "error"
+  assets: string[] // Asset symbols
   createdAt: string
   updatedAt: string
-  performance: BotPerformance
-  stopLoss?: number // Optional percentage for stop loss
-  takeProfit?: number // Optional percentage for take profit
-  maxDrawdown?: number // Optional maximum drawdown percentage
-  allocation?: number // Optional capital allocation for this bot
+  performance?: {
+    totalPnL: number
+    pnlPercentage: number
+    totalTrades: number
+    winRate: number
+    lastUpdated: string
+  }
+  stopLoss?: number
+  takeProfit?: number
+  maxDrawdown?: number
   indicatorConfig?: IndicatorConfig
   gridConfig?: GridConfig
   dcaConfig?: DCAConfig
   basketConfig?: BasketConfig
-  // Fields for whitelabeling support
-  whitelabel?: {
-    enabled: boolean
-    apiKey?: string
-    brandName?: string
-    theme?: Record<string, string>
-  }
 }
 
 export interface BotValidation {

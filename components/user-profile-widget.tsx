@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { useAuth } from "@/providers/auth-provider"
 import { useRouter } from "next/navigation"
-import { Settings, DollarSign, BarChart2, Newspaper } from "lucide-react"
+import { Settings, DollarSign, BarChart2, Newspaper, Link as LinkIcon } from "lucide-react"
 
 export function UserProfileWidget() {
   const { user, isDemoMode } = useAuth()
@@ -19,6 +19,10 @@ export function UserProfileWidget() {
     totalTrades: 245,
     successRate: "68%",
     memberSince: "Oct 2023",
+    portfolioValue: "$124,853",
+    monthlyReturn: "+3.2%",
+    portfoliosCreated: 5,
+    activePortfolios: 3
   }
 
   return (
@@ -41,12 +45,12 @@ export function UserProfileWidget() {
 
           <div className="grid grid-cols-2 gap-4 w-full mt-4">
             <div className="text-center">
-              <p className="text-2xl font-bold">{stats.botsCreated}</p>
-              <p className="text-xs text-muted-foreground">Bots Created</p>
+              <p className="text-2xl font-bold">{stats.portfoliosCreated}</p>
+              <p className="text-xs text-muted-foreground">Portfolios</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold">{stats.activeTrading}</p>
-              <p className="text-xs text-muted-foreground">Active Trading</p>
+              <p className="text-2xl font-bold">{stats.activePortfolios}</p>
+              <p className="text-xs text-muted-foreground">Active</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold">{stats.totalTrades}</p>
@@ -55,6 +59,17 @@ export function UserProfileWidget() {
             <div className="text-center">
               <p className="text-2xl font-bold">{stats.successRate}</p>
               <p className="text-xs text-muted-foreground">Success Rate</p>
+            </div>
+          </div>
+          
+          <div className="w-full mt-4 pt-4 border-t">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm font-medium">Portfolio Value</p>
+              <p className="text-sm font-bold">{stats.portfolioValue}</p>
+            </div>
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-medium">Monthly Return</p>
+              <p className="text-sm font-bold text-green-500">{stats.monthlyReturn}</p>
             </div>
           </div>
 
@@ -70,6 +85,10 @@ export function UserProfileWidget() {
             <Button variant="outline" className="w-full justify-start" onClick={() => router.push("/news")}>
               <Newspaper className="mr-2 h-4 w-4" />
               Latest News
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <LinkIcon className="mr-2 h-4 w-4" />
+              Connect Broker
             </Button>
           </div>
         </div>

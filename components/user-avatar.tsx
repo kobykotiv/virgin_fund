@@ -1,13 +1,9 @@
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { User } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
 interface UserAvatarProps {
-  user?: {
-    name?: string
-    email?: string
-    image?: string
-  }
+  user: any
   className?: string
   size?: "sm" | "md" | "lg"
 }

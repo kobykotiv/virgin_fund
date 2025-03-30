@@ -1,46 +1,25 @@
-# Use Node.js LTS
-FROM node:20-alpine AS base
+# Build stage
+FROM node:18-alpine AS build
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Set working directory
 WORKDIR /app
 
-# Install dependencies only when needed
-FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package*.json ./
+RUN npm ci
 
-# Development image
-FROM base AS development
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-CMD ["pnpm", "dev"]
+RUN npm run build
 
-# Production build
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN pnpm build
+# Production stage
+FROM nginx:alpine
 
-# Production image
-FROM base AS production
-WORKDIR /app
+# Copy build files
+COPY --from=build /app/build /usr/share/nginx/html
 
-ENV NODE_ENV production
+# Copy nginx configuration
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy necessary files
-COPY --from=builder /app/next.config.mjs ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Expose port
+EXPOSE 80
 
-EXPOSE 3000
-
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-CMD ["node", "server.js"]
+# Start Nginx server
+CMD ["nginx", "-g", "daemon off;"]

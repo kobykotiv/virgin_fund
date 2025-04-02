@@ -235,20 +235,49 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Live Ticker Component */}
-      <LiveTicker symbols={getUniqueAssets()} refreshInterval={15000} />
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Live Market Ticker with smooth animations */}
+      <div className="bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 w-full border-b">
+        <LiveTicker 
+          symbols={getUniqueAssets()} 
+          refreshInterval={15000}
+          className="py-2"
+        />
+      </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-          <TabsTrigger value="market">Market Data</TabsTrigger>
+          <TabsTrigger value="market">Market</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Enhanced metric cards with animations */}
+            <Card className="hover:shadow-lg transition-all">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-32" />
+                ) : (
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold animate-in slide-in-from-bottom">
+                      {formatCurrency(portfolio?.totalValue || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground flex items-center">
+                      <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                      <span>+2.5% today</span>
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Bot Status</CardTitle>
@@ -292,25 +321,6 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                     </>
                   )}
                 </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
-                <Wallet className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-32" />
-                ) : (
-                  <>
-                    <div className="text-2xl font-bold">{formatCurrency(portfolio?.totalValue || 0)}</div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Cash: {formatCurrency(portfolio?.cashBalance || 0)}
-                    </p>
-                  </>
-                )}
               </CardContent>
             </Card>
 
@@ -508,16 +518,6 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                       <TableHead>Quantity</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders
-                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                      .slice(0, 5)
-                      .map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.symbol}</TableCell>
-                          <TableCell>
                             <Badge variant={order.side === "buy" ? "default" : "secondary"}>
                               {order.side.toUpperCase()}
                             </Badge>

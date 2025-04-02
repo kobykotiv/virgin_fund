@@ -1,69 +1,70 @@
-import NextAuth from "next-auth"
+import { NextAuthOptions } from "next-auth"
+import NextAuth from "next-auth/next"
+import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { getUsersCollection } from "@/lib/mongodb"
-import bcrypt from "bcryptjs"
-import { NextAuthOptions } from "next-auth"
+import { compare } from "bcrypt"
 
 export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/login",
+    signOut: "/",
+    error: "/login",
+  },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
     CredentialsProvider({
-      name: "Credentials",
+      name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
+        if (!credentials?.email || !credentials.password) {
+          throw new Error("Missing credentials")
         }
-        
+
         const usersCollection = await getUsersCollection()
         const user = await usersCollection.findOne({ email: credentials.email })
-        
+
         if (!user) {
-          return null
+          throw new Error("User not found")
         }
-        
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password, 
-          user.password
-        )
-        
+
+        const isPasswordValid = await compare(credentials.password, user.password)
         if (!isPasswordValid) {
-          return null
+          throw new Error("Invalid password")
         }
-        
+
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.name || user.email.split('@')[0]
+          name: user.name,
         }
-      }
-    })
+      },
+    }),
   ],
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id
+        token.user = user
+      }
+      if (account) {
+        token.accessToken = account.access_token
       }
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-      }
+      session.user = token.user as any
       return session
-    }
+    },
   },
-  pages: {
-    signIn: '/login',
-    error: '/login', 
-    signOut: '/login'
-  }
 }
 
 const handler = NextAuth(authOptions)

@@ -1,100 +1,101 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
+import { useRouter, usePathname } from "next/navigation"
 
 interface User {
   id: string
-  name: string
   email: string
-  role: string
+  name?: string
 }
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<boolean>
-  logout: () => void
-  signup: (name: string, email: string, password: string) => Promise<boolean>
+  isDemoMode: boolean
+  signIn: (email: string, password: string) => Promise<void>
+  signOut: () => Promise<void>
+  signInDemo: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isDemoMode, setIsDemoMode] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
 
+  // Authentication state persistence
   useEffect(() => {
-    // Check if user is logged in
-    const checkAuth = async () => {
-      try {
-        // In a real app, this would be an API call to validate the session
-        const storedUser = localStorage.getItem("user")
-        if (storedUser) {
-          setUser(JSON.parse(storedUser))
-        }
-      } catch (error) {
-        console.error("Authentication check failed", error)
-      } finally {
-        setIsLoading(false)
-      }
+    const savedAuth = localStorage.getItem("auth")
+    if (savedAuth) {
+      const { user, isDemoMode } = JSON.parse(savedAuth)
+      setUser(user)
+      setIsDemoMode(isDemoMode)
     }
-
-    checkAuth()
+    setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
-    try {
-      // In a real app, this would be an API call
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+  // Protected routes handling
+  useEffect(() => {
+    const publicPaths = ["/", "/login", "/signup", "/blog", "/forgot-password"]
+    const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
 
-      // Demo login - in a real app, this would validate credentials
-      const mockUser = {
-        id: "user-1",
-        name: "Demo User",
-        email,
-        role: "user",
+    if (!isLoading) {
+      if (!user && !isDemoMode && !isPublicPath) {
+        router.push("/login")
+      } else if ((user || isDemoMode) && (pathname === "/login" || pathname === "/signup")) {
+        router.push("/dashboard")
       }
+    }
+  }, [user, isDemoMode, isLoading, pathname])
 
-      setUser(mockUser)
-      localStorage.setItem("user", JSON.stringify(mockUser))
-      return true
+  const signIn = async (email: string, password: string) => {
+    try {
+      setIsLoading(true)
+      // Implement your actual authentication logic here
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!response.ok) throw new Error("Authentication failed")
+
+      const userData = await response.json()
+      setUser(userData)
+      setIsDemoMode(false)
+      localStorage.setItem("auth", JSON.stringify({ user: userData, isDemoMode: false }))
+      router.push("/dashboard")
     } catch (error) {
-      console.error("Login failed", error)
-      return false
+      throw error
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem("user")
-  }
-
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
+  const signInDemo = async () => {
     setIsLoading(true)
     try {
-      // In a real app, this would be an API call
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      setUser(null)
+      setIsDemoMode(true)
+      localStorage.setItem("auth", JSON.stringify({ user: null, isDemoMode: true }))
+      router.push("/dashboard")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-      // Demo signup - in a real app, this would create a new user
-      const mockUser = {
-        id: "user-" + Date.now(),
-        name,
-        email,
-        role: "user",
-      }
-
-      setUser(mockUser)
-      localStorage.setItem("user", JSON.stringify(mockUser))
-      return true
-    } catch (error) {
-      console.error("Signup failed", error)
-      return false
+  const signOut = async () => {
+    setIsLoading(true)
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+      setUser(null)
+      setIsDemoMode(false)
+      localStorage.removeItem("auth")
+      router.push("/")
     } finally {
       setIsLoading(false)
     }
@@ -105,10 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isLoading,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        signup,
+        isDemoMode,
+        signIn,
+        signOut,
+        signInDemo,
       }}
     >
       {children}
@@ -116,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext)
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider")

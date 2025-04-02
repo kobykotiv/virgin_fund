@@ -6,35 +6,21 @@ import { BotCard } from '@/components/bot-card'
 import { useAuth } from "@/contexts/auth-context"
 
 export function BotShowcase() {
-  const [isClient, setIsClient] = useState(false)
-  const { user = null, isDemoMode = true, loading = false } = (() => {
-    try {
-      return useAuth()
-    } catch (error) {
-      console.warn("Auth context not available, using demo mode")
-      return { user: null, isDemoMode: true, loading: false }
-    }
-  })()
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  if (!isClient || loading) return null
-
-  const botsToShow = isDemoMode || !user ? demoBots : []
-
   return (
-    <section className="py-20 overflow-hidden">
-      <div className="container">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          {isDemoMode ? "Demo Trading Bots" : "Active Trading Bots"}
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {botsToShow.map((bot) => (
-            <BotCard key={bot.id} bot={bot} />
-          ))}
+    <section className="p-4 bg-white shadow rounded-lg my-4">
+      <h2 className="text-xl font-semibold mb-2">Our Integrations</h2>
+      <div className="flex items-center space-x-4">
+        <img 
+          src="/alpaca-logo.png" 
+          alt="Alpaca Markets" 
+          className="h-12 w-auto" 
+          onError={(e) => ((e.target as HTMLImageElement).src = '/placeholder.png')}
+        />
+        <div>
+          <h3 className="text-lg font-bold">Alpaca Markets</h3>
+          <p className="text-sm text-gray-600">
+            Trade and fetch real-time market data effortlessly using Alpaca's API.
+          </p>
         </div>
       </div>
     </section>

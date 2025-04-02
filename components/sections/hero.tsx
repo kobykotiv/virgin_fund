@@ -52,6 +52,7 @@ export function HeroSection() {
       <LiveTicker symbols={[...symbols, ...coins]} />
       <div className="relative z-10 w-full h-64 md:h-96 bg-gradient-to-b from-primary/10 to-transparent rounded-lg overflow-hidden">
       </div>
+      <BotShowcase />
     </div>
   );
 }

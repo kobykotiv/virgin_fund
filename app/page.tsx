@@ -13,6 +13,7 @@ import Link from "next/link"
 import { BotShowcase } from "@/components/bot-showcase"
 import { MiddleHeroSection } from "@/components/sections/middle-hero"
 import { MiddleSection } from "@/components/sections/middle-section"
+import { CryptoHeroSection } from "@/components/sections/crypto-hero-section"
 
 export const metadata: Metadata = {
   title: "Virgin Fund: AI-Powered Automated Trading Platform",
@@ -28,6 +29,9 @@ export default function LandingPage() {
         
         {/* Problem/Solution Section */}
         <ProblemSolutionSection />
+        
+        {/* Crypto Hero Section */}
+        <CryptoHeroSection />
         
         {/* Middle Hero Section */}
         <MiddleHeroSection />

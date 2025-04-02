@@ -5,6 +5,7 @@ import Marquee from "react-fast-marquee"
 import Image from "next/image"
 
 export function MarqueesSection() {
+  // Create multiplied content for strategies
   const strategies = [
     { name: "Trend Following", performance: "+18.2%", positive: true, timeframe: "3m" },
     { name: "Mean Reversion", performance: "+12.5%", positive: true, timeframe: "3m" },
@@ -14,8 +15,9 @@ export function MarqueesSection() {
     { name: "Bollinger Bands", performance: "+14.2%", positive: true, timeframe: "3m" },
     { name: "MACD Crossover", performance: "-2.4%", positive: false, timeframe: "3m" },
     { name: "RSI Strategy", performance: "+10.9%", positive: true, timeframe: "3m" }
-  ]
+  ].flatMap(strategy => Array(6).fill(strategy)); // Repeat 6 times
   
+  // Multiply demo bots for each category
   const demoBotRows = [
     {
       title: "Crypto Trading Bots",
@@ -25,7 +27,7 @@ export function MarqueesSection() {
         { name: "SOL DCA", market: "Crypto", returns: "+45.3%", trades: 123 },
         { name: "DeFi Index", market: "Crypto", returns: "+19.8%", trades: 89 },
         { name: "Crypto Grid", market: "Crypto", returns: "+22.4%", trades: 445 }
-      ]
+      ].flatMap(bot => Array(4).fill(bot)) // Repeat 4 times
     },
     {
       title: "Stock Trading Bots",
@@ -35,7 +37,7 @@ export function MarqueesSection() {
         { name: "Growth Scanner", market: "Stocks", returns: "+26.7%", trades: 234 },
         { name: "Value Finder", market: "Stocks", returns: "+15.3%", trades: 178 },
         { name: "Dividend Elite", market: "Stocks", returns: "+11.8%", trades: 145 }
-      ]
+      ].flatMap(bot => Array(4).fill(bot)) // Repeat 4 times
     },
     {
       title: "Forex Trading Bots",
@@ -45,7 +47,7 @@ export function MarqueesSection() {
         { name: "USD Index", market: "Forex", returns: "+7.6%", trades: 432 },
         { name: "Forex Reversal", market: "Forex", returns: "+15.2%", trades: 654 },
         { name: "Currency Grid", market: "Forex", returns: "+8.9%", trades: 321 }
-      ]
+      ].flatMap(bot => Array(4).fill(bot)) // Repeat 4 times
     }
   ];
 
@@ -111,34 +113,41 @@ export function MarqueesSection() {
     }
   }
 
-  // Group assets into categories for multiple rows
+  // Group and multiply assets
   const assetRows = [
     {
       title: "Major Indices",
-      assets: assets.filter(a => a.type === "Index").slice(0, 8)
+      assets: assets.filter(a => a.type === "Index")
+        .flatMap(asset => Array(3).fill(asset)) // Repeat 3 times
     },
     {
       title: "Blue Chip Stocks",
-      assets: assets.filter(a => a.type === "Stock" && a.risk === "medium").slice(0, 8)
+      assets: assets.filter(a => a.type === "Stock" && a.risk === "medium")
+        .flatMap(asset => Array(3).fill(asset))
     },
     {
       title: "Growth Stocks",
-      assets: assets.filter(a => a.type === "Stock" && a.risk === "medium-high").slice(0, 8)
+      assets: assets.filter(a => a.type === "Stock" && a.risk === "medium-high")
+        .flatMap(asset => Array(3).fill(asset))
     },
     {
       title: "Cryptocurrency",
-      assets: assets.filter(a => a.type === "Crypto").slice(0, 8)
+      assets: assets.filter(a => a.type === "Crypto")
+        .flatMap(asset => Array(3).fill(asset))
     },
     {
       title: "ETFs & Funds",
-      assets: assets.filter(a => a.type === "ETF" || a.type === "Leveraged").slice(0, 8)
+      assets: assets.filter(a => a.type === "ETF" || a.type === "Leveraged")
+        .flatMap(asset => Array(3).fill(asset))
     },
     {
       title: "Safe Haven Assets",
-      assets: assets.filter(a => a.risk === "safe").slice(0, 8)
+      assets: assets.filter(a => a.risk === "safe")
+        .flatMap(asset => Array(3).fill(asset))
     }
   ];
 
+  // Increase the marquee speeds slightly for better flow on large screens
   return (
     <section className="py-16">
       <div className="space-y-12">
@@ -147,7 +156,7 @@ export function MarqueesSection() {
           <div className="container mb-6">
             <h3 className="text-xl font-semibold">Popular Trading Strategies</h3>
           </div>
-          <Marquee gradient={false} speed={40}>
+          <Marquee gradient={false} speed={50}>
             <div className="flex gap-4 py-4">
               {strategies.map((strategy, idx) => (
                 <Card key={idx} className="w-64 shrink-0">
@@ -175,7 +184,7 @@ export function MarqueesSection() {
             </div>
             <Marquee 
               gradient={false} 
-              speed={30} 
+              speed={35 + (index * 5)} 
               direction={index % 2 === 0 ? "left" : "right"}
             >
               <div className="flex gap-4 py-4">
@@ -206,7 +215,7 @@ export function MarqueesSection() {
             </div>
             <Marquee 
               gradient={false} 
-              speed={20 + (index * 2)} 
+              speed={25 + (index * 3)} 
               direction={index % 2 === 0 ? "left" : "right"}
             >
               <div className="flex gap-8 py-4">

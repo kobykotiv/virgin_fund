@@ -1942,11 +1942,14 @@ export async function createBacktestShareableLink(
  * Generate a unique share ID for a backtest
  * In a real implementation, you'd use a more robust method
  */
-function generateUniqueShareId(): string {
-  const timestamp = Date.now().toString(36);
-  const randomStr = Math.random().toString(36).substring(2, 8);
-  return `${timestamp}-${randomStr}`;
-}
+// Duplicate definition removed to avoid conflicts:
+// /*
+// function generateUniqueShareId(): string {
+//   const timestamp = Date.now().toString(36);
+//   const randomStr = Math.random().toString(36).substring(2, 8);
+//   return `${timestamp}-${randomStr}`;
+// }
+// */
 
 /**
  * Get a shared backtest by its share ID

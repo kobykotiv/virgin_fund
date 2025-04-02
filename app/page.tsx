@@ -10,6 +10,7 @@ import { ReviewsSection } from "@/components/sections/reviews"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { BotShowcase } from "@/components/bot-showcase"
 
 export const metadata: Metadata = {
   title: "Virgin Fund: AI-Powered Automated Trading Platform",
@@ -52,6 +53,9 @@ export default function LandingPage() {
             </p>
           </div>
         </section>
+        
+        {/* Bot Showcase Section */}
+        <BotShowcase />
         
         {/* Marquees Section */}
         <MarqueesSection />

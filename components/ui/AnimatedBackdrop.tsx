@@ -36,7 +36,7 @@ const waveAnimation = keyframes`
   }
 `;
 
-const AnimatedBackdrop: React.FC<AnimatedBackdropProps> = ({
+export default function AnimatedBackdrop({
   children,
   variant = 'particles',
   density = 'medium',
@@ -44,7 +44,7 @@ const AnimatedBackdrop: React.FC<AnimatedBackdropProps> = ({
   color,
   secondaryColor,
   style = {},
-}) => {
+}: AnimatedBackdropProps) {
   const theme = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -282,5 +282,3 @@ const AnimatedBackdrop: React.FC<AnimatedBackdropProps> = ({
     </Box>
   );
 };
-
-export default AnimatedBackdrop;

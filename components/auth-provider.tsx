@@ -119,9 +119,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+  
+  // Return a safe default state for public routes/components
+  if (!context) {
+    return {
+      user: null,
+      isLoading: false,
+      isDemoMode: false,
+      isAuthenticated: false,
+      signIn: async () => {
+        throw new Error('Auth provider not initialized')
+      },
+      signOut: async () => {
+        throw new Error('Auth provider not initialized')
+      },
+      signInDemo: async () => {
+        throw new Error('Auth provider not initialized')
+      }
+    }
   }
+  
   return context
+}
+
+// Update provider check to allow public access
+export function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { user, isDemoMode, isLoading } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const publicPaths = ['/', '/login', '/signup', '/blog', '/forgot-password']
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+
+  useEffect(() => {
+    if (!isLoading && !user && !isDemoMode && !isPublicPath) {
+      router.push('/login')
+    }
+  }, [user, isDemoMode, isLoading, pathname])
+
+  if (isLoading) {
+    return null // Or loading spinner
+  }
+
+  return children
 }
 

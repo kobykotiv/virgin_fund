@@ -10,7 +10,7 @@ import { fetchMarketData } from "@/lib/bot-api"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import dynamic from 'next/dynamic'
 import { getMarketDataService, type MarketData } from "@/services/market-data-service"
-import { useAuth } from "@/providers/auth-provider"
+import { useConditionalAuth } from "@/contexts/auth-context"
 
 // Dynamically import TradingView widget to avoid SSR issues
 const TradingViewWidget = dynamic(
@@ -40,7 +40,7 @@ export function LiveTicker({ symbols, refreshInterval = 15000, showCharts = fals
   const [activeView, setActiveView] = useState<"grid" | "list">("grid")
   const [favoriteSymbols, setFavoriteSymbols] = useState<string[]>([])
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
-  const { apiConfig } = useAuth()
+  const { apiConfig } = useConditionalAuth()
 
   useEffect(() => {
     if (!apiConfig?.keyId || !apiConfig?.secretKey) return;

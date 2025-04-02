@@ -10,9 +10,7 @@ import {
   LinearProgress,
   Tooltip
 } from '@mui/material';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
+import { TrendingUp, TrendingDown, ChevronsRight } from 'lucide-react';
 
 interface MetricItem {
   label: string;
@@ -142,7 +140,7 @@ const AnimatedNumber: React.FC<{
   );
 };
 
-const LiveMetrics: React.FC<LiveMetricsProps> = ({
+export default function LiveMetrics({
   metrics,
   autoUpdate = false,
   updateInterval = 5000,
@@ -150,17 +148,19 @@ const LiveMetrics: React.FC<LiveMetricsProps> = ({
   showTrend = true,
   variant = 'default',
   animation = 'count',
-}) => {
+}: LiveMetricsProps) {
   const theme = useTheme();
   const [localMetrics, setLocalMetrics] = useState<MetricItem[]>(metrics);
   
   // Update local metrics when props change
   useEffect(() => {
+    // Fetch or calculate data related to metrics
     setLocalMetrics(metrics);
   }, [metrics]);
   
   // Auto-update simulation
   useEffect(() => {
+    // Auto-update logic or periodic refresh
     if (!autoUpdate) return;
     
     const interval = setInterval(() => {
@@ -177,8 +177,8 @@ const LiveMetrics: React.FC<LiveMetricsProps> = ({
   }, [autoUpdate, updateInterval]);
   
   const getTrendIcon = (current: number, previous?: number) => {
-    if (!previous || previous === current) return <TrendingFlatIcon />;
-    return current > previous ? <TrendingUpIcon color="success" /> : <TrendingDownIcon color="error" />;
+    if (!previous || previous === current) return <ChevronsRight size={16} />;
+    return current > previous ? <TrendingUp size={16} color="green" /> : <TrendingDown size={16} color="red" />;
   };
   
   const getTrendColor = (current: number, previous?: number): string => {
@@ -490,5 +490,3 @@ const LiveMetrics: React.FC<LiveMetricsProps> = ({
     </Box>
   );
 };
-
-export default LiveMetrics;

@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { BotShowcase } from "@/components/bot-showcase"
+import { MiddleHeroSection } from "@/components/sections/middle-hero"
+import { MiddleSection } from "@/components/sections/middle-section"
 
 export const metadata: Metadata = {
   title: "Virgin Fund: AI-Powered Automated Trading Platform",
@@ -26,6 +28,12 @@ export default function LandingPage() {
         
         {/* Problem/Solution Section */}
         <ProblemSolutionSection />
+        
+        {/* Middle Hero Section */}
+        <MiddleHeroSection />
+        
+        {/* Middle Section */}
+        <MiddleSection />
         
         {/* Features Overview Section */}
         <FeaturesOverviewSection />

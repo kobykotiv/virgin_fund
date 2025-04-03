@@ -1,27 +1,24 @@
-import { demoBots } from '@/data/demo-bots'
-import { BotDetailView } from '@/components/bot-detail-view'
-import { notFound } from 'next/navigation'
+import { notFound } from "next/navigation";
+import { getBotById } from "@/lib/api";
 
-interface BotPageProps {
-  params: {
-    id: string
+export default async function BotPage({ params }: { params: { id: string } }) {
+  try {
+    const bot = await getBotById(params.id);
+
+    if (!bot) {
+      notFound();
+    }
+
+    return (
+      <div className="container mx-auto py-6">
+        <h1 className="text-2xl font-bold mb-4">{bot.name}</h1>
+        <div className="prose dark:prose-invert">
+          {/* Render bot details here */}
+        </div>
+      </div>
+    );
+  } catch (error) {
+    console.error(error);
+    notFound();
   }
 }
-
-export default function BotPage({ params }: BotPageProps) {
-  const bot = demoBots.find(bot => bot.id === params.id)
-  
-  if (!bot) {
-    return notFound()
-  }
-  
-  return <BotDetailView bot={bot} />
-}
-
-// Generate static paths for each bot
-export async function generateStaticParams() {
-  return demoBots.map(bot => ({
-    id: bot.id
-  }))
-}
-```

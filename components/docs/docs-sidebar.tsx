@@ -1,6 +1,8 @@
-import { cn } from "@/lib/utils"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+"use client";
+
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const sidebarNav = [
   {
@@ -75,10 +77,10 @@ const sidebarNav = [
       },
     ],
   },
-]
+];
 
 export function DocsSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <div className="w-full">
@@ -106,5 +108,5 @@ export function DocsSidebar() {
         </div>
       ))}
     </div>
-  )
+  );
 }

@@ -15,20 +15,36 @@ let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
-  // If we have cached values, use them
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
   }
 
-  // Connect to the MongoDB instance
-  const client = await MongoClient.connect(MONGODB_URI);
-  const db = client.db(MONGODB_DB);
+  try {
+    const client = new MongoClient(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
 
-  // Cache the client and db for reuse
-  cachedClient = client;
-  cachedDb = db;
+    await client.connect();
+    const db = client.db(MONGODB_DB);
 
-  return { client, db };
+    cachedClient = client;
+    cachedDb = db;
+
+    console.log("MongoDB connected successfully.");
+    return { client, db };
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+    throw error;
+  }
+}
+
+export async function disconnectFromDatabase(): Promise<void> {
+  if (cachedClient) {
+    await cachedClient.close();
+    cachedClient = null;
+    cachedDb = null;
+  }
 }
 
 // Define collection names as constants to avoid typos

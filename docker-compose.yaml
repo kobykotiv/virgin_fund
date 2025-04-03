@@ -19,6 +19,9 @@ services:
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - DEPLOYMENT_PLATFORM=coolify
+      - NEXT_PUBLIC_ALPACA_KEY_ID=${NEXT_PUBLIC_ALPACA_KEY_ID}
+      - NEXT_PUBLIC_ALPACA_SECRET_KEY=${NEXT_PUBLIC_ALPACA_SECRET_KEY}
+      - NEXT_PUBLIC_ALPACA_BASE_URL=${NEXT_PUBLIC_ALPACA_BASE_URL}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.virgin-fund.rule=Host(`${DOMAIN:-localhost}`)"

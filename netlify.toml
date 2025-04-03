@@ -17,7 +17,5 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# The redirects are not needed for Next.js apps with the plugin-nextjs
+# Removing this as it can cause routing conflicts

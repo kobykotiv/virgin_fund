@@ -124,8 +124,6 @@
     }
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "bcrypt"
-    ]
+    "onlyBuiltDependencies": ["@prisma/client", "sharp"]
   }
 }

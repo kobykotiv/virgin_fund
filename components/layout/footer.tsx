@@ -1,8 +1,12 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import dynamic from 'next/dynamic'
 import { Input } from "@/components/ui/input"
-import { Robot, Twitter, Github, Linkedin, Facebook, Mail } from "lucide-react"
+import { Bot, Twitter, Github, Linkedin, Facebook, Mail } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+
+const Button = dynamic(() => import("@/components/ui/button").then((mod) => mod.Button), {
+  ssr: false,
+})
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -63,7 +67,7 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Robot className="h-6 w-6 text-primary" />
+              <Bot className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">Virgin Fund</span>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-md">

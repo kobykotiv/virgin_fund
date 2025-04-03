@@ -80,6 +80,56 @@ export function FeaturesGridSection() {
           description: "Lightning-fast trade execution with minimal slippage"
         }
       ]
+    },
+    {
+      category: "Integration & Automation",
+      items: [
+        {
+          icon: <RefreshCcw className="h-5 w-5 text-primary" />,
+          title: "API Access",
+          description: "Integrate with external data sources and trading platforms"
+        },
+        {
+          icon: <Bell className="h-5 w-5 text-primary" />,
+          title: "Webhook Notifications",
+          description: "Receive real-time updates on your trading activities"
+        },
+        {
+          icon: <Zap className="h-5 w-5 text-primary" />,
+          title: "Automated Workflows",
+          description: "Create automated workflows to streamline your trading operations"
+        },
+        {
+          icon: <Bot className="h-5 w-5 text-primary" />,
+          title: "Multi-Bot Management",
+          description: "Manage multiple trading bots from a single dashboard"
+        }
+      ]
+    },
+    {
+      category: "User Management & Collaboration",
+      items: [
+        {
+          icon: <Users className="h-5 w-5 text-primary" />,
+          title: "Team Collaboration",
+          description: "Invite team members and collaborate on trading strategies"
+        },
+        {
+          icon: <Shield className="h-5 w-5 text-primary" />,
+          title: "Role-Based Access",
+          description: "Control permissions for different team members"
+        },
+        {
+          icon: <Bell className="h-5 w-5 text-primary" />,
+          title: "Activity Logs",
+          description: "Monitor user activities and changes in real-time"
+        },
+        {
+          icon: <Terminal className="h-5 w-5 text-primary" />,
+          title: "Audit Trail",
+          description: "Maintain a comprehensive audit trail for compliance"
+        }
+      ]
     }
   ]
   
@@ -89,7 +139,7 @@ export function FeaturesGridSection() {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Comprehensive Features</h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Everything you need to build, manage, and optimize automated trading strategies
+            Everything you need to build, manage, audit, and optimize automated trading strategies
           </p>
         </div>
         

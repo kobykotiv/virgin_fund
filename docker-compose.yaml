@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: virgin-fund-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DB=${MONGODB_DB}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - DEPLOYMENT_PLATFORM=coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.virgin-fund.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.virgin-fund.entrypoints=websecure"
+      - "traefik.http.services.virgin-fund.loadbalancer.server.port=3000"
+    
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=virgin_fund
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=false"
+
+volumes:
+  mongodb_data:
+    driver: local

@@ -1,0 +1,28 @@
+This is a Next.js web application for an automated trading platform with the following tech stack:
+
+Frontend:
+- Next.js 15.2
+- React 19.0
+- TypeScript
+- Tailwind CSS
+- Shadcn/UI (based on components.json)
+
+Backend/Services:
+- MongoDB (indicated by .mongodb.js file)
+- Docker containerization
+- Node.js/TypeScript backend
+- Edge middleware (middleware.ts)
+
+Key Features:
+- Authentication system
+- Portfolio management
+- Bot trading automation
+- Real-time monitoring
+- Backtesting capabilities
+- News integration
+- API integrations
+- Dashboard analytics
+
+Project uses pnpm as package manager and follows a modular component architecture. The application has both client and server-side rendering capabilities.
+
+File structure follows Next.js app router conventions with (auth), api, and feature-specific directories. Components are organized by feature/domain.

@@ -1,0 +1,23 @@
+[build]
+  command = "pnpm run build"
+  publish = ".next"
+
+[dev]
+  command = "pnpm run dev"
+  port = 3000
+  targetPort = 3000
+  framework = "next"
+
+# Set Next.js environment variables
+[build.environment]
+  NETLIFY = "true"
+  DEPLOYMENT_PLATFORM = "netlify"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

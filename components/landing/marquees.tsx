@@ -150,9 +150,8 @@ export function MarqueesSection() {
 
   // Increase the marquee speeds slightly for better flow on large screens
   return (
-    <section className="relative py-16 bg-background">
-      <BackgroundPaths />
-      <div className="relative z-10 space-y-12">
+    <BackgroundPaths title="Trading Bots" webEra="4.0">
+      <div className="relative space-y-12 py-32">
         {/* Trading Strategies Section */}
         <div className="relative">
           <div className="container mb-6">
@@ -256,6 +255,6 @@ export function MarqueesSection() {
           </div>
         ))}
       </div>
-    </section>
+    </BackgroundPaths>
   );
 }

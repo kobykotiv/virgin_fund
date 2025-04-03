@@ -6,7 +6,7 @@ import Image from "next/image"
 import { BackgroundPaths } from "@/components/ui/background-paths"
 
 export function MarqueesSection() {
-  // Create multiplied content for strategies with more repetitions
+  // Create multiplied content for strategies
   const strategies = [
     { name: "Trend Following", performance: "+18.2%", positive: true, timeframe: "3m" },
     { name: "Mean Reversion", performance: "+12.5%", positive: true, timeframe: "3m" },
@@ -16,7 +16,7 @@ export function MarqueesSection() {
     { name: "Bollinger Bands", performance: "+14.2%", positive: true, timeframe: "3m" },
     { name: "MACD Crossover", performance: "-2.4%", positive: false, timeframe: "3m" },
     { name: "RSI Strategy", performance: "+10.9%", positive: true, timeframe: "3m" }
-  ].flatMap(strategy => Array(15).fill(strategy)); // Increased from 6 to 15
+  ].flatMap(strategy => Array(6).fill(strategy)); // Repeat 6 times
   
   // Multiply demo bots for each category
   const demoBotRows = [
@@ -28,7 +28,7 @@ export function MarqueesSection() {
         { name: "SOL DCA", market: "Crypto", returns: "+45.3%", trades: 123 },
         { name: "DeFi Index", market: "Crypto", returns: "+19.8%", trades: 89 },
         { name: "Crypto Grid", market: "Crypto", returns: "+22.4%", trades: 445 }
-      ].flatMap(bot => Array(10).fill(bot)) // Increased from 4 to 10
+      ].flatMap(bot => Array(4).fill(bot)) // Repeat 4 times
     },
     {
       title: "Stock Trading Bots",
@@ -114,17 +114,17 @@ export function MarqueesSection() {
     }
   }
 
-  // Group and multiply assets with higher repetition
+  // Group and multiply assets
   const assetRows = [
     {
       title: "Major Indices",
       assets: assets.filter(a => a.type === "Index")
-        .flatMap(asset => Array(8).fill(asset)) // Increased from 3 to 8
+        .flatMap(asset => Array(3).fill(asset)) // Repeat 3 times
     },
     {
       title: "Blue Chip Stocks",
       assets: assets.filter(a => a.type === "Stock" && a.risk === "medium")
-        .flatMap(asset => Array(8).fill(asset))
+        .flatMap(asset => Array(3).fill(asset))
     },
     {
       title: "Growth Stocks",
@@ -150,7 +150,7 @@ export function MarqueesSection() {
 
   // Increase the marquee speeds slightly for better flow on large screens
   return (
-    <section className="relative py-16 bg-background overflow-hidden w-full">
+    <section className="relative py-16 bg-background">
       <BackgroundPaths />
       <div className="relative z-10 space-y-12">
         {/* Trading Strategies Section */}

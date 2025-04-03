@@ -24,7 +24,7 @@ export function CryptoHeroSection() {
                 Trade{" "}
                 <AnimatedWordCycle 
                   words={[
-                    "ETF",
+                    "ETFs",
                     "CRYPTO",
                     "BITCOIN",
                     "FUTURES",
@@ -60,9 +60,9 @@ export function CryptoHeroSection() {
             
             <div className="grid grid-cols-3 gap-6">
               {[
-                { label: "Trading Volume", value: "$4.2B+" },
-                { label: "Active Traders", value: "50K+" },
-                { label: "Success Rate", value: "89%" }
+                { label: "Trading Volume", value: "$4K+" },
+                { label: "Active Traders", value: "1K+" },
+                { label: "Success Rate", value: "59%" }
               ].map((stat, i) => (
                 <div key={i} className="space-y-1">
                   <div className="text-2xl font-bold">{stat.value}</div>

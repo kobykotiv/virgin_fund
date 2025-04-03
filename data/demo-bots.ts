@@ -1,6 +1,7 @@
 import { DemoBot } from '@/types/portfolio'
 
 export const demoBots: DemoBot[] = [
+  // ... previous bots remain unchanged ...
   {
     id: "bot-1",
     nickname: "MegaTrend Alpha",
@@ -12,7 +13,19 @@ export const demoBots: DemoBot[] = [
     assets: ["AAPL", "MSFT", "GOOGL"],
     margin: 0.4,
     performance: [100, 102, 105, 103, 106, 108, 110, 109, 111, 115],
-    allocation: { "Tech": 60, "Finance": 25, "Healthcare": 15 }
+    allocation: { "Tech": 60, "Finance": 25, "Healthcare": 15 },
+    strategy: "basket",
+    stopLoss: 5,
+    takeProfit: 15,
+    maxDrawdown: 10,
+    strategyConfig: {
+      rebalancePeriod: "0 0 1 * *", // Monthly rebalance
+      targetAllocation: {
+        AAPL: 0.4,
+        MSFT: 0.4,
+        GOOGL: 0.2,
+      },
+    },
   },
   {
     id: "bot-2",
@@ -24,7 +37,17 @@ export const demoBots: DemoBot[] = [
     assets: ["GOOGL", "TSLA"],
     margin: 0.3,
     performance: [90, 92, 95, 93, 96, 98, 100, 99, 101, 105],
-    allocation: { "Tech": 70, "Energy": 30 }
+    allocation: { "Tech": 70, "Energy": 30 },
+    strategy: "indicator",
+    stopLoss: 7,
+    takeProfit: 20,
+    maxDrawdown: 15,
+    strategyConfig: {
+      type: "rsi",
+      timeframe: "1day",
+      entryThreshold: 30,
+      exitThreshold: 70,
+    },
   },
   // Add more bots as needed...
 ]

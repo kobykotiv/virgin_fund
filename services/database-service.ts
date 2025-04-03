@@ -1,20 +1,17 @@
-import clientPromise from '@/lib/mongodb'
-import { Collection, Db, Document } from 'mongodb'
+import clientPromise from "@/lib/mongodb";
+import { Collection, Document } from "mongodb";
 
-export class DatabaseService {
-  protected db: Promise<Db>
-  
-  constructor() {
-    this.db = this.getDatabase()
-  }
+export async function getCollection<T extends Document>(name: string): Promise<Collection<T>> {
+  const client = await clientPromise;
+  return client.db().collection<T>(name);
+}
 
-  private async getDatabase(): Promise<Db> {
-    const client = await clientPromise
-    return client.db(process.env.MONGODB_DB || 'virgin_fund')
-  }
+export async function findOne<T>(collection: string, query: object): Promise<T | null> {
+  const coll = await getCollection<T>(collection);
+  return coll.findOne(query);
+}
 
-  protected async getCollection<T extends Document>(name: string): Promise<Collection<T>> {
-    const db = await this.db
-    return db.collection<T>(name)
-  }
+export async function find<T>(collection: string, query: object = {}): Promise<T[]> {
+  const coll = await getCollection<T>(collection);
+  return coll.find(query).toArray();
 }

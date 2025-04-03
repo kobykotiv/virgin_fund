@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "export": "next export"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

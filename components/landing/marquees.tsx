@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown } from "lucide-react"
 import Marquee from "react-fast-marquee"
 import Image from "next/image"
 import { BackgroundPaths } from "@/components/ui/background-paths"
+import { MarketTicker } from "@/components/market/market-ticker";
 
 export function MarqueesSection() {
   // Create multiplied content for strategies
@@ -152,6 +153,20 @@ export function MarqueesSection() {
   return (
     <BackgroundPaths title="Trading Bots" webEra="4.0">
       <div className="relative space-y-12 py-32">
+        {/* Live Market Data Section */}
+        <div className="relative">
+          <div className="container mb-6">
+            <h3 className="text-xl font-semibold">Live Market Data</h3>
+          </div>
+          <MarketTicker 
+            symbols={[
+              'SPY', 'QQQ', 'IWM', 'DIA',
+              'AAPL', 'MSFT', 'GOOGL', 'AMZN',
+              'BTC-USD', 'ETH-USD'
+            ]} 
+          />
+        </div>
+
         {/* Trading Strategies Section */}
         <div className="relative">
           <div className="container mb-6">

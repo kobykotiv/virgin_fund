@@ -1,9 +1,9 @@
-import { connectToDatabase } from "@/lib/mongodb";
+import { clientPromise } from "@/lib/mongodb";
 import { Collection, Document } from "mongodb";
 
 export async function getCollection<T extends Document>(name: string): Promise<Collection<T>> {
-  const { db } = await connectToDatabase();
-  return db.collection<T>(name);
+  const client = await clientPromise;
+  return client.db("virgin_fund").collection<T>(name); // Replace "virgin_fund" with your database name if different
 }
 
 export async function findOne<T>(collection: string, query: object): Promise<T | null> {

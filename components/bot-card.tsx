@@ -1,27 +1,23 @@
 "use client"
 
-import { useState } from 'react'
+import { useRef } from 'react'
 import { DemoBot } from '@/types/portfolio'
 import { Card } from '@/components/ui/card'
 import { LineChart, PieChart } from '@/components/charts'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { ArrowRightIcon } from 'lucide-react'
+import { ArrowRightIcon, ArrowUpIcon, ArrowDownIcon } from 'lucide-react'
 import { BotDetailView } from './bot-detail-view'
+import { useExpandable } from '@/components/hooks/use-expandable'
 
 interface BotCardProps {
   bot: DemoBot
 }
 
 export function BotCard({ bot }: BotCardProps) {
-  const [showDetails, setShowDetails] = useState(false)
+  const { isExpanded, toggleExpand, animatedHeight } = useExpandable()
+  const contentRef = useRef<HTMLDivElement>(null)
   
-  if (showDetails) {
-    return (
-      <BotDetailView bot={bot} onBack={() => setShowDetails(false)} />
-    )
-  }
-
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -51,6 +47,27 @@ export function BotCard({ bot }: BotCardProps) {
             </div>
           </div>
 
+          <motion.div
+            style={{ height: animatedHeight }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="overflow-hidden"
+          >
+            <div ref={contentRef}>
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="pt-4"
+                  >
+                    <BotDetailView bot={bot} onBack={toggleExpand} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+
           <div className="flex justify-between items-center">
             <div className="flex gap-4 text-sm">
               <p>{bot.positions.length} Positions</p>
@@ -60,10 +77,14 @@ export function BotCard({ bot }: BotCardProps) {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => setShowDetails(true)}
+              onClick={toggleExpand}
               className="gap-1"
             >
-              Details <ArrowRightIcon className="h-4 w-4" />
+              {isExpanded ? (
+                <>Less <ArrowUpIcon className="h-4 w-4" /></>
+              ) : (
+                <>More <ArrowDownIcon className="h-4 w-4" /></>
+              )}
             </Button>
           </div>
         </div>

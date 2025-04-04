@@ -85,7 +85,9 @@ export function AnimatedBackground() {
           const distance = Math.sqrt(dx * dx + dy * dy)
 
           if (distance < 100) {
-            ctx.strokeStyle = `rgba(var(--primary-rgb), ${0.1 - distance / 1000})`
+            // Use a static color instead of CSS variables
+            const opacity = 0.1 - distance / 1000
+            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity})` // Use a default blue color
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.moveTo(particlesArray[a].x, particlesArray[a].y)

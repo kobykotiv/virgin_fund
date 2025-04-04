@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -35,6 +36,14 @@ import { useAuth } from "@/providers/auth-provider"
 import { PortfolioAllocation } from "@/components/portfolio-allocation"
 
 export default function LandingPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const auth = useAuth()
+
+  useEffect(() => {
+    // Update authentication state after mount to prevent hydration mismatch
+    setIsAuthenticated(auth.isAuthenticated)
+  }, [auth.isAuthenticated])
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -65,17 +74,15 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            {/* Conditionally render buttons based on auth status */}
-            {useAuth().isAuthenticated ? (
+            {/* Conditionally render buttons based on client-side auth status to prevent hydration mismatch */}
+            {isAuthenticated ? (
               <>
-                <Link href="/login">
-                  <Button variant="outline" size="sm">
-                    Log In
-                  </Button>
-                </Link>
                 <Link href="/dashboard">
                   <Button size="sm">Dashboard</Button>
                 </Link>
+                <Button variant="outline" size="sm" onClick={auth.logout}>
+                  Log Out
+                </Button>
               </>
             ) : (
               <>

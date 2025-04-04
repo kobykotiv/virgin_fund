@@ -126,3 +126,55 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
 }
+
+export function NavMenu() {
+  return (
+    <NavigationMenu>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Calculators</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              <li>
+                <NavigationMenuLink href="/calculators/portfolio-allocation">
+                  <h3 className="text-sm font-medium">Portfolio Allocation</h3>
+                  <p className="text-xs">Calculate optimal asset distribution based on risk tolerance</p>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink href="/calculators/risk-reward">
+                  <h3 className="text-sm font-medium">Risk/Reward Ratio</h3>
+                  <p className="text-xs">Analyze potential trades based on risk/reward profiles</p>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink href="/calculators/position-size">
+                  <h3 className="text-sm font-medium">Position Sizing</h3>
+                  <p className="text-xs">Calculate optimal position sizes based on account risk</p>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink href="/calculators/profit-loss">
+                  <h3 className="text-sm font-medium">Profit/Loss</h3>
+                  <p className="text-xs">Project potential profits and losses for trades</p>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink href="/calculators/compound-interest">
+                  <h3 className="text-sm font-medium">Compound Interest</h3>
+                  <p className="text-xs">Project growth over time with compound interest</p>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink href="/calculators/drawdown">
+                  <h3 className="text-sm font-medium">Drawdown Analysis</h3>
+                  <p className="text-xs">Calculate maximum drawdown and recovery scenarios</p>
+                </NavigationMenuLink>
+              </li>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  )
+}

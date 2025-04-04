@@ -4,6 +4,7 @@ import ClientLayout from "./ClientLayout"
 import { Inter } from "next/font/google"
 import { Providers } from "@/providers/providers"
 import "./globals.css"
+import { MockDataWarning } from '../components/mock-data-warning'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,6 +30,9 @@ export const metadata: Metadata = {
     generator: 'v0.dev'
 }
 
+/**
+ * Root layout component that wraps all pages
+ */
 export default function RootLayout({
   children,
 }: {
@@ -37,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <MockDataWarning />
         <Providers>{children}</Providers>
       </body>
     </html>

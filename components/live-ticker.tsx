@@ -8,15 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { fetchMarketData } from "@/lib/bot-api"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import dynamic from 'next/dynamic'
-import { getMarketDataService, type MarketData } from "@/services/market-data-service"
-import { useConditionalAuth } from "@/contexts/auth-context"
-
-// Dynamically import TradingView widget to avoid SSR issues
-const TradingViewWidget = dynamic(
-  () => import('react-tradingview-widget').then((mod) => mod.default),
-  { ssr: false }
-)
 
 interface TickerData {
   symbol: string
@@ -29,88 +20,52 @@ interface TickerData {
 interface LiveTickerProps {
   symbols: string[]
   refreshInterval?: number // in milliseconds
-  showCharts?: boolean;
 }
 
-export function LiveTicker({ symbols, refreshInterval = 15000, showCharts = false }: LiveTickerProps) {
+export function LiveTicker({ symbols, refreshInterval = 15000 }: LiveTickerProps) {
   const [tickerData, setTickerData] = useState<TickerData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [searchQuery, setSearchQuery] = useState("")
   const [activeView, setActiveView] = useState<"grid" | "list">("grid")
   const [favoriteSymbols, setFavoriteSymbols] = useState<string[]>([])
-  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
-  const { apiConfig } = useConditionalAuth()
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
+      const data = await Promise.all(symbols.map((symbol) => fetchMarketData(symbol)))
+
+      setTickerData(
+        data.map((item) => ({
+          symbol: item.symbol,
+          price: item.price,
+          change: item.change,
+          volume: item.volume,
+          lastUpdated: new Date(),
+        })),
+      )
+
+      setLastUpdated(new Date())
+    } catch (error) {
+      console.error("Error fetching ticker data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    if (!apiConfig?.keyId || !apiConfig?.secretKey) return;
+    // Initial fetch
+    fetchData()
 
-    const service = getMarketDataService(apiConfig.keyId, apiConfig.secretKey);
-    service.connect();
+    // Set up interval for refreshing data
+    const intervalId = setInterval(fetchData, refreshInterval)
 
-    // Initialize with current data
-    fetchInitialData();
-
-    // Set up WebSocket subscriptions for each symbol
-    const handleMarketData = (symbol: string) => (data: MarketData) => {
-      setTickerData(current => {
-        const index = current.findIndex(t => t.symbol === symbol);
-        if (index === -1) {
-          return [...current, {
-            symbol: data.symbol,
-            price: data.price,
-            change: data.changePercent,
-            volume: data.volume,
-            lastUpdated: new Date()
-          }];
-        }
-        const updated = [...current];
-        updated[index] = {
-          ...updated[index],
-          price: data.price,
-          change: data.changePercent,
-          volume: data.volume,
-          lastUpdated: new Date()
-        };
-        return updated;
-      });
-      setLastUpdated(new Date());
-    };
-
-    // Subscribe to updates for each symbol
-    symbols.forEach(symbol => {
-      service.subscribe(symbol, handleMarketData(symbol));
-    });
-
-    return () => {
-      // Cleanup subscriptions
-      symbols.forEach(symbol => {
-        service.unsubscribe(symbol, handleMarketData(symbol));
-      });
-      service.disconnect();
-    };
-  }, [symbols, apiConfig]);
-
-  const fetchInitialData = async () => {
-    try {
-      setIsLoading(true);
-      const data = await Promise.all(symbols.map(symbol => fetchMarketData(symbol)));
-      setTickerData(data.map(item => ({
-        symbol: item.symbol,
-        price: item.price,
-        change: item.change,
-        volume: item.volume,
-        lastUpdated: new Date()
-      })));
-    } catch (error) {
-      console.error("Error fetching initial ticker data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId)
+  }, [symbols, refreshInterval])
 
   const handleManualRefresh = () => {
-    fetchInitialData()
+    fetchData()
   }
 
   const toggleFavorite = (symbol: string) => {
@@ -120,10 +75,6 @@ export function LiveTicker({ symbols, refreshInterval = 15000, showCharts = fals
       setFavoriteSymbols([...favoriteSymbols, symbol])
     }
   }
-
-  const handleSymbolSelect = (symbol: string) => {
-    setSelectedSymbol(symbol === selectedSymbol ? null : symbol);
-  };
 
   const filteredData = searchQuery
     ? tickerData.filter((ticker) => ticker.symbol.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -174,48 +125,20 @@ export function LiveTicker({ symbols, refreshInterval = 15000, showCharts = fals
       </CardHeader>
       <CardContent>
         {activeView === "grid" ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {isLoading && tickerData.length === 0 ? (
-                Array.from({ length: symbols.length }).map((_, index) => <TickerSkeleton key={index} />)
-              ) : filteredData.length === 0 ? (
-                <div className="col-span-full text-center py-6 text-muted-foreground">No matching symbols found</div>
-              ) : (
-                filteredData.map((ticker) => (
-                  <div key={ticker.symbol} onClick={() => showCharts && handleSymbolSelect(ticker.symbol)} className={showCharts ? 'cursor-pointer' : ''}>
-                    <TickerItem
-                      ticker={ticker}
-                      isFavorite={favoriteSymbols.includes(ticker.symbol)}
-                      onToggleFavorite={() => toggleFavorite(ticker.symbol)}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
-            
-            {showCharts && selectedSymbol && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-base">{selectedSymbol} Chart</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[400px]">
-                    <TradingViewWidget
-                      symbol={selectedSymbol}
-                      theme="light"
-                      autosize
-                      interval="D"
-                      locale="en"
-                      timezone="Etc/UTC"
-                      style="1"
-                      hide_side_toolbar={false}
-                      allow_symbol_change={true}
-                      save_image={true}
-                      enable_publishing={false}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {isLoading && tickerData.length === 0 ? (
+              Array.from({ length: symbols.length }).map((_, index) => <TickerSkeleton key={index} />)
+            ) : filteredData.length === 0 ? (
+              <div className="col-span-full text-center py-6 text-muted-foreground">No matching symbols found</div>
+            ) : (
+              filteredData.map((ticker) => (
+                <TickerItem
+                  key={ticker.symbol}
+                  ticker={ticker}
+                  isFavorite={favoriteSymbols.includes(ticker.symbol)}
+                  onToggleFavorite={() => toggleFavorite(ticker.symbol)}
+                />
+              ))
             )}
           </div>
         ) : (

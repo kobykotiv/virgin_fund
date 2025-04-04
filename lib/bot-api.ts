@@ -149,13 +149,13 @@ export async function createBot(botData: Partial<Bot>): Promise<Bot> {
         winRate: 0,
         lastUpdated: now,
       },
-      stopLoss: botData.stopLoss || 5,
-      takeProfit: botData.takeProfit || 10,
-      maxDrawdown: botData.maxDrawdown || 15,
-      indicatorConfig: botData.type === "indicator" ? botData.indicatorConfig : undefined,
-      gridConfig: botData.type === "grid" ? botData.gridConfig : undefined,
-      dcaConfig: botData.type === "dca" ? botData.dcaConfig : undefined,
-      basketConfig: botData.type === "basket" ? botData.basketConfig : undefined,
+      stopLoss: botData.stopLoss,
+      takeProfit: botData.takeProfit,
+      maxDrawdown: botData.maxDrawdown,
+      indicatorConfig: botData.indicatorConfig,
+      gridConfig: botData.gridConfig,
+      dcaConfig: botData.dcaConfig,
+      basketConfig: botData.basketConfig,
     }
 
     // If in demo mode, add allocation
@@ -390,32 +390,5 @@ export async function fetchAccountBalance(): Promise<any> {
       500,
     )
   })
-}
-
-export function convertDemoBotToBot(demoBot: DemoBot): Bot {
-  const botType = demoBot.strategy as "grid" | "dca" | "indicator" | "basket";
-  return {
-    id: demoBot.id,
-    name: demoBot.nickname,
-    type: botType,
-    status: "active",
-    assets: demoBot.assets,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    performance: {
-      totalPnL: demoBot.positions.reduce((sum, pos) => sum + pos.unrealizedPnL, 0),
-      pnlPercentage: (demoBot.performance[demoBot.performance.length - 1] / demoBot.performance[0] - 1) * 100,
-      totalTrades: Math.floor(Math.random() * 100) + 20,
-      winRate: 0.6 + Math.random() * 0.2,
-      lastUpdated: new Date().toISOString(),
-    },
-    stopLoss: demoBot.stopLoss,
-    takeProfit: demoBot.takeProfit,
-    maxDrawdown: demoBot.maxDrawdown,
-    ...(botType === "indicator" && { indicatorConfig: demoBot.strategyConfig }),
-    ...(botType === "grid" && { gridConfig: demoBot.strategyConfig }),
-    ...(botType === "dca" && { dcaConfig: demoBot.strategyConfig }),
-    ...(botType === "basket" && { basketConfig: demoBot.strategyConfig }),
-  };
 }
 

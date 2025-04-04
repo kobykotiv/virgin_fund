@@ -85,13 +85,10 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
 
   const handleUpdateBasketAllocation = (index: number, field: "symbol" | "allocation", value: string | number) => {
     const newAllocations = [...basketAllocations]
-    
-    if (field === "symbol") {
-      newAllocations[index].symbol = value as string
-    } else if (field === "allocation") {
-      newAllocations[index].allocation = Number(value)
+    newAllocations[index] = {
+      ...newAllocations[index],
+      [field]: field === "allocation" ? Number(value) : value,
     }
-    
     setBasketAllocations(newAllocations)
   }
 
@@ -196,7 +193,8 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
                 <SelectItem value="indicator">Indicator-Based</SelectItem>
                 <SelectItem value="grid">Grid Trading</SelectItem>
                 <SelectItem value="dca">Dollar Cost Averaging</SelectItem>
-                <SelectItem value="basket">Basket Trading</SelectContent>
+                <SelectItem value="basket">Basket Trading</SelectItem>
+              </SelectContent>
             </Select>
           </div>
 
@@ -512,7 +510,7 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
                             : "text-red-500"
                         }
                       >
-                        {basketAllocations.reduce((sum, { allocation }) => sum + allocation, 0).toFixed(1)}%
+                        {basketAllocations.reduce((sum, { allocation }) => sum + allocation, 0)}%
                       </span>
                     </div>
                   </div>

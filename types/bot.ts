@@ -1,31 +1,39 @@
-export type BotType = "indicator" | "grid" | "dca" | "basket"
-export type BotStatus = "active" | "paused" | "error"
+export type BotType =
+  | "basket" // Basket Trading
+  | "grid" // Grid Trading
+  | "dca" // Dollar Cost Averaging
+  | "indicator" // Indicator-Based Trading
+
+export type BotStatus =
+  | "active" // Bot is running
+  | "paused" // Bot is paused
+  | "error" // Bot has encountered an error
 
 export type Timeframe = "1min" | "5min" | "15min" | "30min" | "1hour" | "2hour" | "4hour" | "1day" | "1week" | "1month"
 
 export interface IndicatorConfig {
   type: "rsi" | "macd" | "bollinger"
-  timeframe: string
+  timeframe: Timeframe
   entryThreshold: number
   exitThreshold: number
 }
 
 export interface GridConfig {
-  gridSize: number // Percentage between grid lines
-  upperLimit: number
-  lowerLimit: number
-  quantity: number
+  gridSize: number // Grid size in percentage (e.g. 1 for 1%)
+  upperLimit: number // Upper price limit
+  lowerLimit: number // Lower price limit
+  quantity: number // Quantity per order
 }
 
 export interface DCAConfig {
-  interval: string // Cron expression (e.g., "0 0 * * 1" for every Monday)
-  amount: number
-  duration?: string // Optional duration (e.g., "30days", "3months", "1year")
+  interval: string // Cron expression for scheduling
+  amount: number // Amount per purchase
+  duration?: string // Optional duration (e.g. '30days')
 }
 
 export interface BasketConfig {
-  rebalancePeriod?: string // Cron expression for rebalancing
-  targetAllocation: Record<string, number> // Symbol to decimal percentage map
+  rebalancePeriod?: string // Optional rebalance period (cron expression)
+  targetAllocation: Record<string, number> // e.g. {'AAPL': 0.5, 'MSFT': 0.5}
 }
 
 export interface BotPerformance {
@@ -40,127 +48,22 @@ export interface Bot {
   id: string
   name: string
   type: BotType
-  status: "active" | "paused" | "error"
-  assets: string[] // Asset symbols
+  status: BotStatus
+  assets: string[] // Stock symbols
   createdAt: string
   updatedAt: string
-  performance?: {
-    totalPnL: number
-    pnlPercentage: number
-    totalTrades: number
-    winRate: number
-    lastUpdated: string
-  }
-  stopLoss?: number
-  takeProfit?: number
-  maxDrawdown?: number
+  performance?: BotPerformance
+  allocation?: number // Capital allocation for the bot (for demo mode)
+
+  // Risk management
+  stopLoss?: number // Stop loss percentage
+  takeProfit?: number // Take profit percentage
+  maxDrawdown?: number // Maximum drawdown percentage
+
+  // Bot-specific configs
   indicatorConfig?: IndicatorConfig
   gridConfig?: GridConfig
   dcaConfig?: DCAConfig
   basketConfig?: BasketConfig
-}
-
-export interface BotValidation {
-  isValid: boolean
-  errors: string[]
-  warnings: string[]
-  suggestions: string[]
-}
-
-export interface BotQuota {
-  maxBots: number
-  activeBots: number
-  remainingBots: number
-  maxAssetsPerBot: number
-  features: {
-    liveTrading: boolean
-    paperTrading: boolean
-    indicator: boolean
-    grid: boolean
-    dca: boolean
-    basket: boolean
-  }
-}
-
-// Types for historical price data
-export interface OHLCV {
-  timestamp: string
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
-}
-
-// Types for bot signals
-export interface Signal {
-  botId: string
-  type: "entry" | "exit"
-  asset: string
-  price: number
-  timestamp: string
-  reason: string
-  confidence?: number // Optional confidence score 0-1
-  metadata?: Record<string, any> // Additional signal-specific data
-}
-
-// Types for trading rules
-export interface TradingRule {
-  id: string
-  name: string
-  description?: string
-  conditions: RuleCondition[]
-  actions: RuleAction[]
-  enabled: boolean
-}
-
-export interface RuleCondition {
-  type: "price" | "indicator" | "time" | "volume" | "custom"
-  operator: ">" | "<" | ">=" | "<=" | "==" | "!="
-  value: number | string
-  asset?: string
-  indicator?: {
-    type: string
-    params: Record<string, any>
-  }
-}
-
-export interface RuleAction {
-  type: "buy" | "sell" | "alert" | "custom"
-  amount?: number | "all"
-  price?: number | "market"
-  asset?: string
-  metadata?: Record<string, any>
-}
-
-// Types for exchange integration
-export interface ExchangeCredentials {
-  keyId: string
-  secretKey: string
-  baseUrl: string
-  paper: boolean
-}
-
-// Types for platform configuration
-export interface PlatformConfig {
-  branding?: {
-    name: string
-    logo?: string
-    primaryColor?: string
-    secondaryColor?: string
-  }
-  features: {
-    userAuth: boolean
-    copyTrading: boolean
-    backtesting: boolean
-    signals: boolean
-  }
-  limits?: {
-    maxBots: number
-    maxUsers?: number
-    maxAssetsPerBot?: number
-    supportedExchanges: string[]
-    supportedAssets: string[]
-  }
 }
 

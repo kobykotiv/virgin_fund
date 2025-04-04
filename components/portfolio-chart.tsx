@@ -5,10 +5,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { getPortfolioAllocation } from "@/services/alpaca-service"
 
 interface PortfolioChartProps {
-  portfolioType?: string;
-  portfolioId?: string;
-  className?: string;
-  showTransactionHistory?: boolean;
+  portfolioType: string
+  className?: string
 }
 
 const COLORS = [
@@ -24,59 +22,14 @@ const COLORS = [
   "#66B2FF", // light blue
 ]
 
-export function PortfolioChart({ portfolioType, portfolioId, className, showTransactionHistory = false }: PortfolioChartProps) {
+export function PortfolioChart({ portfolioType, className }: PortfolioChartProps) {
   const [data, setData] = useState<Array<{ name: string; value: number }>>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [transactions, setTransactions] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
-      setError(null)
-      
-      try {
-        if (portfolioId) {
-          // Fetch portfolio data from our API
-          const response = await fetch(`/api/db/portfolios/${portfolioId}?includeAssets=true`)
-          if (!response.ok) throw new Error('Failed to fetch portfolio data')
-          
-          const portfolioData = await response.json()
-          
-          // Transform asset data for chart display
-          const assetAllocation = portfolioData.assets.map((asset: any) => ({
-            name: asset.symbol,
-            value: asset.quantity * asset.averagePrice,
-            holdingType: asset.holdingType,
-            id: asset.id
-          }))
-          
-          setData(assetAllocation)
-          
-          // Fetch transaction history if requested
-          if (showTransactionHistory && portfolioData.assets.length > 0) {
-            const txResponse = await fetch(`/api/db/transactions?portfolioId=${portfolioId}`)
-            if (txResponse.ok) {
-              const txData = await txResponse.json()
-              setTransactions(txData)
-            }
-          }
-        } else {
-          // Fallback to legacy method
-          const allocationData = await getPortfolioAllocation(portfolioType || 'default')
-          setData(allocationData)
-        }
-      } catch (err: any) {
-        console.error('Error fetching portfolio data:', err)
-        setError(err.message || 'Failed to load portfolio data')
-        setData([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    fetchData()
-  }, [portfolioType, portfolioId, showTransactionHistory])
+    // Get portfolio allocation data
+    const allocationData = getPortfolioAllocation(portfolioType)
+    setData(allocationData)
+  }, [portfolioType])
 
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5
@@ -98,14 +51,6 @@ export function PortfolioChart({ portfolioType, portfolioId, className, showTran
     )
   }
 
-  if (isLoading) {
-    return <div className={`w-full h-64 flex items-center justify-center ${className}`}>Loading portfolio data...</div>
-  }
-
-  if (error) {
-    return <div className={`w-full h-64 flex items-center justify-center text-red-500 ${className}`}>{error}</div>
-  }
-
   return (
     <div className={`w-full h-64 ${className}`}>
       <ResponsiveContainer width="100%" height="100%">
@@ -125,11 +70,7 @@ export function PortfolioChart({ portfolioType, portfolioId, className, showTran
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number, name: string) => {
-              const total = data.reduce((sum, item) => sum + item.value, 0)
-              const percentage = ((value / total) * 100).toFixed(1)
-              return [`${percentage}% ($${value.toLocaleString()})`, name]
-            }}
+            formatter={(value: number) => [`${value}%`, "Allocation"]}
             contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "6px", border: "none" }}
           />
           <Legend />

@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useRouter, usePathname } from "next/navigation"
 import { DEMO_ACCOUNT } from "@/lib/demo-data"
 import { DEMO_SCENARIOS } from "@/lib/demo-scenarios"
-import { getMarketDataService } from "@/services/market-data-service";
 
 interface User {
   email: string
@@ -23,12 +22,6 @@ interface AuthContextType {
   logout: () => void
   enableDemoMode: (demoScenario?: string) => void
   disableDemoMode: () => void
-  apiConfig: {
-    keyId: string;
-    secretKey: string;
-    baseUrl: string;
-    isPaper: boolean;
-  } | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -38,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isDemoMode, setIsDemoMode] = useState(false)
-  const [apiConfig, setApiConfig] = useState<AuthContextType["apiConfig"]>(null);
   const router = useRouter()
   const pathname = usePathname()
 
@@ -111,29 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push("/login")
     }
   }, [isAuthenticated, isLoading, pathname, router])
-
-  useEffect(() => {
-    // Fetch API configuration on mount
-    const fetchApiConfig = async () => {
-      try {
-        const response = await fetch("/api/alpaca/status");
-        const data = await response.json();
-        if (data.config) {
-          setApiConfig(data.config);
-          
-          // Initialize market data service if we have API keys
-          if (data.config.keyId && data.config.secretKey) {
-            const service = getMarketDataService(data.config.keyId, data.config.secretKey);
-            service.connect();
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching API configuration:", error);
-      }
-    };
-
-    fetchApiConfig();
-  }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true)
@@ -243,7 +212,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         enableDemoMode,
         disableDemoMode,
-        apiConfig,
       }}
     >
       {children}

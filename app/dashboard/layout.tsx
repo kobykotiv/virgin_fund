@@ -1,74 +1,71 @@
-'use client';
+import type { ReactNode } from "react"
+import Link from "next/link"
+import { DashboardNav } from "@/components/dashboard-nav"
+import { UserAccountNav } from "@/components/user-account-nav"
+import { ModeToggle } from "@/components/mode-toggle"
 
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/auth-context';
+interface DashboardLayoutProps {
+  children: ReactNode
+}
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
-  
-  const navItems = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Portfolios', path: '/portfolios' },
-    { name: 'Positions', path: '/positions' },
-    { name: 'Transactions', path: '/transactions' },
-    { name: 'Trades', path: '/trades' },
-    { name: 'Rebalances', path: '/rebalances' },
-    { name: 'Settings', path: '/settings' },
-  ];
-
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, loading, router]);
-
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const dashboardNavItems = [
+    {
+      href: "/dashboard",
+      title: "Overview",
+    },
+    {
+      href: "/dashboard/custom-signals",
+      title: "Custom Signals",
+    },
+    {
+      href: "/dashboard/custom-signals/builder",
+      title: "Signal Builder",
+    },
+    {
+      href: "/dashboard/custom-signals/backtest",
+      title: "Backtest",
+    },
+    {
+      href: "/dashboard/calculators/savings",
+      title: "Savings Calculator",
+    },
+    {
+      href: "/dashboard/calculators/compound-interest",
+      title: "Compound Interest",
+    },
+    {
+      href: "/dashboard/calculators/inflation",
+      title: "Inflation Calculator",
+    },
+    {
+      href: "/dashboard/calculators/retirement",
+      title: "Retirement Calculator",
+    },
+  ]
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-md">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-800">Virgin Fund</h1>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-40 border-b bg-background">
+        <div className="container flex h-16 items-center justify-between py-4">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <h1 className="text-xl font-bold">Virgin Fund</h1>
+            </Link>
+          </div>
+          <div className="flex items-center gap-4">
+            <ModeToggle />
+            <UserAccountNav />
+          </div>
         </div>
-        <nav className="mt-6">
-          <ul>
-            {navItems.map((item) => (
-              <li key={item.path}>
-                <Link href={item.path} 
-                  className={`block px-6 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-800 ${
-                    pathname === item.path ? 'bg-gray-100 text-gray-800 border-l-4 border-blue-500' : ''
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6">
-          {children}
-        </div>
+      </header>
+      <div className="container grid flex-1 gap-12 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
+        <aside className="hidden w-[200px] flex-col md:flex lg:w-[240px]">
+          <DashboardNav items={dashboardNavItems} />
+        </aside>
+        <main className="flex w-full flex-1 flex-col overflow-hidden py-6">{children}</main>
       </div>
     </div>
-  );
+  )
 }
 

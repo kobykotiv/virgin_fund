@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/providers/auth-provider"
 import { Loader2 } from "lucide-react"
+import { AlpacaKeyForm } from "@/components/alpaca-key-form"
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -316,17 +317,15 @@ export default function SettingsPage() {
           <Card id="security-settings-card">
             <CardHeader>
               <CardTitle>API Configuration</CardTitle>
-              <CardDescription>Manage your Alpaca Markets API keys</CardDescription>
+              <CardDescription>Configure your Alpaca Markets API keys</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm">
-                  Configure your Alpaca Markets API keys to enable paper trading. These keys are used to connect to the
-                  Alpaca API for executing trades and retrieving market data.
+              <AlpacaKeyForm />
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Your API keys are stored securely in your browser and are only used to communicate directly with Alpaca Markets.
+                  They are never sent to our servers.
                 </p>
-                <Button onClick={() => window.dispatchEvent(new CustomEvent("openApiSettings"))}>
-                  Configure API Keys
-                </Button>
               </div>
             </CardContent>
           </Card>

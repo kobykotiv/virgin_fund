@@ -927,11 +927,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
+    <div id="login-modal" className="fixed inset-0 flex items-center justify-center z-50">
       {/* Blurred background overlay */}
       <div
+        id="login-modal-overlay"
         className="absolute inset-0 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
-        onClick={handleDismiss} // Allow clicking outside to dismiss
       />
 
       {/* Replace the main container div with a full-screen tabbed interface */}

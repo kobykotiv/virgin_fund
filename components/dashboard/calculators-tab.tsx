@@ -20,8 +20,14 @@ export default function CalculatorsTab() {
 
       <Tabs defaultValue="inflation" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="inflation">Inflation Calculator</TabsTrigger>
-          <TabsTrigger value="savings">Long-Term Savings</TabsTrigger>
+          <TabsTrigger value="inflation">Inflation</TabsTrigger>
+          <TabsTrigger value="savings">Savings</TabsTrigger>
+          <TabsTrigger value="retirement">Retirement</TabsTrigger>
+          <TabsTrigger value="mortgage">Mortgage</TabsTrigger>
+          <TabsTrigger value="debt">Debt</TabsTrigger>
+          <TabsTrigger value="fees">Investment Fees</TabsTrigger>
+          <TabsTrigger value="dca">DCA</TabsTrigger>
+          <TabsTrigger value="options">Options</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inflation" className="space-y-4">
@@ -30,6 +36,30 @@ export default function CalculatorsTab() {
 
         <TabsContent value="savings" className="space-y-4">
           <SavingsCalculator />
+        </TabsContent>
+
+        <TabsContent value="retirement" className="space-y-4">
+          <RetirementCalculator />
+        </TabsContent>
+
+        <TabsContent value="mortgage" className="space-y-4">
+          <MortgageCalculator />
+        </TabsContent>
+
+        <TabsContent value="debt" className="space-y-4">
+          <DebtCalculator />
+        </TabsContent>
+
+        <TabsContent value="fees" className="space-y-4">
+          <FeeImpactCalculator />
+        </TabsContent>
+
+        <TabsContent value="dca" className="space-y-4">
+          <DCACalculator />
+        </TabsContent>
+
+        <TabsContent value="options" className="space-y-4">
+          <OptionPremiumCalculator />
         </TabsContent>
       </Tabs>
     </div>

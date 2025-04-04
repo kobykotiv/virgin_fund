@@ -6,8 +6,9 @@ import { DEMO_ACCOUNT } from "@/lib/demo-data"
 import { DEMO_SCENARIOS } from "@/lib/demo-scenarios"
 
 interface User {
+  id: string
   email: string
-  name?: string
+  name: string
   image?: string
   isDemoAccount?: boolean
   demoScenario?: string
@@ -19,6 +20,7 @@ interface AuthContextType {
   isLoading: boolean
   isDemoMode: boolean
   login: (email: string, password: string) => Promise<void>
+  signup: (email: string, password: string, name: string) => Promise<void>
   logout: () => void
   enableDemoMode: (demoScenario?: string) => void
   disableDemoMode: () => void
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Validate that the demo scenario exists
           if (DEMO_SCENARIOS[demoScenario]) {
             setUser({
+              id: "user_" + Math.random().toString(36).substr(2, 9),
               email: "admin@example.com",
               name: "Demo User",
               isDemoAccount: true,
@@ -65,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Fall back to general demo if the specified scenario doesn't exist
             localStorage.setItem("demo-scenario", "general")
             setUser({
+              id: "user_" + Math.random().toString(36).substr(2, 9),
               email: "admin@example.com",
               name: "Demo User",
               isDemoAccount: true,
@@ -115,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const demoScenario = localStorage.getItem("demo-scenario") || "general"
 
         const user = {
+          id: "user_" + Math.random().toString(36).substr(2, 9),
           email: email,
           name: "Demo User",
           image: "/placeholder.svg?height=128&width=128",
@@ -136,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const user = {
+        id: "user_" + Math.random().toString(36).substr(2, 9),
         email,
         name: email.split("@")[0], // Generate a name from the email
       }
@@ -147,6 +153,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push("/")
     } catch (error) {
       console.error("Login error:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const signup = async (email: string, password: string, name: string) => {
+    setIsLoading(true)
+    try {
+      // In a real app, you would make an API call to create a new user
+      // For this demo, we'll simulate a successful signup
+      const mockUser = {
+        id: "user_" + Math.random().toString(36).substr(2, 9),
+        email,
+        name
+      }
+      
+      localStorage.setItem("user", JSON.stringify(mockUser))
+      setUser(mockUser)
+    } catch (error) {
+      console.error("Signup error:", error)
       throw error
     } finally {
       setIsLoading(false)
@@ -174,6 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Create a demo user
     const demoUser = {
+      id: "user_" + Math.random().toString(36).substr(2, 9),
       email: "admin@example.com",
       name: "Demo User",
       image: "/placeholder.svg?height=128&width=128",
@@ -209,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isDemoMode,
         login,
+        signup,
         logout,
         enableDemoMode,
         disableDemoMode,

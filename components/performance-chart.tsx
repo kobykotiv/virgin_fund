@@ -1,154 +1,149 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts"
+import { useEffect, useRef } from "react"
+import { cn } from "@/lib/utils"
 
 interface PerformanceChartProps {
   days: number
-  variant?: "default" | "crypto" | "defi"
+  variant?: "default" | "Bitcoin" | "crypto" | "defi"
   className?: string
 }
 
-export function PerformanceChart({ days = 30, variant = "default", className = "" }: PerformanceChartProps) {
-  const [data, setData] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+export function PerformanceChart({ days, variant = "default", className }: PerformanceChartProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    // Generate random performance data
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    // Set canvas dimensions
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio
+    canvas.style.width = `${canvas.offsetWidth}px`
+    canvas.style.height = `${canvas.offsetHeight}px`
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+
+    // Generate data based on the variant
     const generateData = () => {
-      setIsLoading(true)
-
-      let startValue = 10000
-      let volatility = 0.01
-
-      // Adjust volatility based on variant
-      if (variant === "crypto") {
-        startValue = 5000
-        volatility = 0.03
-      } else if (variant === "defi") {
-        startValue = 8000
-        volatility = 0.02
+      const data = []
+      let trend = variant === "crypto" ? 0.6 : variant === "defi" ? 0.4 : 0.2
+      let volatility = variant === "crypto" ? 4 : variant === "defi" ? 3 : 2
+      
+      let value = 100
+      for (let i = 0; i < days; i++) {
+        // Random walk with trend
+        const change = (Math.random() - 0.5 + trend / 10) * volatility
+        value = Math.max(50, value + change)
+        data.push(value)
       }
-
-      const result = []
-      let currentValue = startValue
-
-      // Generate data for the specified number of days
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(endDate.getDate() - days)
-
-      for (let i = 0; i <= days; i++) {
-        const currentDate = new Date(startDate)
-        currentDate.setDate(startDate.getDate() + i)
-
-        // Add some randomness to the value, but with an upward trend
-        const change = (Math.random() - 0.3) * volatility
-        currentValue = currentValue * (1 + change)
-
-        result.push({
-          date: currentDate.toISOString().split("T")[0],
-          value: currentValue,
-          previousValue: currentValue * 0.85,
-        })
-      }
-
-      setData(result)
-      setIsLoading(false)
+      return data
     }
 
-    generateData()
+    const data = generateData()
+    
+    // Draw chart
+    const drawChart = () => {
+      const width = canvas.offsetWidth
+      const height = canvas.offsetHeight
+      const padding = 30
+
+      ctx.clearRect(0, 0, width, height)
+
+      // Calculate min and max values
+      const max = Math.max(...data) * 1.1
+      const min = Math.min(...data) * 0.9
+
+      // Draw grid lines
+      ctx.strokeStyle = 'rgba(var(--muted-foreground-rgb), 0.1)'
+      ctx.lineWidth = 1
+
+      // Horizontal grid lines
+      for (let i = 0; i <= 5; i++) {
+        const y = padding + (height - 2 * padding) * (1 - i / 5)
+        ctx.beginPath()
+        ctx.moveTo(padding, y)
+        ctx.lineTo(width - padding, y)
+        ctx.stroke()
+      }
+
+      // Vertical grid lines
+      for (let i = 0; i <= 6; i++) {
+        const x = padding + (width - 2 * padding) * (i / 6)
+        ctx.beginPath()
+        ctx.moveTo(x, padding)
+        ctx.lineTo(x, height - padding)
+        ctx.stroke()
+      }
+
+      // Draw the chart line
+      ctx.strokeStyle = 'rgb(var(--primary-rgb))'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+
+      // Create gradient for area under the line
+      const gradient = ctx.createLinearGradient(0, padding, 0, height - padding)
+      gradient.addColorStop(0, 'rgba(var(--primary-rgb), 0.2)')
+      gradient.addColorStop(1, 'rgba(var(--primary-rgb), 0)')
+
+      // Draw each data point
+      data.forEach((value, index) => {
+        const x = padding + (width - 2 * padding) * (index / (data.length - 1))
+        const y = padding + (height - 2 * padding) * (1 - (value - min) / (max - min))
+        
+        if (index === 0) {
+          ctx.moveTo(x, y)
+        } else {
+          ctx.lineTo(x, y)
+        }
+      })
+      
+      ctx.stroke()
+
+      // Fill area under the line
+      ctx.lineTo(width - padding, height - padding)
+      ctx.lineTo(padding, height - padding)
+      ctx.closePath()
+      ctx.fillStyle = gradient
+      ctx.fill()
+
+      // Draw data points
+      ctx.fillStyle = 'rgb(var(--primary-rgb))'
+      data.forEach((value, index) => {
+        // Only draw some points for better visual
+        if (index % Math.ceil(data.length / 10) === 0 || index === data.length - 1) {
+          const x = padding + (width - 2 * padding) * (index / (data.length - 1))
+          const y = padding + (height - 2 * padding) * (1 - (value - min) / (max - min))
+          
+          ctx.beginPath()
+          ctx.arc(x, y, 3, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      })
+    }
+
+    // Initial draw
+    drawChart()
+
+    // Redraw on window resize
+    const handleResize = () => {
+      canvas.width = canvas.offsetWidth * window.devicePixelRatio
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio
+      canvas.style.width = `${canvas.offsetWidth}px`
+      canvas.style.height = `${canvas.offsetHeight}px`
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+      drawChart()
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
   }, [days, variant])
 
-  if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center ${className}`}>
-        <div className="animate-pulse text-muted-foreground">Loading chart data...</div>
-      </div>
-    )
-  }
-
-  // Determine colors based on variant
-  let colors = {
-    line: "#3b82f6",
-    area: "rgba(59, 130, 246, 0.2)",
-    grid: "rgba(59, 130, 246, 0.1)",
-  }
-
-  if (variant === "crypto") {
-    colors = {
-      line: "#f59e0b",
-      area: "rgba(245, 158, 11, 0.2)",
-      grid: "rgba(245, 158, 11, 0.1)",
-    }
-  } else if (variant === "defi") {
-    colors = {
-      line: "#10b981",
-      area: "rgba(16, 185, 129, 0.2)",
-      grid: "rgba(16, 185, 129, 0.1)",
-    }
-  }
-
-  return (
-    <div className={className}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{
-            top: 10,
-            right: 10,
-            left: 0,
-            bottom: 0,
-          }}
-        >
-          <defs>
-            <linearGradient id={`colorValue-${variant}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={colors.line} stopOpacity={0.3} />
-              <stop offset="95%" stopColor={colors.line} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => {
-              const date = new Date(value)
-              return `${date.getMonth() + 1}/${date.getDate()}`
-            }}
-          />
-          <YAxis
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => `$${(value / 1000).toFixed(1)}k`}
-            domain={["dataMin - 500", "dataMax + 500"]}
-          />
-          <Tooltip
-            formatter={(value) => [
-              `$${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-              "Value",
-            ]}
-            labelFormatter={(value) => new Date(value).toLocaleDateString()}
-          />
-          <Area
-            type="monotone"
-            dataKey="previousValue"
-            stroke="rgba(100, 100, 100, 0.3)"
-            strokeWidth={1.5}
-            fillOpacity={0.3}
-            fill="url(#colorValue-previous)"
-            dot={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke={colors.line}
-            strokeWidth={2.5}
-            fillOpacity={1}
-            fill={`url(#colorValue-${variant})`}
-            activeDot={{ r: 6 }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  )
+  return <canvas ref={canvasRef} className={cn("w-full h-full", className)} />
 }
 

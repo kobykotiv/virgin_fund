@@ -1,141 +1,91 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 
 export function FearGreedWidget() {
-  const [data, setData] = useState<any[]>([])
-  const [currentValue, setCurrentValue] = useState<number>(0)
-  const [sentiment, setSentiment] = useState<string>("")
-  const [isLoading, setIsLoading] = useState(true)
+  const [fearGreedValue, setFearGreedValue] = useState(50)
+  const [fearGreedLabel, setFearGreedLabel] = useState("Neutral")
 
   useEffect(() => {
-    // Generate mock fear & greed data
-    const generateData = () => {
-      setIsLoading(true)
-
-      const result = []
-      const days = 30
-
-      // Generate data for the last 30 days
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(endDate.getDate() - days)
-
-      let value = 50 + (Math.random() * 20 - 10)
-
-      for (let i = 0; i <= days; i++) {
-        const currentDate = new Date(startDate)
-        currentDate.setDate(startDate.getDate() + i)
-
-        // Add some randomness to the value, but with a trend
-        const change = Math.random() * 10 - 5
-        value = Math.max(0, Math.min(100, value + change))
-
-        result.push({
-          date: currentDate.toISOString().split("T")[0],
-          value: Math.round(value),
-        })
-      }
-
-      setData(result)
-      setCurrentValue(Math.round(value))
-
-      // Set sentiment based on value
-      if (value >= 0 && value < 25) {
-        setSentiment("Extreme Fear")
-      } else if (value >= 25 && value < 45) {
-        setSentiment("Fear")
-      } else if (value >= 45 && value < 55) {
-        setSentiment("Neutral")
-      } else if (value >= 55 && value < 75) {
-        setSentiment("Greed")
-      } else {
-        setSentiment("Extreme Greed")
-      }
-
-      setIsLoading(false)
+    // In a real app, you would fetch this data from an API
+    // For demo purposes, we're using a random value
+    const fetchFearGreedIndex = () => {
+      // Random value between 0 and 100
+      const randomValue = Math.floor(Math.random() * 100)
+      setFearGreedValue(randomValue)
+      
+      // Set the label based on the value
+      if (randomValue <= 25) setFearGreedLabel("Extreme Fear")
+      else if (randomValue <= 40) setFearGreedLabel("Fear")
+      else if (randomValue <= 60) setFearGreedLabel("Neutral")
+      else if (randomValue <= 80) setFearGreedLabel("Greed")
+      else setFearGreedLabel("Extreme Greed")
     }
 
-    generateData()
+    fetchFearGreedIndex()
+    
+    // Simulate data updates
+    const interval = setInterval(fetchFearGreedIndex, 30000)
+    
+    return () => clearInterval(interval)
   }, [])
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-muted-foreground">Loading fear & greed data...</div>
-      </div>
-    )
+  // Calculate the gauge position and color
+  const gaugeRotation = (fearGreedValue / 100) * 180 - 90
+  const gaugeColor = getColorForValue(fearGreedValue)
+  
+  function getColorForValue(value: number) {
+    if (value <= 25) return "#FF4136" // Red for Extreme Fear
+    if (value <= 40) return "#FF851B" // Orange for Fear
+    if (value <= 60) return "#FFDC00" // Yellow for Neutral
+    if (value <= 80) return "#2ECC40" // Green for Greed
+    return "#3D9970" // Dark Green for Extreme Greed
   }
-
-  // Get color based on value
-  const getColor = (value: number) => {
-    if (value >= 0 && value < 25) return "#ef4444" // red
-    if (value >= 25 && value < 45) return "#f97316" // orange
-    if (value >= 45 && value < 55) return "#eab308" // yellow
-    if (value >= 55 && value < 75) return "#84cc16" // light green
-    return "#22c55e" // green
-  }
-
-  const color = getColor(currentValue)
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <div className="text-sm text-muted-foreground">Current Index</div>
-          <div className="text-2xl font-bold">{currentValue}</div>
-        </div>
-        <div className="text-right">
-          <div className="text-sm text-muted-foreground">Sentiment</div>
-          <div className="text-lg font-semibold" style={{ color }}>
-            {sentiment}
+    <><div className="w-full h-full flex flex-col items-center justify-center p-4">
+      <h3 className="text-xl font-bold mb-2">Crypto Fear & Greed Index</h3>
+
+      <div className="relative w-48 h-24 mb-6">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
+          {/* Gauge background */}
+          <div className="absolute top-0 left-0 w-full h-full bg-muted rounded-t-full"></div>
+
+          {/* Gauge levels */}
+          <div className="absolute top-0 left-0 w-full h-full">
+            <div className="absolute top-0 left-0 w-1/5 h-full bg-red-500 opacity-20 rounded-tl-full"></div>
+            <div className="absolute top-0 left-1/5 w-1/5 h-full bg-orange-400 opacity-20"></div>
+            <div className="absolute top-0 left-2/5 w-1/5 h-full bg-yellow-400 opacity-20"></div>
+            <div className="absolute top-0 left-3/5 w-1/5 h-full bg-green-400 opacity-20"></div>
+            <div className="absolute top-0 left-4/5 w-1/5 h-full bg-green-600 opacity-20 rounded-tr-full"></div>
           </div>
+
+          {/* Gauge needle */}
+          <div
+            className="absolute bottom-0 left-1/2 w-1 h-24 bg-foreground origin-bottom"
+            style={{ transform: `translateX(-50%) rotate(${gaugeRotation}deg)` }}
+          ></div>
+
+          {/* Gauge center point */}
+          <div className="absolute bottom-0 left-1/2 w-4 h-4 rounded-full bg-foreground transform -translate-x-1/2 translate-y-1/2"></div>
         </div>
       </div>
 
-      <div className="flex-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={data}
-            margin={{
-              top: 5,
-              right: 10,
-              left: 0,
-              bottom: 5,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(100, 100, 100, 0.1)" />
-            <XAxis
-              dataKey="date"
-              tick={{ fontSize: 10 }}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return `${date.getMonth() + 1}/${date.getDate()}`
-              }}
-            />
-            <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-            <Tooltip
-              formatter={(value) => [`${value}`, "Index"]}
-              labelFormatter={(value) => new Date(value).toLocaleDateString()}
-            />
-            <ReferenceLine y={25} stroke="rgba(239, 68, 68, 0.5)" strokeDasharray="3 3" />
-            <ReferenceLine y={45} stroke="rgba(234, 179, 8, 0.5)" strokeDasharray="3 3" />
-            <ReferenceLine y={55} stroke="rgba(234, 179, 8, 0.5)" strokeDasharray="3 3" />
-            <ReferenceLine y={75} stroke="rgba(34, 197, 94, 0.5)" strokeDasharray="3 3" />
-            <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="text-center">
+        <div className="text-3xl font-bold mb-1">{fearGreedValue}</div>
+        <div className="text-lg font-medium" style={{ color: gaugeColor }}>{fearGreedLabel}</div>
       </div>
 
-      <div className="grid grid-cols-5 gap-1 mt-2 text-xs text-center">
-        <div className="bg-red-500 text-white p-1 rounded-l-sm">Extreme Fear</div>
-        <div className="bg-orange-500 text-white p-1">Fear</div>
-        <div className="bg-yellow-500 text-white p-1">Neutral</div>
-        <div className="bg-lime-500 text-white p-1">Greed</div>
-        <div className="bg-green-500 text-white p-1 rounded-r-sm">Extreme Greed</div>
-      </div>
-    </div>
+      <div className="w-full mt-6 grid grid-cols-5 text-xs text-center"></div>
+      <div className="text-red-500">Extreme<br />Fear</div>
+      <div className="text-orange-400">Fear</div>
+      <div className="text-yellow-400">Neutral</div>
+      <div className="text-green-400">Greed</div>
+      <div className="text-green-600">Extreme<br />Greed</div>
+    </div><div className="mt-4 text-xs text-muted-foreground">
+        Last updated: {new Date().toLocaleString()}
+      </div></>
+    // </div>
   )
 }
 

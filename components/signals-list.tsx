@@ -1,120 +1,114 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { ArrowDownRightIcon, ArrowUpRightIcon, LineChart } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-interface Signal {
-  asset: string
-  signal: "Buy" | "Sell" | "Hold"
-  strength: "Strong" | "Moderate" | "Neutral" | "Weak"
-  indicator: string
-  timestamp: string
-}
-
 export function SignalsList() {
-  const [signals, setSignals] = useState<Signal[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  // In a real app, this would be fetched from an API
+  const signals = [
+    {
+      ticker: "AAPL",
+      action: "buy",
+      price: 173.45,
+      strength: "strong",
+      indicator: "MACD Crossover",
+      timestamp: new Date(Date.now() - 25 * 60000).toISOString(), // 25 minutes ago
+    },
+    {
+      ticker: "TSLA",
+      action: "sell",
+      price: 235.12,
+      strength: "medium",
+      indicator: "RSI Overbought",
+      timestamp: new Date(Date.now() - 47 * 60000).toISOString(), // 47 minutes ago
+    },
+    {
+      ticker: "BTC-USD",
+      action: "buy",
+      price: 36752.18,
+      strength: "strong",
+      indicator: "Support Level Bounce",
+      timestamp: new Date(Date.now() - 112 * 60000).toISOString(), // 112 minutes ago
+    },
+    {
+      ticker: "MSFT",
+      action: "buy",
+      price: 345.87,
+      strength: "weak",
+      indicator: "Golden Cross",
+      timestamp: new Date(Date.now() - 174 * 60000).toISOString(), // 174 minutes ago
+    },
+    {
+      ticker: "ETH-USD",
+      action: "sell",
+      price: 1762.54,
+      strength: "medium",
+      indicator: "Volume Spike",
+      timestamp: new Date(Date.now() - 203 * 60000).toISOString(), // 203 minutes ago
+    },
+  ]
 
-  useEffect(() => {
-    // Generate mock signals data
-    const generateSignals = () => {
-      setIsLoading(true)
-
-      const assets = ["BTC/USD", "ETH/USD", "AAPL", "TSLA", "MSFT", "AMZN", "SOL/USD", "NVDA", "GOOGL"]
-      const indicators = [
-        "MACD Crossover",
-        "RSI Overbought",
-        "RSI Oversold",
-        "Golden Cross",
-        "Death Cross",
-        "Support Level",
-        "Resistance Level",
-        "Volume Spike",
-        "Bollinger Bands Squeeze",
-      ]
-      const signalTypes: ["Buy", "Sell", "Hold"] = ["Buy", "Sell", "Hold"]
-      const strengthTypes: ["Strong", "Moderate", "Neutral", "Weak"] = ["Strong", "Moderate", "Neutral", "Weak"]
-
-      const mockSignals: Signal[] = []
-
-      // Generate 8 random signals
-      for (let i = 0; i < 8; i++) {
-        const asset = assets[Math.floor(Math.random() * assets.length)]
-        const signal = signalTypes[Math.floor(Math.random() * signalTypes.length)]
-        const strength = strengthTypes[Math.floor(Math.random() * strengthTypes.length)]
-        const indicator = indicators[Math.floor(Math.random() * indicators.length)]
-
-        // Create timestamp within the last 24 hours
-        const now = new Date()
-        const hoursAgo = Math.floor(Math.random() * 24)
-        const minutesAgo = Math.floor(Math.random() * 60)
-        now.setHours(now.getHours() - hoursAgo)
-        now.setMinutes(now.getMinutes() - minutesAgo)
-
-        mockSignals.push({
-          asset,
-          signal,
-          strength,
-          indicator,
-          timestamp: now.toISOString(),
-        })
-      }
-
-      // Sort by timestamp (newest first)
-      mockSignals.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
-      setSignals(mockSignals)
-      setIsLoading(false)
-    }
-
-    generateSignals()
-  }, [])
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-muted-foreground">Loading signals data...</div>
-      </div>
-    )
+  // Helper function to format the time
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
-  // Format timestamp to relative time
-  const formatRelativeTime = (timestamp: string) => {
+  // Helper function to get minutes ago
+  const getMinutesAgo = (timestamp: string) => {
     const now = new Date()
     const signalTime = new Date(timestamp)
     const diffMs = now.getTime() - signalTime.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-
-    if (diffHours > 0) {
-      return `${diffHours}h ago`
-    } else {
+    const diffMins = Math.round(diffMs / 60000)
+    
+    if (diffMins < 60) {
       return `${diffMins}m ago`
+    } else {
+      const hours = Math.floor(diffMins / 60)
+      return `${hours}h ago`
     }
   }
 
   return (
-    <div className="h-full overflow-auto">
-      <div className="space-y-3">
+    <div className="w-full h-full overflow-auto p-2">
+      <div className="divide-y">
         {signals.map((signal, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between p-3 bg-background/80 backdrop-blur-sm rounded-md"
-          >
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="font-medium">{signal.asset}</p>
-                <span className="text-xs text-muted-foreground">{formatRelativeTime(signal.timestamp)}</span>
+          <div key={index} className="py-3 first:pt-0 last:pb-0">
+            <div className="flex justify-between items-start mb-1">
+              <div className="flex items-center">
+                <LineChart className="h-4 w-4 mr-1 text-muted-foreground" />
+                <span className="font-medium">{signal.ticker}</span>
               </div>
-              <p className="text-xs text-muted-foreground">{signal.indicator}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs">{signal.strength}</span>
-              <Badge
-                variant={signal.signal === "Buy" ? "default" : signal.signal === "Sell" ? "destructive" : "outline"}
+              <Badge 
+                variant={signal.action === "buy" ? "success" : "destructive"}
+                className="ml-auto flex items-center gap-1"
               >
-                {signal.signal}
+                {signal.action === "buy" ? (
+                  <ArrowUpRightIcon className="h-3 w-3" />
+                ) : (
+                  <ArrowDownRightIcon className="h-3 w-3" />
+                )}
+                {signal.action.toUpperCase()}
               </Badge>
+            </div>
+            
+            <div className="flex justify-between text-sm">
+              <div className="text-muted-foreground">{signal.indicator}</div>
+              <div className="font-medium">${signal.price.toLocaleString()}</div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-1">
+              <Badge 
+                variant="outline" 
+                className={
+                  signal.strength === "strong" ? "border-green-500 text-green-500" :
+                  signal.strength === "medium" ? "border-yellow-500 text-yellow-500" :
+                  "border-muted-foreground text-muted-foreground"
+                }
+              >
+                {signal.strength}
+              </Badge>
+              <span className="text-xs text-muted-foreground">{getMinutesAgo(signal.timestamp)}</span>
             </div>
           </div>
         ))}

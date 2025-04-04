@@ -1,103 +1,134 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useAuth } from "@/providers/auth-provider"
+import { createContext, useContext, ReactNode, useState, useEffect } from "react"
 
-export type SubscriptionTier = "free" | "baby" | "middle" | "big" | "xl"
+type SubscriptionTier = "free" | "baby" | "middle" | "big" | "xl"
 
 interface TierLimits {
   maxBots: number
-  allowedBotTypes: string[]
   liveTrading: boolean
-}
-
-interface SubscriptionContextType {
-  currentTier: SubscriptionTier
-  tierLimits: TierLimits
-  upgradeTier: (newTier: SubscriptionTier) => void
-  canCreateBot: (botType: string) => boolean
-  canCreateMoreBots: (currentBotCount: number) => boolean
-  isFeatureAvailable: (feature: string) => boolean
+  strategies: string[]
+  basketTrading: boolean
+  backtestingLevel: "basic" | "standard" | "advanced" | "advanced+"
+  apiAccess: boolean
+  supportLevel: "community" | "email" | "priority" | "vip" | "dedicated"
 }
 
 const tierLimitsConfig: Record<SubscriptionTier, TierLimits> = {
   free: {
     maxBots: 5,
-    allowedBotTypes: ["grid", "dca"],
     liveTrading: false,
+    strategies: ["grid", "dca"],
+    basketTrading: false,
+    backtestingLevel: "basic",
+    apiAccess: false,
+    supportLevel: "community"
   },
   baby: {
     maxBots: 10,
-    allowedBotTypes: ["grid", "dca"],
     liveTrading: true,
+    strategies: ["grid", "dca"],
+    basketTrading: false,
+    backtestingLevel: "standard",
+    apiAccess: false,
+    supportLevel: "email"
   },
   middle: {
     maxBots: 15,
-    allowedBotTypes: ["grid", "dca", "indicator"],
     liveTrading: true,
+    strategies: ["grid", "dca", "indicators"],
+    basketTrading: false,
+    backtestingLevel: "advanced",
+    apiAccess: false,
+    supportLevel: "priority"
   },
   big: {
     maxBots: 25,
-    allowedBotTypes: ["grid", "dca", "indicator", "basket"],
     liveTrading: true,
+    strategies: ["grid", "dca", "indicators", "custom"],
+    basketTrading: true,
+    backtestingLevel: "advanced",
+    apiAccess: true,
+    supportLevel: "vip"
   },
   xl: {
-    maxBots: Number.POSITIVE_INFINITY,
-    allowedBotTypes: ["grid", "dca", "indicator", "basket"],
+    maxBots: Infinity,
     liveTrading: true,
-  },
+    strategies: ["grid", "dca", "indicators", "custom", "ai"],
+    basketTrading: true,
+    backtestingLevel: "advanced+",
+    apiAccess: true,
+    supportLevel: "dedicated"
+  }
 }
 
-const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined)
+interface SubscriptionContextType {
+  currentTier: SubscriptionTier
+  tierLimits: TierLimits
+  upgradeTier: (tier: SubscriptionTier) => void
+  canCreateMoreBots: (currentBotCount: number) => boolean
+  isFeatureAvailable: (feature: keyof TierLimits) => boolean
+  checkStrategyAccess: (strategy: string) => boolean
+}
 
-export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+const SubscriptionContext = createContext<SubscriptionContextType>({
+  currentTier: "free",
+  tierLimits: tierLimitsConfig.free,
+  upgradeTier: () => {},
+  canCreateMoreBots: () => false,
+  isFeatureAvailable: () => false,
+  checkStrategyAccess: () => false
+})
+
+export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [currentTier, setCurrentTier] = useState<SubscriptionTier>("free")
+  const [tierLimits, setTierLimits] = useState<TierLimits>(tierLimitsConfig.free)
 
   useEffect(() => {
-    // In a real app, this would fetch the user's subscription from an API
-    const storedTier = localStorage.getItem("subscriptionTier") as SubscriptionTier
-    if (storedTier && Object.keys(tierLimitsConfig).includes(storedTier)) {
-      setCurrentTier(storedTier)
+    // Load subscription from localStorage or API in a real app
+    const savedTier = localStorage.getItem("subscriptionTier") as SubscriptionTier | null
+    if (savedTier && tierLimitsConfig[savedTier]) {
+      setCurrentTier(savedTier)
+      setTierLimits(tierLimitsConfig[savedTier])
     }
-  }, [user])
+  }, [])
 
-  const upgradeTier = (newTier: SubscriptionTier) => {
-    // In a real app, this would handle payment processing and API calls
-    setCurrentTier(newTier)
-    localStorage.setItem("subscriptionTier", newTier)
-  }
-
-  const canCreateBot = (botType: string) => {
-    return tierLimitsConfig[currentTier].allowedBotTypes.includes(botType)
+  const upgradeTier = (tier: SubscriptionTier) => {
+    setCurrentTier(tier)
+    setTierLimits(tierLimitsConfig[tier])
+    localStorage.setItem("subscriptionTier", tier)
   }
 
   const canCreateMoreBots = (currentBotCount: number) => {
-    return currentBotCount < tierLimitsConfig[currentTier].maxBots
+    return currentBotCount < tierLimits.maxBots
   }
 
-  const isFeatureAvailable = (feature: string) => {
-    switch (feature) {
-      case "liveTrading":
-        return tierLimitsConfig[currentTier].liveTrading
-      case "basketTrading":
-        return tierLimitsConfig[currentTier].allowedBotTypes.includes("basket")
-      case "indicatorTrading":
-        return tierLimitsConfig[currentTier].allowedBotTypes.includes("indicator")
-      default:
-        return false
+  const isFeatureAvailable = (feature: keyof TierLimits) => {
+    if (typeof tierLimits[feature] === "boolean") {
+      return tierLimits[feature] as boolean
     }
+    if (feature === "maxBots") {
+      return tierLimits.maxBots > 0
+    }
+    if (feature === "strategies") {
+      return tierLimits.strategies.length > 0
+    }
+    return false
+  }
+
+  const checkStrategyAccess = (strategy: string) => {
+    return tierLimits.strategies.includes(strategy.toLowerCase())
   }
 
   return (
     <SubscriptionContext.Provider
       value={{
         currentTier,
-        tierLimits: tierLimitsConfig[currentTier],
+        tierLimits,
         upgradeTier,
-        canCreateBot,
         canCreateMoreBots,
         isFeatureAvailable,
+        checkStrategyAccess
       }}
     >
       {children}
@@ -105,11 +136,5 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useSubscription() {
-  const context = useContext(SubscriptionContext)
-  if (context === undefined) {
-    throw new Error("useSubscription must be used within a SubscriptionProvider")
-  }
-  return context
-}
+export const useSubscription = () => useContext(SubscriptionContext)
 

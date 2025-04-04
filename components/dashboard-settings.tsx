@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { encryptData, decryptData } from '../utils/encryption'
 
 /**
  * Dashboard Settings component for configuring API credentials
@@ -29,11 +30,22 @@ export function DashboardSettings() {
 
   // Load saved credentials on component mount
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('alpaca_api_key')
-    const savedSecretKey = localStorage.getItem('alpaca_secret_key')
+    const loadCredentials = async () => {
+      const encryptedApiKey = localStorage.getItem('alpaca_api_key')
+      const encryptedSecretKey = localStorage.getItem('alpaca_secret_key')
+      
+      if (encryptedApiKey) {
+        const decryptedApiKey = await decryptData(encryptedApiKey)
+        setApiKey(decryptedApiKey)
+      }
+      
+      if (encryptedSecretKey) {
+        const decryptedSecretKey = await decryptData(encryptedSecretKey)
+        setSecretKey(decryptedSecretKey)
+      }
+    }
     
-    if (savedApiKey) setApiKey(savedApiKey)
-    if (savedSecretKey) setSecretKey(savedSecretKey)
+    loadCredentials()
   }, [])
 
   /**
@@ -70,18 +82,27 @@ export function DashboardSettings() {
    * Handles form submission and saves credentials to local storage
    * @param {React.FormEvent} e - Form submission event
    */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!validateForm()) return
     
-    // Save to local storage
-    localStorage.setItem('alpaca_api_key', apiKey)
-    localStorage.setItem('alpaca_secret_key', secretKey)
-    
-    // Show success message
-    setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 3000)
+    try {
+      // Encrypt credentials before storing
+      const encryptedApiKey = await encryptData(apiKey)
+      const encryptedSecretKey = await encryptData(secretKey)
+      
+      // Save encrypted credentials
+      localStorage.setItem('alpaca_api_key', encryptedApiKey)
+      localStorage.setItem('alpaca_secret_key', encryptedSecretKey)
+      
+      setIsSaved(true)
+      setTimeout(() => setIsSaved(false), 3000)
+    } catch (error) {
+      setIsError(true)
+      setErrorMessage('Failed to secure credentials')
+      console.error('Encryption failed:', error)
+    }
   }
 
   /**

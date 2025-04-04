@@ -17,7 +17,10 @@ Users need to provide their Alpaca API credentials in the Dashboard Settings pag
 ## How It Works
 
 ### Data Storage
-- API credentials are stored in the browser's localStorage
+- API credentials are stored in the browser's localStorage with AES-GCM encryption
+- A unique encryption key is required in the environment variables
+- Credentials are encrypted before storage and decrypted when needed
+- Encryption key should be kept secure and different in production
 - Credentials are never sent to our servers
 - All API requests are made directly from the client to Alpaca
 
@@ -32,6 +35,21 @@ When no valid API credentials are provided, the application will:
 1. Display a prominent warning in the footer
 2. Use pre-defined mock data for all visualizations
 3. Indicate "Mock Data" within the chart visualization
+
+## Security
+
+### Encryption
+The application uses AES-GCM symmetric encryption to protect API credentials:
+- Credentials are encrypted before storage using a secure key
+- Each deployment should use a unique 32-character encryption key
+- The encryption key is stored in NEXT_PUBLIC_CREDENTIAL_ENCRYPTION_KEY
+- Development uses a default key that should not be used in production
+
+### Setup
+1. Create a .env.local file in your project root
+2. Add NEXT_PUBLIC_CREDENTIAL_ENCRYPTION_KEY with a 32-character secret
+3. Keep this key secure and different between environments
+4. Never commit the .env.local file to version control
 
 ## Troubleshooting
 

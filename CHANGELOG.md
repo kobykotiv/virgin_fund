@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - Updated PortfolioAllocation component to dynamically load either mock data or real market data
 - Added documentation for all new components and features
 - Improved accessibility for form elements and warning notifications
+- Symmetric encryption for API credentials using AES-GCM
+- Environment variable for credential encryption key
+- Secure credential storage utilities
 
 ### Changed
 - Modified the portfolio allocation data flow to support both mock and real data sources

@@ -86,15 +86,15 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold">Settings</h1>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="trading">Trading</TabsTrigger>
-          <TabsTrigger value="api">API Keys</TabsTrigger>
+      <Tabs id="settings-tabs" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList id="settings-tabs-list" className="mb-6">
+          <TabsTrigger id="settings-tab-general" value="general">General</TabsTrigger>
+          <TabsTrigger id="settings-tab-notifications" value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger id="settings-tab-security" value="security">Security</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="account">
-          <Card>
+        <TabsContent id="settings-content-general" value="general">
+          <Card id="general-settings-card">
             <CardHeader>
               <CardTitle>Account Settings</CardTitle>
               <CardDescription>Manage your account preferences</CardDescription>
@@ -201,8 +201,8 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="trading">
-          <Card>
+        <TabsContent id="settings-content-notifications" value="notifications">
+          <Card id="notifications-settings-card">
             <CardHeader>
               <CardTitle>Trading Settings</CardTitle>
               <CardDescription>Configure your default trading parameters</CardDescription>
@@ -312,8 +312,8 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="api">
-          <Card>
+        <TabsContent id="settings-content-security" value="security">
+          <Card id="security-settings-card">
             <CardHeader>
               <CardTitle>API Configuration</CardTitle>
               <CardDescription>Manage your Alpaca Markets API keys</CardDescription>

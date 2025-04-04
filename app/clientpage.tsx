@@ -46,13 +46,13 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
+      <header id="main-header" className="border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div id="header-container" className="container flex h-16 items-center justify-between">
+          <div id="header-logo" className="flex items-center gap-2">
             <Bot className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">Virgin Fund : GenEric TraDer AI</span>
+            <span className="text-xl font-bold">Virgin Fund : GenEric Trading Platform</span>
           </div>
-          <nav className="hidden md:flex items-center gap-6">
+          <nav id="main-nav" className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
               Features
             </Link>
@@ -72,7 +72,7 @@ export default function LandingPage() {
               Pricing
             </Link>
           </nav>
-          <div className="flex items-center gap-4">
+          <div id="auth-buttons" className="flex items-center gap-4">
             <ThemeToggle />
             {/* Conditionally render buttons based on client-side auth status to prevent hydration mismatch */}
             {isAuthenticated ? (
@@ -100,9 +100,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full py-12 md:py-24 lg:py-32 xl:py-48 overflow-hidden">
+        <section id="hero-section" className="relative w-full py-12 md:py-24 lg:py-32 xl:py-48 overflow-hidden">
           <AnimatedBackground />
           <div className="container px-4 md:px-6 relative z-10">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
@@ -198,7 +198,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
+        <section id="features-section" className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <Image src="/images/abstract-background.png" alt="Abstract background" fill className="object-cover" />
           </div>

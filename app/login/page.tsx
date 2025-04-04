@@ -949,10 +949,11 @@ export default function LoginPage() {
         />
 
         {/* Tabs navigation */}
-        <div className="relative z-10 flex border-b border-border/40 bg-background/60 backdrop-blur-md overflow-x-auto">
+        <div id="login-tabs-container" className="relative z-10 flex border-b border-border/40 bg-background/60 backdrop-blur-md overflow-x-auto">
           {/* Main tabs */}
-          <div className="flex">
+          <div id="login-tabs-wrapper" className="flex">
             <button
+              id="login-tab-btn"
               className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === "login"
                   ? "border-b-2 border-primary text-primary"
@@ -963,6 +964,7 @@ export default function LoginPage() {
               Login
             </button>
             <button
+              id="signup-tab-btn"
               className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === "signup"
                   ? "border-b-2 border-primary text-primary"
@@ -973,6 +975,7 @@ export default function LoginPage() {
               Sign Up
             </button>
             <button
+              id="demos-tab-btn"
               className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === "demos"
                   ? "border-b-2 border-primary text-primary"
@@ -1099,10 +1102,10 @@ export default function LoginPage() {
         </div>
 
         {/* Tab content */}
-        <div className="flex-1 overflow-y-auto p-6 relative z-10">
+        <div id="login-tabs-content" className="flex-1 overflow-y-auto p-6 relative z-10">
           {activeTab === "login" && (
-            <div className="max-w-md mx-auto">
-              <Card>
+            <div id="login-form-container" className="max-w-md mx-auto">
+              <Card id="login-card">
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
                   <CardDescription>Log in to access your GenEric TraDer account</CardDescription>
@@ -1222,8 +1225,8 @@ export default function LoginPage() {
           )}
 
           {activeTab === "signup" && (
-            <div className="max-w-md mx-auto">
-              <Card>
+            <div id="signup-form-container" className="max-w-md mx-auto">
+              <Card id="signup-card">
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
                   <CardDescription>Join GenEric TraDer and start your trading journey</CardDescription>

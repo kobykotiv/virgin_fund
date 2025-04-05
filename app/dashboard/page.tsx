@@ -24,6 +24,22 @@ import { Checkbox } from "@/components/ui/checkbox"
 // Import the new BacktestTab component
 import BacktestTab from "@/components/dashboard/backtest-tab"
 
+// Import new icons and dropdown menu components
+import { 
+  Bell,
+  BookOpen,
+  Calendar,
+  Download,
+  HelpCircle,
+  History,
+  LineChart,
+  MessageSquare,
+  Share2,
+  Shield,
+  Upload
+} from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 export default function DashboardPage() {
   const [bots, setBots] = useState<Bot[]>([])
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null)
@@ -47,6 +63,9 @@ export default function DashboardPage() {
     baseUrl: string
     isPaper: boolean
   } | null>(null)
+
+  const [notifications, setNotifications] = useState<number>(3);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if API keys are configured
@@ -176,17 +195,38 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-mono font-bold">Virgin Fund : GenEric TraDer AI</h1>
           <p className="text-muted-foreground text-sm">Alpaca Markets Trading Bot Manager</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2" onClick={() => router.push("/backtest")}>
-            <BarChart2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Backtest</span>
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2" onClick={() => setActiveTab("settings")}>
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => setIsApiKeyFormOpen(true)} title="API Settings">
-            <Settings className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {/* Add notification dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="relative">
+                <Bell className="h-4 w-4" />
+                {notifications > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                    {notifications}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem>
+                <LineChart className="h-4 w-4 mr-2" />
+                New trading signal detected
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Shield className="h-4 w-4 mr-2" />
+                Security alert: New login
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Bot status update available
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Add help button */}
+          <Button variant="outline" size="icon" onClick={() => setShowTutorial(true)}>
+            <HelpCircle className="h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -213,6 +253,34 @@ export default function DashboardPage() {
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Add action buttons under the subscription banner */}
+      <div className="px-4 mb-4 flex flex-wrap gap-2">
+        <Button variant="outline" className="flex items-center gap-2">
+          <Upload className="h-4 w-4" />
+          Import Strategy
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Export Data
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Schedule
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <History className="h-4 w-4" />
+          History
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Share2 className="h-4 w-4" />
+          Share
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <BookOpen className="h-4 w-4" />
+          Documentation
+        </Button>
       </div>
 
       <Tabs
@@ -662,6 +730,61 @@ export default function DashboardPage() {
               onCancel={() => setIsFormOpen(false)}
               presentationMode={true}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Add tutorial modal */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-lg w-full max-w-lg">
+            <h2 className="text-xl font-semibold mb-4">Welcome to Virgin Fund</h2>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <LineChart className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Create Your First Bot</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get started by creating a trading bot with our pre-built strategies.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Settings className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Configure API Settings</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Connect your Alpaca account to start trading.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <BarChart2 className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Run Backtests</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Test your strategies with historical data before going live.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowTutorial(false)}>
+                Close
+              </Button>
+              <Button onClick={() => {
+                setShowTutorial(false);
+                router.push('/docs/getting-started');
+              }}>
+                Learn More
+              </Button>
+            </div>
           </div>
         </div>
       )}

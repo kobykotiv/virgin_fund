@@ -13,18 +13,18 @@ export function AnimatedBackground() {
     if (!ctx) return
 
     // Set canvas dimensions
-    const resizeCanvas = () => {
+    const setCanvasDimensions = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
     }
 
-    resizeCanvas()
-    window.addEventListener("resize", resizeCanvas)
+    setCanvasDimensions()
+    window.addEventListener("resize", setCanvasDimensions)
 
     // Create particles
     const particlesArray: Particle[] = []
-    const numberOfParticles = 100
-    const colors = ["rgba(66, 133, 244, 0.3)", "rgba(219, 68, 55, 0.3)", "rgba(244, 180, 0, 0.3)", "rgba(15, 157, 88, 0.3)"]
+    const numberOfParticles = Math.min(50, Math.floor(window.innerWidth / 20))
+    const colors = ["rgba(54, 162, 235, 0.2)", "rgba(75, 192, 192, 0.2)", "rgba(153, 102, 255, 0.2)"]
 
     class Particle {
       x: number
@@ -37,7 +37,7 @@ export function AnimatedBackground() {
       constructor() {
         this.x = Math.random() * canvas.width
         this.y = Math.random() * canvas.height
-        this.size = Math.random() * 5 + 1
+        this.size = Math.random() * 15 + 5
         this.speedX = Math.random() * 1 - 0.5
         this.speedY = Math.random() * 1 - 0.5
         this.color = colors[Math.floor(Math.random() * colors.length)]
@@ -61,33 +61,22 @@ export function AnimatedBackground() {
       }
     }
 
-    function init() {
+    const init = () => {
       for (let i = 0; i < numberOfParticles; i++) {
         particlesArray.push(new Particle())
       }
     }
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (let i = 0; i < particlesArray.length; i++) {
-        particlesArray[i].update()
-        particlesArray[i].draw()
-      }
-      connectParticles()
-      requestAnimationFrame(animate)
-    }
-
-    function connectParticles() {
+    const connectParticles = () => {
       for (let a = 0; a < particlesArray.length; a++) {
         for (let b = a; b < particlesArray.length; b++) {
           const dx = particlesArray[a].x - particlesArray[b].x
           const dy = particlesArray[a].y - particlesArray[b].y
           const distance = Math.sqrt(dx * dx + dy * dy)
 
-          if (distance < 100) {
-            // Use a static color instead of CSS variables
-            const opacity = 0.1 - distance / 1000
-            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity})` // Use a default blue color
+          if (distance < 200) {
+            const opacity = 1 - distance / 200
+            ctx.strokeStyle = `rgba(150, 150, 255, ${opacity * 0.2})`
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.moveTo(particlesArray[a].x, particlesArray[a].y)
@@ -98,14 +87,32 @@ export function AnimatedBackground() {
       }
     }
 
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
+      gradient.addColorStop(0, "rgba(30, 30, 60, 0.05)")
+      gradient.addColorStop(1, "rgba(60, 30, 90, 0.05)")
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      for (let i = 0; i < particlesArray.length; i++) {
+        particlesArray[i].update()
+        particlesArray[i].draw()
+      }
+      connectParticles()
+      requestAnimationFrame(animate)
+    }
+
     init()
     animate()
 
     return () => {
-      window.removeEventListener("resize", resizeCanvas)
+      window.removeEventListener("resize", setCanvasDimensions)
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full -z-10" style={{ opacity: 0.7 }} />
 }
 

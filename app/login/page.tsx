@@ -1,7 +1,5 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -9,9 +7,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Loader2, DollarSign, Github, Signal, Grid, X } from "lucide-react"
+import { AlertCircle, Loader2, DollarSign, Github, Signal, Grid, Info, X } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/providers/auth-provider"
 import { CookieBanner } from "@/components/cookie-banner"
@@ -45,14 +43,6 @@ import {
   Scale,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-
-// First, add imports for the calculator components at the top of the file, after the existing imports
-import { SavingsCalculator } from "@/components/calculators/savings-calculator"
-import { CompoundInterestCalculator } from "@/components/calculators/compound-interest-calculator"
-import { InflationCalculator } from "@/components/calculators/inflation-calculator"
-import { RetirementCalculator } from "@/components/calculators/retirement-calculator"
-import { NewsList } from "@/components/news-list"
 
 const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
 
@@ -91,21 +81,7 @@ type DemoType =
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<
-    | "login"
-    | "signup"
-    | "demos"
-    | "calculators"
-    | "news"
-    | "education"
-    | "forum"
-    | "api"
-    | "risk"
-    | "calendar"
-    | "performance"
-    | "backtest"
-    | "screener"
-  >("login")
+  const [activeTab, setActiveTab] = useState<"login" | "signup" | "demos">("login")
   const [isVisible, setIsVisible] = useState(true)
   const [activeDemo, setActiveDemo] = useState<DemoType | null>(null)
   const [demoAnimation, setDemoAnimation] = useState(false)
@@ -119,6 +95,7 @@ export default function LoginPage() {
 
   // Portfolio data
   const portfolios = [
+    // Original portfolios
     {
       id: "general",
       name: "$10M Portfolio",
@@ -927,11 +904,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div id="login-modal" className="fixed inset-0 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
       {/* Blurred background overlay */}
       <div
-        id="login-modal-overlay"
         className="absolute inset-0 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
+        onClick={handleDismiss} // Allow clicking outside to dismiss
       />
 
       {/* Replace the main container div with a full-screen tabbed interface */}
@@ -949,148 +926,40 @@ export default function LoginPage() {
         />
 
         {/* Tabs navigation */}
-        <div id="login-tabs-container" className="relative z-10 flex border-b border-border/40 bg-background/60 backdrop-blur-md overflow-x-auto">
-          {/* Main tabs */}
-          <div id="login-tabs-wrapper" className="flex">
-            <button
-              id="login-tab-btn"
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "login"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("login")}
-            >
-              Login
-            </button>
-            <button
-              id="signup-tab-btn"
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "signup"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("signup")}
-            >
-              Sign Up
-            </button>
-            <button
-              id="demos-tab-btn"
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "demos"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("demos")}
-            >
-              Demo Accounts
-            </button>
-
-            {/* Additional tabs */}
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "calculators"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("calculators")}
-            >
-              Calculators
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "news"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("news")}
-            >
-              Market News
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "education"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("education")}
-            >
-              Educational Resources
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "forum"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("forum")}
-            >
-              Community Forum
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "api"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("api")}
-            >
-              API Documentation
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "risk"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("risk")}
-            >
-              Risk Management
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "calendar"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("calendar")}
-            >
-              Economic Calendar
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "performance"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("performance")}
-            >
-              Performance Metrics
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "backtest"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("backtest")}
-            >
-              Backtesting
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "screener"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("screener")}
-            >
-              Asset Screener
-            </button>
-          </div>
+        <div className="relative z-10 flex border-b border-border/40 bg-background/60 backdrop-blur-md">
+          <button
+            className={`px-6 py-3 font-medium text-sm transition-colors ${
+              activeTab === "login"
+                ? "border-b-2 border-primary text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={() => setActiveTab("login")}
+          >
+            Login
+          </button>
+          <button
+            className={`px-6 py-3 font-medium text-sm transition-colors ${
+              activeTab === "signup"
+                ? "border-b-2 border-primary text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={() => setActiveTab("signup")}
+          >
+            Sign Up
+          </button>
+          <button
+            className={`px-6 py-3 font-medium text-sm transition-colors ${
+              activeTab === "demos"
+                ? "border-b-2 border-primary text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={() => setActiveTab("demos")}
+          >
+            Demo Accounts
+          </button>
 
           {/* Close button */}
-          <div className="ml-auto flex-shrink-0 flex items-center pr-4">
+          <div className="ml-auto flex items-center pr-4">
             <button
               onClick={handleDismiss}
               className="rounded-full p-1.5 bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground transition-colors"
@@ -1102,10 +971,10 @@ export default function LoginPage() {
         </div>
 
         {/* Tab content */}
-        <div id="login-tabs-content" className="flex-1 overflow-y-auto p-6 relative z-10">
+        <div className="flex-1 overflow-y-auto p-6 relative z-10">
           {activeTab === "login" && (
-            <div id="login-form-container" className="max-w-md mx-auto">
-              <Card id="login-card">
+            <div className="max-w-md mx-auto">
+              <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
                   <CardDescription>Log in to access your GenEric TraDer account</CardDescription>
@@ -1208,25 +1077,37 @@ export default function LoginPage() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex flex-col">
-                  <p className="text-xs text-center text-muted-foreground">
-                    By signing in, you agree to our{" "}
-                    <Link href="/terms" className="underline underline-offset-2 hover:text-primary">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className="underline underline-offset-2 hover:text-primary">
-                      Privacy Policy
-                    </Link>
-                  </p>
+                <CardFooter className="flex flex-col space-y-2">
+                  <div className="w-full text-center text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-1">
+                      <p>Demo credentials:</p>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={toggleDemoInfo}>
+                        <Info className="h-3 w-3" />
+                        <span className="sr-only">Demo Info</span>
+                      </Button>
+                    </div>
+                    <p className="font-mono text-xs">admin@example.com / admin123</p>
+                  </div>
+
+                  {showDemoInfo && (
+                    <Alert className="mt-2">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        <p className="text-xs">
+                          Demo accounts provide a simulated trading environment with pre-configured portfolios and
+                          strategies. No real money is used, and all data is reset when you log out.
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </CardFooter>
               </Card>
             </div>
           )}
 
           {activeTab === "signup" && (
-            <div id="signup-form-container" className="max-w-md mx-auto">
-              <Card id="signup-card">
+            <div className="max-w-md mx-auto">
+              <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
                   <CardDescription>Join GenEric TraDer and start your trading journey</CardDescription>
@@ -1282,7 +1163,7 @@ export default function LoginPage() {
           {activeTab === "demos" && (
             <div className="container mx-auto">
               <h2 className="text-2xl font-bold mb-4 text-center">Demo Trading Accounts</h2>
-              <p className="text-center text-muted-foreground mb-6">
+              <p className="text-center text-muted-foreground mb-4">
                 Try our demo accounts to experience different trading scenarios without risking real money
               </p>
 
@@ -1455,225 +1336,6 @@ export default function LoginPage() {
                   </div>
                 )}
               </div>
-            </div>
-          )}
-
-          {activeTab === "calculators" && (
-            <div className="container mx-auto">
-              <h2 className="text-2xl font-bold mb-4 text-center">Financial Calculators</h2>
-              <p className="text-center text-muted-foreground mb-6">
-                Explore our suite of financial calculators to help with your investment planning and decision making
-              </p>
-
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid grid-cols-3">
-                  <TabsTrigger value="basic">Basic</TabsTrigger>
-                  <TabsTrigger value="trading">Trading</TabsTrigger>
-                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="basic" className="mt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="col-span-1">
-                      <Card className="h-full">
-                        <CardHeader>
-                          <CardTitle>Compound Interest</CardTitle>
-                          <CardDescription>Calculate how your investments grow over time</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <CompoundInterestCalculator />
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="col-span-1">
-                      <Card className="h-full">
-                        <CardHeader>
-                          <CardTitle>Savings Calculator</CardTitle>
-                          <CardDescription>Plan your savings with regular contributions</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <SavingsCalculator />
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="col-span-1">
-                      <Card className="h-full">
-                        <CardHeader>
-                          <CardTitle>Inflation Impact</CardTitle>
-                          <CardDescription>See how inflation affects your purchasing power</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <InflationCalculator />
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="col-span-1">
-                      <Card className="h-full">
-                        <CardHeader>
-                          <CardTitle>Retirement Planning</CardTitle>
-                          <CardDescription>Plan for your retirement needs</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <RetirementCalculator />
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="news" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Market News</h2>
-                    <p className="text-center text-muted-foreground mb-6">
-                      Stay up-to-date with the latest market news and analysis
-                    </p>
-                    <NewsList />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="education" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Educational Resources</h2>
-                    <p className="text-center text-muted-foreground mb-6">
-                      Learn about trading strategies, risk management, and more
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <Card className="h-full">
-                        <CardHeader>
-                          <CardTitle>Trading Basics</CardTitle>
-                          <CardDescription>Learn the fundamentals of trading</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p>Learn about trading strategies, risk management, and more.</p>
-                        </CardContent>
-                      </Card>
-                      <Card className="h-full">
-                        <CardHeader>
-                          <CardTitle>Technical Analysis</CardTitle>
-                          <CardDescription>Learn about technical analysis</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p>Learn about trading strategies, risk management, and more.</p>
-                        </CardContent>
-                      </Card>
-                      <Card className="h-full">
-                        <CardHeader>
-                          <CardTitle>Risk Management</CardTitle>
-                          <CardDescription>Learn about risk management</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p>Learn about trading strategies, risk management, and more.</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="forum" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Community Forum</h2>
-                    <p className="text-center text-muted-foreground mb-6">
-                      Connect with other traders and discuss strategies
-                    </p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/forum" target="_blank" rel="noopener noreferrer">
-                          Visit the Forum
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="api" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">API Documentation</h2>
-                    <p className="text-center text-muted-foreground mb-6">
-                      Learn how to integrate with our platform using our API
-                    </p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/api" target="_blank" rel="noopener noreferrer">
-                          View API Documentation
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="risk" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Risk Management</h2>
-                    <p className="text-center text-muted-foreground mb-6">Learn about risk management strategies</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/risk" target="_blank" rel="noopener noreferrer">
-                          View Risk Management
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="calendar" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Economic Calendar</h2>
-                    <p className="text-center text-muted-foreground mb-6">Stay up-to-date with economic events</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/calendar" target="_blank" rel="noopener noreferrer">
-                          View Economic Calendar
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="performance" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Performance Metrics</h2>
-                    <p className="text-center text-muted-foreground mb-6">View performance metrics</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/performance" target="_blank" rel="noopener noreferrer">
-                          View Performance Metrics
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="backtest" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Backtesting</h2>
-                    <p className="text-center text-muted-foreground mb-6">Backtest your strategies</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/backtest" target="_blank" rel="noopener noreferrer">
-                          View Backtesting
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="screener" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Asset Screener</h2>
-                    <p className="text-center text-muted-foreground mb-6">Screen assets</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/screener" target="_blank" rel="noopener noreferrer">
-                          View Asset Screener
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
             </div>
           )}
         </div>

@@ -1,4 +1,3 @@
-// Demo mode service to handle switching between real and demo data
 import type { Bot, BotType, BotStatus } from "@/types/bot"
 
 // Demo mode constants

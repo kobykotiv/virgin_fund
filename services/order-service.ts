@@ -1,4 +1,3 @@
-// Order service to handle order operations with demo mode support
 import { isDemoMode, DEMO_ORDERS_KEY } from "./demo-service"
 import { executeOrder as executeRealOrder } from "@/lib/bot-api"
 

@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/providers/auth-provider"
 import { Loader2 } from "lucide-react"
-import { AlpacaKeyForm } from "@/components/alpaca-key-form"
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -87,15 +86,15 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold">Settings</h1>
       </div>
 
-      <Tabs id="settings-tabs" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList id="settings-tabs-list" className="mb-6">
-          <TabsTrigger id="settings-tab-general" value="general">General</TabsTrigger>
-          <TabsTrigger id="settings-tab-notifications" value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger id="settings-tab-security" value="security">Security</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="trading">Trading</TabsTrigger>
+          <TabsTrigger value="api">API Keys</TabsTrigger>
         </TabsList>
 
-        <TabsContent id="settings-content-general" value="general">
-          <Card id="general-settings-card">
+        <TabsContent value="account">
+          <Card>
             <CardHeader>
               <CardTitle>Account Settings</CardTitle>
               <CardDescription>Manage your account preferences</CardDescription>
@@ -202,8 +201,8 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent id="settings-content-notifications" value="notifications">
-          <Card id="notifications-settings-card">
+        <TabsContent value="trading">
+          <Card>
             <CardHeader>
               <CardTitle>Trading Settings</CardTitle>
               <CardDescription>Configure your default trading parameters</CardDescription>
@@ -313,19 +312,21 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent id="settings-content-security" value="security">
-          <Card id="security-settings-card">
+        <TabsContent value="api">
+          <Card>
             <CardHeader>
               <CardTitle>API Configuration</CardTitle>
-              <CardDescription>Configure your Alpaca Markets API keys</CardDescription>
+              <CardDescription>Manage your Alpaca Markets API keys</CardDescription>
             </CardHeader>
             <CardContent>
-              <AlpacaKeyForm />
-              <div className="mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Your API keys are stored securely in your browser and are only used to communicate directly with Alpaca Markets.
-                  They are never sent to our servers.
+              <div className="space-y-4">
+                <p className="text-sm">
+                  Configure your Alpaca Markets API keys to enable paper trading. These keys are used to connect to the
+                  Alpaca API for executing trades and retrieving market data.
                 </p>
+                <Button onClick={() => window.dispatchEvent(new CustomEvent("openApiSettings"))}>
+                  Configure API Keys
+                </Button>
               </div>
             </CardContent>
           </Card>

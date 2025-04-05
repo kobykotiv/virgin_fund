@@ -21,6 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RefreshCw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 
+// Import the new BacktestTab component
+import BacktestTab from "@/components/dashboard/backtest-tab"
+
 export default function DashboardPage() {
   const [bots, setBots] = useState<Bot[]>([])
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null)
@@ -28,7 +31,7 @@ export default function DashboardPage() {
   const [isApiKeyFormOpen, setIsApiKeyFormOpen] = useState(false)
   const [apiConfigured, setApiConfigured] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "bots" | "strategies" | "performance" | "analytics" | "settings"
+    "dashboard" | "bots" | "strategies" | "performance" | "analytics" | "settings" | "backtest"
   >("dashboard")
   const router = useRouter()
 
@@ -158,6 +161,14 @@ export default function DashboardPage() {
 
   const [isDemoMode, setIsDemoMode] = useState(false)
 
+  useEffect(() => {
+    // Check if we're returning from the backtest page
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("from") === "backtest") {
+      setActiveTab("backtest")
+    }
+  }, [])
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="p-4 border-b flex justify-between items-center">
@@ -169,6 +180,10 @@ export default function DashboardPage() {
           <Button variant="outline" className="flex items-center gap-2" onClick={() => router.push("/backtest")}>
             <BarChart2 className="h-4 w-4" />
             <span className="hidden sm:inline">Backtest</span>
+          </Button>
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => setActiveTab("settings")}>
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Settings</span>
           </Button>
           <Button variant="outline" size="icon" onClick={() => setIsApiKeyFormOpen(true)} title="API Settings">
             <Settings className="h-4 w-4" />
@@ -203,7 +218,9 @@ export default function DashboardPage() {
       <Tabs
         value={activeTab}
         onValueChange={(value) =>
-          setActiveTab(value as "dashboard" | "bots" | "strategies" | "performance" | "analytics" | "settings")
+          setActiveTab(
+            value as "dashboard" | "bots" | "strategies" | "performance" | "analytics" | "settings" | "backtest",
+          )
         }
         className="flex-1 flex flex-col"
       >
@@ -226,6 +243,13 @@ export default function DashboardPage() {
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               Strategies
+            </TabsTrigger>
+            <TabsTrigger
+              value="backtest"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              onClick={() => router.push("/backtest")}
+            >
+              Backtesting
             </TabsTrigger>
             <TabsTrigger
               value="performance"
@@ -564,6 +588,11 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          {/* Add a new TabsContent for the backtest tab */}
+          <TabsContent value="backtest" className="mt-0 h-full">
+            {apiConfigured && <BacktestTab />}
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 h-full">

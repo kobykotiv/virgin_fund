@@ -1,312 +1,80 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
-/**
- * Represents a single portfolio allocation item
- * @interface PortfolioItem
- * @property {string} name - Asset class name (e.g., "Large Cap", "Bonds")
- * @property {number} value - Percentage allocation (0-100)
- * @property {string} color - RGBA color string for chart rendering
- */
-interface PortfolioItem {
-  name: string;
-  value: number;
-  color: string;
-}
+// Portfolio data with risk levels (1-10, 10 being highest risk)
+const portfolioData = [
+  { name: "SPY (S&P 500)", value: 35, risk: 3, color: "#4ade80" },
+  { name: "QQQ (NASDAQ-100)", value: 25, risk: 4, color: "#60a5fa" },
+  { name: "NASDAQ Composite", value: 20, risk: 4, color: "#818cf8" },
+  { name: "BTC", value: 5, risk: 9, color: "#f59e0b" },
+  { name: "ETH", value: 5, risk: 8, color: "#8b5cf6" },
+  { name: "SOL", value: 5, risk: 10, color: "#ec4899" },
+  { name: "Cash", value: 5, risk: 1, color: "#94a3b8" },
+]
 
-/**
- * A donut chart component that visualizes portfolio allocation percentages
- * 
- * @component
- * @example
- * ```tsx
- * <PortfolioAllocation />
- * ```
- * 
- * @description
- * Renders a responsive donut chart using the HTML Canvas API. The chart automatically
- * adjusts for screen size and pixel density, and supports both light and dark modes.
- * 
- * Can display either mock data or real data from Alpaca API depending on user configuration.
- * 
- * @technical
- * - Uses Canvas for performance optimization with complex rendering
- * - Handles high DPI displays with pixel ratio scaling
- * - Implements responsive design with dynamic resizing
- * - Auto-detects system color scheme for dark/light mode
- * - Checks for Alpaca API credentials for data source selection
- * 
- * @accessibility
- * - Color contrast meets WCAG 2.1 guidelines
- * - Text size adjusts for readability
- * - Includes aria-label and role attributes
- * - TODO: Implement keyboard navigation
- * 
- * @browser-support
- * Requires browsers with Canvas and MediaQuery support
- * Fallback: None currently implemented
- */
 export function PortfolioAllocation() {
-  // Canvas reference for drawing operations
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [isUsingMockData, setIsUsingMockData] = useState<boolean>(true)
-  const [portfolioData, setPortfolioData] = useState<PortfolioItem[]>([])
+  const RADIAN = Math.PI / 180
 
-  /**
-   * Checks if real market data credentials are available
-   * @returns {boolean} Whether real data can be used
-   */
-  const checkDataSource = (): boolean => {
-    if (typeof window === 'undefined') return true
-    
-    const apiKey = localStorage.getItem('alpaca_api_key')
-    const secretKey = localStorage.getItem('alpaca_secret_key')
-    
-    return !(apiKey && secretKey)
+  // Custom label renderer
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+    const x = cx + radius * Math.cos(-midAngle * RADIAN)
+    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+
+    // Only show label for segments with enough space
+    return percent > 0.05 ? (
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="medium"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    ) : null
   }
 
-  /**
-   * Fetches portfolio data either from mock data or Alpaca API
-   */
-  useEffect(() => {
-    const fetchData = async () => {
-      const usingMock = checkDataSource()
-      setIsUsingMockData(usingMock)
-      
-      if (usingMock) {
-        // Use mock data
-        setPortfolioData([
-          { name: "Large Cap", value: 40, color: "rgba(66, 133, 244, 0.8)" },
-          { name: "Mid Cap", value: 20, color: "rgba(15, 157, 88, 0.8)" },
-          { name: "Small Cap", value: 15, color: "rgba(244, 180, 0, 0.8)" },
-          { name: "Bonds", value: 15, color: "rgba(219, 68, 55, 0.8)" },
-          { name: "Crypto", value: 5, color: "rgba(145, 68, 219, 0.8)" },
-          { name: "Cash", value: 5, color: "rgba(68, 178, 219, 0.8)" }
-        ])
-      } else {
-        try {
-          // In a real implementation, we would fetch from Alpaca API here
-          // This is a placeholder for demonstration purposes
-          const apiKey = localStorage.getItem('alpaca_api_key')
-          const secretKey = localStorage.getItem('alpaca_secret_key')
-          
-          // For demo purposes, just use the mock data
-          // In a real app, you would make an API call like:
-          // const response = await fetch('https://api.alpaca.markets/v2/portfolio', {
-          //   headers: {
-          //     'APCA-API-KEY-ID': apiKey,
-          //     'APCA-API-SECRET-KEY': secretKey
-          //   }
-          // })
-          // const data = await response.json()
-          
-          // For now, just use mock data with a slight variation to show it's "different"
-          setPortfolioData([
-            { name: "Large Cap", value: 42, color: "rgba(66, 133, 244, 0.8)" },
-            { name: "Mid Cap", value: 18, color: "rgba(15, 157, 88, 0.8)" },
-            { name: "Small Cap", value: 16, color: "rgba(244, 180, 0, 0.8)" },
-            { name: "Bonds", value: 14, color: "rgba(219, 68, 55, 0.8)" },
-            { name: "Crypto", value: 6, color: "rgba(145, 68, 219, 0.8)" },
-            { name: "Cash", value: 4, color: "rgba(68, 178, 219, 0.8)" }
-          ])
-        } catch (error) {
-          console.error("Error fetching from Alpaca API:", error)
-          // Fallback to mock data on error
-          setIsUsingMockData(true)
-          setPortfolioData([
-            { name: "Large Cap", value: 40, color: "rgba(66, 133, 244, 0.8)" },
-            { name: "Mid Cap", value: 20, color: "rgba(15, 157, 88, 0.8)" },
-            { name: "Small Cap", value: 15, color: "rgba(244, 180, 0, 0.8)" },
-            { name: "Bonds", value: 15, color: "rgba(219, 68, 55, 0.8)" },
-            { name: "Crypto", value: 5, color: "rgba(145, 68, 219, 0.8)" },
-            { name: "Cash", value: 5, color: "rgba(68, 178, 219, 0.8)" }
-          ])
-        }
-      }
-    }
-    
-    fetchData()
-  }, [])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas || portfolioData.length === 0) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    /**
-     * Configures canvas for high DPI displays
-     * Prevents blurry rendering on retina screens
-     */
-    canvas.width = canvas.offsetWidth * window.devicePixelRatio
-    canvas.height = canvas.offsetHeight * window.devicePixelRatio
-    canvas.style.width = `${canvas.offsetWidth}px`
-    canvas.style.height = `${canvas.offsetHeight}px`
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-
-    /**
-     * Calculates total allocation to verify 100% total and compute angles
-     * @returns {number} Sum of all allocation percentages
-     */
-    const total = portfolioData.reduce((sum, item) => sum + item.value, 0)
-
-    /**
-     * Determines text color based on system color scheme
-     * @returns {string} Hex color code for text
-     */
-    const getForegroundColor = () => {
-      const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      return isDarkMode ? "#ffffff" : "#000000"
-    }
-    
-    /**
-     * Determines background color based on system color scheme
-     * @returns {string} Hex color code for background
-     */
-    const getBackgroundColor = () => {
-      const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      return isDarkMode ? "#1e293b" : "#ffffff"
-    }
-
-    /**
-     * Renders the complete donut chart with segments, labels, and legend
-     * Chart is drawn clockwise from top center (-π/2)
-     * Inner circle creates donut effect
-     * Text is only rendered for segments > 5% for legibility
-     */
-    const drawDonutChart = () => {
-      const width = canvas.offsetWidth
-      const height = canvas.offsetHeight
-      const centerX = width / 2
-      const centerY = height / 2
-      const radius = Math.min(width, height) / 2 - 10
-      
-      const foregroundColor = getForegroundColor()
-      const backgroundColor = getBackgroundColor()
-
-      // Draw the legend
-      const drawLegend = () => {
-        const legendY = centerY + radius + 20
-        const legendItemHeight = 20
-        const legendItemWidth = width / portfolioData.length
-        
-        portfolioData.forEach((item, index) => {
-          const x = (index * legendItemWidth) + 10
-          const y = legendY
-          
-          // Draw color box
-          ctx.fillStyle = item.color
-          ctx.fillRect(x, y, 10, 10)
-          
-          // Draw text
-          ctx.fillStyle = foregroundColor
-          ctx.font = '10px sans-serif'
-          ctx.textAlign = 'left'
-          ctx.fillText(`${item.name} (${item.value}%)`, x + 15, y + 9)
-        })
-      }
-
-      // Clear the canvas
-      ctx.clearRect(0, 0, width, height)
-
-      // Draw each segment
-      let startAngle = 0
-      portfolioData.forEach(item => {
-        // Calculate the angle for this segment
-        const segmentAngle = (item.value / total) * 2 * Math.PI
-        
-        // Draw the segment
-        ctx.beginPath()
-        ctx.moveTo(centerX, centerY)
-        ctx.arc(centerX, centerY, radius, startAngle, startAngle + segmentAngle)
-        ctx.closePath()
-        
-        // Fill the segment
-        ctx.fillStyle = item.color
-        ctx.fill()
-        
-        // Add a stroke between segments
-        ctx.strokeStyle = backgroundColor
-        ctx.lineWidth = 2
-        ctx.stroke()
-        
-        // Calculate angle for text
-        const textAngle = startAngle + segmentAngle / 2
-        
-        // Only draw text in segment if there's enough space (value > 5%)
-        if (item.value > 5) {
-          // Calculate text position
-          const textRadius = radius * 0.7
-          const textX = centerX + Math.cos(textAngle) * textRadius
-          const textY = centerY + Math.sin(textAngle) * textRadius
-          
-          // Draw text
-          ctx.fillStyle = backgroundColor
-          ctx.font = 'bold 12px sans-serif'
-          ctx.textAlign = 'center'
-          ctx.textBaseline = 'middle'
-          ctx.fillText(`${item.value}%`, textX, textY)
-        }
-        
-        // Update start angle for next segment
-        startAngle += segmentAngle
-      })
-      
-      // Draw center circle to create donut
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, radius * 0.5, 0, 2 * Math.PI)
-      ctx.fillStyle = backgroundColor
-      ctx.fill()
-      
-      // Draw center text
-      ctx.fillStyle = foregroundColor
-      ctx.font = 'bold 14px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText('Portfolio', centerX, centerY - 10)
-      ctx.font = '12px sans-serif'
-      ctx.fillText('Allocation', centerX, centerY + 10)
-      
-      // Add data source indicator
-      ctx.font = '10px sans-serif'
-      ctx.fillStyle = isUsingMockData ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 128, 0, 0.7)'
-      ctx.fillText(
-        isUsingMockData ? 'Mock Data' : 'Alpaca API Data', 
-        centerX, 
-        centerY + 30
-      )
-    }
-
-    /**
-     * Handles window resize events
-     * Debounced to prevent excessive redraws
-     * Updates canvas dimensions and re-renders chart
-     */
-    const handleResize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio
-      canvas.style.width = `${canvas.offsetWidth}px`
-      canvas.style.height = `${canvas.offsetHeight}px`
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-      drawDonutChart()
-    }
-
-    // Initialize chart and set up resize handler
-    drawDonutChart()
-    window.addEventListener('resize', handleResize)
-
-    // Cleanup resize listener on unmount
-    return () => {
-      window.removeEventListener('resize', handleResize)
-    }
-  }, [portfolioData, isUsingMockData])
-
-  return <canvas 
-    ref={canvasRef} 
-    className="w-full h-full"
-    role="img"
-    aria-label={`Portfolio allocation donut chart - ${isUsingMockData ? 'using mock data' : 'using real market data'}`}
-  />
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={portfolioData}
+          cx="50%"
+          cy="50%"
+          labelLine={false}
+          label={renderCustomizedLabel}
+          outerRadius={80}
+          fill="#8884d8"
+          dataKey="value"
+        >
+          {portfolioData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.color} />
+          ))}
+        </Pie>
+        <Tooltip
+          formatter={(value) => [`${value}%`, "Allocation"]}
+          contentStyle={{
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            borderRadius: "6px",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            border: "none",
+          }}
+        />
+        <Legend
+          layout="vertical"
+          verticalAlign="bottom"
+          align="center"
+          wrapperStyle={{
+            fontSize: "12px",
+            paddingTop: "20px",
+            width: "100%",
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  )
 }
 

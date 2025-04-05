@@ -1,4 +1,3 @@
-// Portfolio service to handle portfolio operations with demo mode support
 import { isDemoMode, DEMO_PORTFOLIO_KEY } from "./demo-service"
 
 export interface Position {

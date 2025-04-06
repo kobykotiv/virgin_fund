@@ -469,46 +469,7 @@ export default function LoginPage() {
             </button>
 
             {/* Additional tabs */}
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "calculators"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("calculators")}
-            >
-              Calculators
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "news"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("news")}
-            >
-              Market News
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "education"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("education")}
-            >
-              Educational Resources
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "backtest"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("backtest")}
-            >
-              Backtesting
-            </button>
+
 
           </div>
 
@@ -1292,4 +1253,25 @@ const DEMO_SCENARIOS: Record<string, {
 }> = {
   // ...existing code...
 }
+
+const filteredScenarios = Object.values(DEMO_SCENARIOS).filter(scenario => {
+  if (!scenario || !scenario.title) return false;
+  return scenario.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         scenario.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         scenario.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+         false;
+});
+
+// Update interface if not already defined
+interface DemoScenario {
+  title: string;
+  description?: string;
+  tags?: string[];
+  scenarios: Array<{
+    id: string;
+    name: string;
+    focus: string;
+  }>;
+}
+
 

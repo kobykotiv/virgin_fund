@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Grid2X2, Pulse, Repeat, ChevronDown, ArrowsUpDown, Package } from "lucide-react"
 import { useState } from "react"
 import { BotActivationWizard } from "./activation"
+import { botOperations } from "@/lib/bot-operations"
 
 const PARAMETER_SCHEMAS = {
   grid: {
@@ -96,6 +97,22 @@ export function BotParameters({ type, onChange }: {
     onChange(newValues)
   }
 
+  const handleActivate = async () => {
+    const result = await botOperations.createBot({
+      type,
+      name: schema.name,
+      description: "Custom trading strategy",
+      investment: values.investmentAmount || 0,
+      risk: "Medium",
+      ...values
+    })
+
+    if (result.success && result.data) {
+      onChange(result.data)
+      setShowActivation(false)
+    }
+  }
+
   return (
     <>
       <Card>
@@ -149,10 +166,7 @@ export function BotParameters({ type, onChange }: {
             risk: "Medium",
             ...values
           }}
-          onActivate={async () => {
-            onChange(values)
-            setShowActivation(false)
-          }}
+          onActivate={handleActivate}
           onCancel={() => setShowActivation(false)}
         />
       )}

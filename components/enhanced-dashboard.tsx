@@ -192,10 +192,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
 
   // Generate performance data for chart
   const performanceData = portfolio ? calculatePositionPerformance(portfolio.positions) : []
-  const historicalData = portfolio ? calculateHistoricalPerformance(portfolio.positions) : []
-
-  // Generate mock historical performance data
-  const historicalData = Array.from({ length: 30 }, (_, i) => {
+  const historicalData = portfolio ? calculateHistoricalPerformance(portfolio.positions) : Array.from({ length: 30 }, (_, i) => {
     const date = new Date()
     date.setDate(date.getDate() - (30 - i))
     return {

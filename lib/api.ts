@@ -63,6 +63,7 @@ export async function fetchPortfolio(): Promise<Portfolio> {
                 datetime: "2025-03-18T10:15:00Z"
               }
             ]
+          },
           {
             id: "pos2b",
             assetType: "stock",
@@ -81,7 +82,6 @@ export async function fetchPortfolio(): Promise<Portfolio> {
                 datetime: "2025-03-18T10:20:00Z"
               }
             ]
-          }
           }
         ]
       },

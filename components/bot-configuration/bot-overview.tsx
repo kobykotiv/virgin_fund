@@ -34,12 +34,61 @@ export function SimpleBotOverview({ bot }: { bot: any }) {
             <div className="text-2xl font-bold">{bot.activeTrades}</div>
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground">Portfolio Value</div>
+            <div className="text-2xl font-bold">
+              ${bot.portfolio.currentValue.toLocaleString()}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground">Daily Change</div>
+            <div className={`text-2xl font-bold ${bot.portfolio.dailyChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {bot.portfolio.dailyChange >= 0 ? '+' : ''}{bot.portfolio.dailyChange.toFixed(2)}%
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Cash Balance</span>
+            <span>${bot.portfolio.cashBalance.toLocaleString()}</span>
+          </div>
+          <Progress value={(bot.portfolio.cashBalance / bot.portfolio.currentValue) * 100} />
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Position Types</span>
+            <span>{bot.portfolio.positions.filter(p => p.assetType === 'stock').length} Stocks, 
+                  {bot.portfolio.positions.filter(p => p.assetType === 'crypto').length} Crypto</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {bot.portfolio.positions.filter((p: any) => p.assetType !== 'basket').map((position: any) => (
+              <div key={position.id} className="flex justify-between items-center text-sm">
+                <Badge variant="outline">{position.ticker}</Badge>
+                <span className={position.avgPrice < position.currentPrice ? 'text-green-500' : 'text-red-500'}>
+                  ${position.currentPrice.toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </CardContent>
     </Card>
   )
 }
 
 export function AdvancedBotOverview({ bot }: { bot: any }) {
+  const getPositionValue = (position: any) => {
+    if (position.assetType === 'basket') {
+      return position.positions.reduce((sum: number, pos: any) => 
+        sum + (pos.quantity * pos.currentPrice), 0)
+    }
+    return position.quantity * position.currentPrice
+  }
+
+  const totalValue = bot.portfolio.positions.reduce((sum: number, pos: any) => 
+    sum + getPositionValue(pos), 0)
+
   return (
     <Card>
       <CardHeader>
@@ -81,6 +130,27 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
           />
         </div>
 
+        <div className="grid grid-cols-3 gap-4">
+          <MetricCard
+            icon={Activity}
+            label="Portfolio Return"
+            value={`${(bot.portfolio.totalReturn * 100).toFixed(1)}%`}
+            trend={bot.portfolio.totalReturn > 0 ? 'up' : 'down'}
+          />
+          <MetricCard
+            icon={Wallet}
+            label="Cash Allocation"
+            value={`${((bot.portfolio.cashBalance / bot.portfolio.currentValue) * 100).toFixed(1)}%`}
+            trend="neutral"
+          />
+          <MetricCard
+            icon={BarChart2}
+            label="Invested Amount"
+            value={`$${(bot.portfolio.currentValue - bot.portfolio.cashBalance).toLocaleString()}`}
+            trend="neutral"
+          />
+        </div>
+
         {/* Risk Management */}
         <div className="space-y-4">
           <div className="flex justify-between text-sm">
@@ -88,6 +158,26 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
             <span>{bot.capitalUsage}%</span>
           </div>
           <Progress value={bot.capitalUsage} />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex justify-between text-sm">
+            <span>Asset Allocation</span>
+            <span>{bot.portfolio.positions.length} positions</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {bot.portfolio.positions.map((position: any) => (
+              <div key={position.id} className="flex justify-between items-center text-sm">
+                <Badge variant="outline">
+                  {position.assetType === 'basket' ? position.name : position.ticker}
+                  <span className="ml-1 text-xs opacity-70">
+                    {position.assetType === 'basket' ? `(${position.positions.length})` : ''}
+                  </span>
+                </Badge>
+                <span>{((getPositionValue(position) / totalValue) * 100).toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

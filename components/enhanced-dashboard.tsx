@@ -50,6 +50,8 @@ import { useAuth } from "@/providers/auth-provider"
 import { calculateHistoricalPerformance, calculatePositionPerformance } from "@/lib/performance-utils"
 import { runBacktest } from "@/services/backtest-service"
 import { BotHero, BotGrid } from "@/components/bot-management"
+import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-views"
+import { BotAnalytics } from "./bot-configuration/bot-analytics"
 
 interface EnhancedDashboardProps {
   apiConfig?: {
@@ -71,6 +73,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
   const { toast } = useToast()
   const { isDemoMode } = useAuth()
   const [backtestResults, setBacktestResults] = useState<BacktestResult | null>(null)
+  const [viewMode, setViewMode] = useState<'simple' | 'advanced' | 'expert'>('simple')
 
   // Get unique assets from portfolio and bots
   const getUniqueAssets = () => {
@@ -873,26 +876,56 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
         </TabsContent>
 
         <TabsContent value="bots" className="space-y-8">
-          {bots.length > 0 && (
-            <BotHero 
-              bot={bots[0]} 
-              onAction={(action) => onBotAction(bots[0].id, action)}
-              isLoading={isLoading}
+          <div className="flex justify-end space-x-2">
+            <Button 
+              variant={viewMode === 'simple' ? 'default' : 'outline'}
+              onClick={() => setViewMode('simple')}
+            >
+              Simple
+            </Button>
+            <Button 
+              variant={viewMode === 'advanced' ? 'default' : 'outline'}
+              onClick={() => setViewMode('advanced')}
+            >
+              Advanced
+            </Button>
+            <Button 
+              variant={viewMode === 'expert' ? 'default' : 'outline'}
+              onClick={() => setViewMode('expert')}
+            >
+              Expert
+            </Button>
+          </div>
+        
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bots.map(bot => (
+              <div key={bot.id}>
+                {viewMode === 'expert' ? (
+                  <ExpertView bot={bot} />
+                ) : viewMode === 'advanced' ? (
+                  <AdvancedView bot={bot} />
+                ) : (
+                  <SimpleView bot={bot} />
+                )}
+                <div className="flex justify-end mt-2">
+                  {renderBotControls(bot)}
+                </div>
+              </div>
+            ))}
+          </div>
+          {selectedBot && (
+            <BotAnalytics 
+              data={{
+                equityCurve: generateEquityCurveData(selectedBot),
+                rollingReturns: generateRollingReturnsData(selectedBot),
+                tradeDistribution: generateTradeDistributionData(selectedBot),
+                tradeTiming: generateTradeTimingData(selectedBot),
+                assetAllocation: generateAssetAllocationData(selectedBot),
+                strategyAttribution: generateStrategyAttributionData(selectedBot),
+                correlationMatrix: generateCorrelationData(selectedBot)
+              }}
             />
           )}
-          
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col gap-4 md:gap-8">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">Active Bots</h2>
-                <p className="text-muted-foreground">Manage your trading bots and strategies</p>
-              </div>
-              <BotGrid 
-                bots={bots} 
-                onAction={onBotAction}
-              />
-            </div>
-          </div>
         </TabsContent>
 
         {renderPerformanceTab()}

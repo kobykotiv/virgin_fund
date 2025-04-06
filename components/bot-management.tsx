@@ -7,6 +7,8 @@ import Image from "next/image"
 import { Bot } from "@/types/bot"
 import { SimpleBotConfig, ComplexBotConfig } from "@/components/bot-configuration"
 import { useState } from "react"
+import { SimpleBotOverview, AdvancedBotOverview, ExpertBotOverview } from "./bot-configuration/bot-overview"
+import { BotMainView } from "./bot-configuration/bot-main-view"
 
 interface BotHeroProps {
   bot: Bot
@@ -56,105 +58,28 @@ export function BotHero({ bot, onAction, isLoading }: BotHeroProps) {
 
 export function BotGrid({ bots, onAction }: { bots: Bot[], onAction: (botId: string, action: string) => void }) {
   const [showConfig, setShowConfig] = useState<'simple' | 'complex' | null>(null)
+  const [viewMode, setViewMode] = useState<'simple' | 'advanced' | 'expert'>('simple')
+
+  const renderBotCard = (bot: Bot) => {
+    switch (viewMode) {
+      case 'expert':
+        return <ExpertBotOverview bot={bot} />
+      case 'advanced':
+        return <AdvancedBotOverview bot={bot} />
+      default:
+        return <SimpleBotOverview bot={bot} />
+    }
+  }
 
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {bots.map((bot) => (
-          <Card key={bot.id} className="overflow-hidden">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge variant="outline" className="mb-2">
-                    {bot.type}
-                  </Badge>
-                  <CardTitle className="text-xl">{bot.name}</CardTitle>
-                  <CardDescription className="mt-2">
-                    {bot.description}
-                  </CardDescription>
-                </div>
-                <Badge 
-                  variant={bot.status === 'active' ? "success" : "secondary"}
-                >
-                  {bot.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">P&L</span>
-                  <span className={bot.pnl >= 0 ? "text-green-500" : "text-red-500"}>
-                    {bot.pnl >= 0 ? '+' : ''}{bot.pnl.toFixed(2)}%
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Positions</span>
-                  <span>{bot.positions?.length || 0}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Last Trade</span>
-                  <span>{bot.lastTradeAt ? new Date(bot.lastTradeAt).toLocaleString() : 'Never'}</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between border-t pt-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onAction(bot.id, bot.status === 'active' ? 'stop' : 'start')}
-              >
-                {bot.status === 'active' ? (
-                  <><Pause className="mr-2 h-4 w-4" /> Stop</>
-                ) : (
-                  <><Play className="mr-2 h-4 w-4" /> Start</>
-                )}
-              </Button>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm">
-                  <Settings className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => onAction(bot.id, 'delete')}
-                  disabled={bot.status === 'active'}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
-        
-        {/* Add New Bot Card */}
-        <Card className="flex flex-col items-center justify-center p-6 border-dashed">
-          <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Create New Bot</h3>
-          <p className="text-sm text-muted-foreground text-center mb-4">
-            Choose your configuration method
-          </p>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowConfig('simple')}>
-              Quick Setup
-            </Button>
-            <Button variant="outline" onClick={() => setShowConfig('complex')}>
-              Advanced
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Configuration Dialogs */}
-      <Dialog open={showConfig !== null} onOpenChange={() => setShowConfig(null)}>
-        <DialogContent className="sm:max-w-[800px]">
-          {showConfig === 'simple' ? (
-            <SimpleBotConfig onSubmit={handleCreateBot} />
-          ) : (
-            <ComplexBotConfig onSubmit={handleCreateBot} />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+    <div className="space-y-8">
+      {bots.map(bot => (
+        <BotMainView 
+          key={bot.id}
+          bot={bot}
+          onAction={(action) => onAction(bot.id, action)}
+        />
+      ))}
+    </div>
   )
 }

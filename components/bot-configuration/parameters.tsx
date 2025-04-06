@@ -3,8 +3,9 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Grid2X2, Pulse, Repeat, ChevronDown, ArrowsUpDown } from "lucide-react"
+import { Grid2X2, Pulse, Repeat, ChevronDown, ArrowsUpDown, Package } from "lucide-react"
 import { useState } from "react"
+import { BotActivationWizard } from "./activation"
 
 const PARAMETER_SCHEMAS = {
   grid: {
@@ -64,6 +65,20 @@ const PARAMETER_SCHEMAS = {
       { name: "minSpread", label: "Minimum Spread %", type: "number", default: 0.5 },
       { name: "maxSlippage", label: "Max Slippage %", type: "number", default: 0.1 }
     ]
+  },
+  basket: {
+    name: "Basket Trading",
+    icon: Package,
+    params: [
+      { name: "assets", label: "Assets", type: "multiselect", options: [
+        { value: "AAPL", label: "Apple Inc." },
+        { value: "MSFT", label: "Microsoft" },
+        { value: "GOOGL", label: "Google" }
+      ]},
+      { name: "rebalanceInterval", label: "Rebalance Interval (days)", type: "number", default: 30 },
+      { name: "maxAssetWeight", label: "Max Asset Weight %", type: "number", default: 25 },
+      { name: "minAssetWeight", label: "Min Asset Weight %", type: "number", default: 5 }
+    ]
   }
 }
 
@@ -72,6 +87,7 @@ export function BotParameters({ type, onChange }: {
   onChange: (params: any) => void 
 }) {
   const [values, setValues] = useState<Record<string, any>>({})
+  const [showActivation, setShowActivation] = useState(false)
   const schema = PARAMETER_SCHEMAS[type]
   
   const handleChange = (name: string, value: any) => {
@@ -81,46 +97,65 @@ export function BotParameters({ type, onChange }: {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center space-x-2">
-          <schema.icon className="h-5 w-5" />
-          <CardTitle>{schema.name} Parameters</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {schema.params.map(param => (
-          <div key={param.name} className="grid grid-cols-2 gap-4">
-            <Label htmlFor={param.name} className="self-center">
-              {param.label}
-            </Label>
-            {param.type === 'select' ? (
-              <Select 
-                value={values[param.name] || ''} 
-                onValueChange={value => handleChange(param.name, value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {param.options?.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                id={param.name}
-                type={param.type}
-                value={values[param.name] || param.default || ''}
-                onChange={e => handleChange(param.name, e.target.value)}
-              />
-            )}
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <schema.icon className="h-5 w-5" />
+            <CardTitle>{schema.name} Parameters</CardTitle>
           </div>
-        ))}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {schema.params.map(param => (
+            <div key={param.name} className="grid grid-cols-2 gap-4">
+              <Label htmlFor={param.name} className="self-center">
+                {param.label}
+              </Label>
+              {param.type === 'select' ? (
+                <Select 
+                  value={values[param.name] || ''} 
+                  onValueChange={value => handleChange(param.name, value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {param.options?.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id={param.name}
+                  type={param.type}
+                  value={values[param.name] || param.default || ''}
+                  onChange={e => handleChange(param.name, e.target.value)}
+                />
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+      {showActivation && (
+        <BotActivationWizard
+          botConfig={{
+            name: schema.name,
+            type,
+            description: "Custom trading strategy",
+            investment: values.investmentAmount || 0,
+            risk: "Medium",
+            ...values
+          }}
+          onActivate={async () => {
+            onChange(values)
+            setShowActivation(false)
+          }}
+          onCancel={() => setShowActivation(false)}
+        />
+      )}
+    </>
   )
 }

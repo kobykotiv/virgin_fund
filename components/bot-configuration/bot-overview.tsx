@@ -151,6 +151,48 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
           />
         </div>
 
+        {/* Portfolio Allocation */}
+        <div className="space-y-4">
+          <div className="flex justify-between text-sm">
+            <span>Portfolio Allocation</span>
+            <span>
+              {bot.portfolio.positions.filter(p => p.assetType === 'stock').length} Stocks, 
+              {bot.portfolio.positions.filter(p => p.assetType === 'crypto').length} Crypto,
+              {bot.portfolio.positions.filter(p => p.assetType === 'basket').length} Baskets
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {bot.portfolio.positions.map((position: any) => (
+              <div key={position.id} className="flex justify-between items-center text-sm">
+                <Badge variant="outline" className="flex items-center gap-2">
+                  {position.assetType === 'basket' ? position.name : position.ticker}
+                  {position.assetType === 'basket' && (
+                    <span className="text-xs opacity-70">({position.positions.length})</span>
+                  )}
+                  <span className={`ml-1 text-xs ${getReturnClass(position)}`}>
+                    {getPositionReturn(position)}%
+                  </span>
+                </Badge>
+                <span>{((getPositionValue(position) / totalValue) * 100).toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Historical Performance */}
+        <div className="space-y-4">
+          <div className="flex justify-between text-sm">
+            <span>Historical Performance</span>
+            <span className={getReturnClass(bot.portfolio)}>
+              {bot.portfolio.return >= 0 ? '+' : ''}{bot.portfolio.return}%
+            </span>
+          </div>
+          <Progress 
+            value={Math.min(Math.abs(bot.portfolio.return), 100)} 
+            className={bot.portfolio.return >= 0 ? 'bg-green-500' : 'bg-red-500'} 
+          />
+        </div>
+
         {/* Risk Management */}
         <div className="space-y-4">
           <div className="flex justify-between text-sm">
@@ -182,6 +224,17 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
       </CardContent>
     </Card>
   )
+}
+
+function getReturnClass(position: any) {
+  if (!position.avgPrice || !position.currentPrice) return ''
+  const returnPct = ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100
+  return returnPct >= 0 ? 'text-green-500' : 'text-red-500'
+}
+
+function getPositionReturn(position: any) {
+  if (!position.avgPrice || !position.currentPrice) return 0
+  return (((position.currentPrice - position.avgPrice) / position.avgPrice) * 100).toFixed(1)
 }
 
 export function ExpertBotOverview({ bot }: { bot: any }) {

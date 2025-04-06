@@ -99,13 +99,6 @@ export default function LoginPage() {
     | "calculators"
     | "news"
     | "education"
-    | "forum"
-    | "api"
-    | "risk"
-    | "calendar"
-    | "performance"
-    | "backtest"
-    | "screener"
   >("login")
   const [isVisible, setIsVisible] = useState(true)
   const [activeDemo, setActiveDemo] = useState<DemoType | null>(null)
@@ -995,8 +988,8 @@ export default function LoginPage() {
               id="signup-tab-btn"
               className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === "signup"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-b-2 border-orange-500 text-orange-500"
+                  : "bg-orange-500 text-white rounded-md mx-1 hover:bg-orange-600"
               }`}
               onClick={() => setActiveTab("signup")}
             >
@@ -1047,56 +1040,6 @@ export default function LoginPage() {
             </button>
             <button
               className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "forum"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("forum")}
-            >
-              Community Forum
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "api"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("api")}
-            >
-              API Documentation
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "risk"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("risk")}
-            >
-              Risk Management
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "calendar"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("calendar")}
-            >
-              Economic Calendar
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "performance"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("performance")}
-            >
-              Performance Metrics
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === "backtest"
                   ? "border-b-2 border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -1105,16 +1048,7 @@ export default function LoginPage() {
             >
               Backtesting
             </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
-                activeTab === "screener"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveTab("screener")}
-            >
-              Asset Screener
-            </button>
+
           </div>
 
           {/* Close button */}
@@ -1600,90 +1534,256 @@ export default function LoginPage() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="forum" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Community Forum</h2>
-                    <p className="text-center text-muted-foreground mb-6">
-                      Connect with other traders and discuss strategies
-                    </p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/forum" target="_blank" rel="noopener noreferrer">
-                          Visit the Forum
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
+        
 
-                <TabsContent value="api" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">API Documentation</h2>
-                    <p className="text-center text-muted-foreground mb-6">
-                      Learn how to integrate with our platform using our API
-                    </p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/api" target="_blank" rel="noopener noreferrer">
-                          View API Documentation
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="risk" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Risk Management</h2>
-                    <p className="text-center text-muted-foreground mb-6">Learn about risk management strategies</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/risk" target="_blank" rel="noopener noreferrer">
-                          View Risk Management
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="calendar" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Economic Calendar</h2>
-                    <p className="text-center text-muted-foreground mb-6">Stay up-to-date with economic events</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/calendar" target="_blank" rel="noopener noreferrer">
-                          View Economic Calendar
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
+           
 
-                <TabsContent value="performance" className="mt-4">
-                  <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Performance Metrics</h2>
-                    <p className="text-center text-muted-foreground mb-6">View performance metrics</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/performance" target="_blank" rel="noopener noreferrer">
-                          View Performance Metrics
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
+ 
 
                 <TabsContent value="backtest" className="mt-4">
                   <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Backtesting</h2>
-                    <p className="text-center text-muted-foreground mb-6">Backtest your strategies</p>
-                    <div className="flex items-center justify-center">
-                      <Button asChild>
-                        <Link href="https://example.com/backtest" target="_blank" rel="noopener noreferrer">
-                          View Backtesting
-                        </Link>
-                      </Button>
+                    <h2 className="text-2xl font-bold mb-4 text-center">Backtesting Tool</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Test trading strategies with historical data without creating an account
+                    </p>
+                    
+                    <Card className="mb-6">
+                      <CardContent className="pt-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                          <div>
+                            <Label htmlFor="strategy" className="mb-2 block">Select Strategy</Label>
+                            <select id="strategy" className="w-full p-2 border rounded-md bg-background">
+                              <option value="moving-average">Moving Average Crossover</option>
+                              <option value="rsi">RSI Overbought/Oversold</option>
+                              <option value="bollinger">Bollinger Bands Breakout</option>
+                              <option value="macd">MACD Signal Line</option>
+                              <option value="grid-trading">Grid Trading (1%)</option>
+                            </select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="portfolio" className="mb-2 block">Select Portfolio/Asset</Label>
+                            <select id="portfolio" className="w-full p-2 border rounded-md bg-background">
+                              <option value="sp500">S&P 500 ETF</option>
+                              <option value="nasdaq">NASDAQ 100</option>
+                              <option value="btc">Bitcoin (BTC/USD)</option>
+                              <option value="eth">Ethereum (ETH/USD)</option>
+                              <option value="tech-stocks">Tech Stocks Basket</option>
+                              <option value="dividend-stocks">Dividend Stocks Basket</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                          <div>
+                            <Label htmlFor="start-date" className="mb-2 block">Start Date</Label>
+                            <Input
+                              id="start-date"
+                              type="date"
+                              defaultValue="2022-01-01"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="end-date" className="mb-2 block">End Date</Label>
+                            <Input
+                              id="end-date"
+                              type="date"
+                              defaultValue="2023-01-01" 
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="initial-capital" className="mb-2 block">Initial Capital</Label>
+                            <Input
+                              id="initial-capital"
+                              type="number"
+                              defaultValue="10000"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                          <div>
+                            <Label htmlFor="param1" className="mb-2 block">Parameter 1</Label>
+                            <div className="flex items-center">
+                              <span className="text-sm text-muted-foreground mr-2">5</span>
+                              <Input
+                                id="param1"
+                                type="range"
+                                min="5"
+                                max="50"
+                                defaultValue="20"
+                                className="flex-grow"
+                              />
+                              <span className="text-sm text-muted-foreground ml-2">50</span>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="param2" className="mb-2 block">Parameter 2</Label>
+                            <div className="flex items-center">
+                              <span className="text-sm text-muted-foreground mr-2">5</span>
+                              <Input
+                                id="param2"
+                                type="range"
+                                min="5"
+                                max="100"
+                                defaultValue="50"
+                                className="flex-grow"
+                              />
+                              <span className="text-sm text-muted-foreground ml-2">100</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <Button className="w-full md:w-auto">Run Backtest</Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <Card className="lg:col-span-2">
+                        <CardHeader>
+                          <CardTitle>Performance Chart</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-[300px] relative flex items-center justify-center bg-muted/20 rounded-md">
+                            <div className="h-64 w-full" style={{ 
+                              backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAzMDAgTDUwIDI2MCBMMTAwIDI0MCBMMTUwIDI0NSBMMjAwIDI2MCBMMjUwIDIzMCBMMzAwIDIyMCBMMzUwIDE5MCBMNDAwIDE4MCBMNDUwIDE3MCBMNTAwIDE1MCBMNTUwIDE2MCBMNjAwIDE0MCBMNjUwIDEyMCBMNzAwIDEwMCBMNzUwIDgwIEw4MDAgNjAgTDgwMCAzMDAgTDAgMzAwIFoiIGZpbGw9InJnYmEoNzksIDcwLCAyMjksIDAuMikiIHN0cm9rZT0icmdiKDc5LCA3MCwgMjI5KSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+')",
+                              backgroundSize: "cover",
+                              backgroundPosition: "center"
+                            }} />
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <p className="text-muted-foreground">Run a backtest to see results</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Backtest Results</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <dl className="space-y-4">
+                            <div>
+                              <dt className="text-sm text-muted-foreground">Total Return</dt>
+                              <dd className="text-2xl font-semibold text-green-500">+24.8%</dd>
+                            </div>
+                            
+                            <div>
+                              <dt className="text-sm text-muted-foreground">Annualized Return</dt>
+                              <dd className="text-xl font-semibold">18.3%</dd>
+                            </div>
+                            
+                            <div>
+                              <dt className="text-sm text-muted-foreground">Sharpe Ratio</dt>
+                              <dd className="font-medium">1.42</dd>
+                            </div>
+                            
+                            <div>
+                              <dt className="text-sm text-muted-foreground">Max Drawdown</dt>
+                              <dd className="font-medium text-red-500">-12.6%</dd>
+                            </div>
+                            
+                            <div>
+                              <dt className="text-sm text-muted-foreground">Win Rate</dt>
+                              <dd className="font-medium">68%</dd>
+                            </div>
+                          </dl>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Trade History</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="overflow-auto max-h-[200px]">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="text-left border-b">
+                                  <th className="pb-2">Date</th>
+                                  <th className="pb-2">Action</th>
+                                  <th className="pb-2">Price</th>
+                                  <th className="pb-2">Result</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr className="border-b border-border/40">
+                                  <td className="py-2">2022-01-15</td>
+                                  <td className="py-2 text-green-500">Buy</td>
+                                  <td className="py-2">$452.10</td>
+                                  <td className="py-2">-</td>
+                                </tr>
+                                <tr className="border-b border-border/40">
+                                  <td className="py-2">2022-02-20</td>
+                                  <td className="py-2 text-red-500">Sell</td>
+                                  <td className="py-2">$468.35</td>
+                                  <td className="py-2 text-green-500">+3.6%</td>
+                                </tr>
+                                <tr className="border-b border-border/40">
+                                  <td className="py-2">2022-03-10</td>
+                                  <td className="py-2 text-green-500">Buy</td>
+                                  <td className="py-2">$445.20</td>
+                                  <td className="py-2">-</td>
+                                </tr>
+                                <tr className="border-b border-border/40">
+                                  <td className="py-2">2022-04-05</td>
+                                  <td className="py-2 text-red-500">Sell</td>
+                                  <td className="py-2">$439.85</td>
+                                  <td className="py-2 text-red-500">-1.2%</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-2">2022-05-12</td>
+                                  <td className="py-2 text-green-500">Buy</td>
+                                  <td className="py-2">$428.70</td>
+                                  <td className="py-2">-</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Strategy Details</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-medium mb-1">Moving Average Crossover</h4>
+                              <p className="text-sm text-muted-foreground">
+                                This strategy generates buy signals when a faster moving average crosses above a slower moving average, 
+                                and sell signals when the faster average crosses below the slower one.
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <h4 className="font-medium mb-1">Parameters</h4>
+                              <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                                <li>Fast MA Period: 20 days</li>
+                                <li>Slow MA Period: 50 days</li>
+                                <li>Position Size: 100%</li>
+                              </ul>
+                            </div>
+                            
+                            <div className="pt-2">
+                              <p className="text-sm">
+                                <span className="text-muted-foreground">Want more strategy options and full customization? </span>
+                                <Button variant="link" className="h-auto p-0" onClick={() => setActiveTab("signup")}>
+                                  Sign up for a free account
+                                </Button>
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
                 </TabsContent>
@@ -1707,7 +1807,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <CookieBanner />
+      {/* <CookieBanner /> */}
     </div>
   )
 }

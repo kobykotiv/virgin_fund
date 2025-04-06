@@ -16,7 +16,6 @@ interface Article {
   category: string;
   image: string;
   slug: string;
-  featured?: boolean;
 }
 
 interface MagazineHeroProps {

@@ -1,5 +1,6 @@
 // Market data service to fetch data from multiple sources
 import { isDemoMode } from "./demo-service"
+import { Position } from "@/types/portfolio"
 
 // Define the market data interface
 export interface MarketData {
@@ -80,8 +81,42 @@ export async function getMarketData(symbol: string, forceRefresh = false): Promi
 }
 
 // Get market data for multiple symbols
-export async function getMultipleMarketData(symbols: string[]): Promise<MarketData[]> {
-  return Promise.all(symbols.map((symbol) => getMarketData(symbol)))
+export async function getMultipleMarketData(symbols: string[]) {
+  // Simulate API call for demo
+  return symbols.map(symbol => ({
+    symbol,
+    price: Math.random() * 1000,
+    change: Math.random() * 10 - 5,
+    changePercent: Math.random() * 10 - 5,
+    volume: Math.random() * 1000000,
+    open: Math.random() * 1000,
+    high: Math.random() * 1000,
+    low: Math.random() * 1000,
+  }))
+}
+
+export async function getMarketDataForPortfolio(positions: Position[]) {
+  const symbols = positions.flatMap(pos => 
+    pos.assetType === 'basket' 
+      ? pos.positions.map(p => p.ticker || '')
+      : [pos.ticker || '']
+  ).filter(Boolean)
+
+  return getMultipleMarketData(symbols)
+}
+
+export async function getMarketDataForPosition(position: Position): Promise<any[]> {
+  if (position.assetType === 'basket') {
+    const promises = position.positions.map(pos => getMarketDataForPosition(pos))
+    return (await Promise.all(promises)).flat()
+  }
+
+  try {
+    return await getMultipleMarketData([position.ticker || ''])
+  } catch (error) {
+    console.error(`Error fetching market data for ${position.ticker}:`, error)
+    return []
+  }
 }
 
 // Get market data from Alpaca

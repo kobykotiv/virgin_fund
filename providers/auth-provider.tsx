@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useRouter, usePathname } from "next/navigation"
 import { DEMO_ACCOUNT } from "@/lib/demo-data"
 import { DEMO_SCENARIOS } from "@/lib/demo-scenarios"
+import { toast } from "@/components/ui/use-toast"
 
 interface User {
   id: string
@@ -19,6 +20,9 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   isDemoMode: boolean
+  apiKey: string | null
+  secretKey: string | null
+  isPaper: boolean
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string) => Promise<void>
   logout: () => void
@@ -33,6 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isDemoMode, setIsDemoMode] = useState(false)
+  const [apiKey, setApiKey] = useState<string | null>(null)
+  const [secretKey, setSecretKey] = useState<string | null>(null)
+  const [isPaper, setIsPaper] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -181,6 +188,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
+    setApiKey(null)
+    setSecretKey(null)
+    setIsAuthenticated(false)
+    setIsDemoMode(false)
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("user")
     localStorage.removeItem("demoMode")
@@ -236,6 +247,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         isLoading,
         isDemoMode,
+        apiKey,
+        secretKey,
+        isPaper,
         login,
         signup,
         logout,

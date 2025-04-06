@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import MarketDataCache from '@/models/mongodb/MarketDataCache';
 import { connectToDatabase, disconnectFromDatabase } from '@/lib/db/models';
 import { Document } from 'mongodb';
+import { MarketDataBar } from '@/types/market';
 
 // Cache configuration
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes in milliseconds
@@ -176,6 +177,59 @@ class MarketDataCacheService {
         timeframe: '1D'
       })
     );
+  }
+
+  async cacheData(symbol: string, timeframe: string, data: MarketDataBar[]) {
+    try {
+      await connectToDatabase();
+      
+      // Upsert the data
+      await MarketDataCache.findOneAndUpdate(
+        { symbol, timeframe },
+        { symbol, timeframe, data, lastUpdated: new Date() },
+        { upsert: true, new: true }
+      );
+    } catch (error) {
+      console.error('Error caching market data:', error);
+      throw error;
+    }
+  }
+  
+  async getCachedData(symbol: string, timeframe: string, maxAge: number = 3600000): Promise<MarketDataBar[] | null> {
+    try {
+      await connectToDatabase();
+      
+      const cachedData = await MarketDataCache.findOne({ symbol, timeframe });
+      
+      if (!cachedData) return null;
+      
+      // Check if data is too old
+      const now = new Date();
+      const lastUpdated = new Date(cachedData.lastUpdated);
+      if (now.getTime() - lastUpdated.getTime() > maxAge) {
+        return null;
+      }
+      
+      return cachedData.data as MarketDataBar[];
+    } catch (error) {
+      console.error('Error retrieving cached market data:', error);
+      return null;
+    }
+  }
+  
+  async clearCache(olderThanDays: number = 7) {
+    try {
+      await connectToDatabase();
+      
+      const date = new Date();
+      date.setDate(date.getDate() - olderThanDays);
+      
+      await MarketDataCache.deleteMany({ lastUpdated: { $lt: date } });
+      console.log(`Cleared market data cache older than ${olderThanDays} days`);
+    } catch (error) {
+      console.error('Error clearing market data cache:', error);
+      throw error;
+    }
   }
 }
 

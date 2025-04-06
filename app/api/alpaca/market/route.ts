@@ -1,59 +1,54 @@
-import { NextResponse } from "next/server"
-import { AlpacaClient } from "@/lib/alpaca-client"
+import { NextResponse } from 'next/server'
+import { MarketDataService } from '@/services/market-data'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { MarketDataCacheService } from '@/services/market-data-cache'
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const symbol = searchParams.get("symbol")
-
-    if (!symbol) {
-      return NextResponse.json({ message: "Symbol parameter is required" }, { status: 400 })
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const config = AlpacaClient.getConfig()
-
-    if (config) {
-      // Fetch data from Alpaca API
-      const url = `${AlpacaClient.baseUrl}/v2/stocks/${symbol}/bars/latest`
-
-      const response = await fetch(url, {
-        headers: {
-          "APCA-API-KEY-ID": config.apiKey,
-          "APCA-API-SECRET-KEY": config.secretKey,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Alpaca API error: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      return NextResponse.json({
-        symbol: data.symbol,
-        price: data.close,
-        change: data.close - data.open,
-        volume: data.volume,
-        timestamp: new Date(data.timestamp).toISOString(),
-        source: "Alpaca",
-      })
-    } else {
-      // For demo purposes, return mock data
-      const mockPrice = Math.random() * 1000
-      const mockChange = Math.random() * 10 - 5
-
-      return NextResponse.json({
-        symbol,
-        price: mockPrice,
-        change: mockChange,
-        volume: Math.floor(Math.random() * 1000000),
-        timestamp: new Date().toISOString(),
-        source: "Mock",
-      })
+    
+    // Get query parameters
+    const url = new URL(request.url)
+    const symbol = url.searchParams.get('symbol')
+    const timeframe = url.searchParams.get('timeframe') || '1D'
+    const start = url.searchParams.get('start')
+    const end = url.searchParams.get('end')
+    
+    if (!symbol || !start || !end) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
     }
+    
+    // Retrieve API credentials from session
+    const { apiKey, secretKey, isPaper } = session.user as any
+    
+    if (!apiKey || !secretKey) {
+      return NextResponse.json({ error: 'API credentials not configured' }, { status: 400 })
+    }
+    
+    // Check cache first
+    const cacheService = new MarketDataCacheService()
+    const cachedData = await cacheService.getCachedData(symbol, timeframe)
+    
+    if (cachedData) {
+      return NextResponse.json(cachedData)
+    }
+    
+    // Fetch from API if not in cache
+    const marketDataService = new MarketDataService(apiKey, secretKey, isPaper)
+    const data = await marketDataService.getHistoricalBars(symbol, timeframe, start, end)
+    
+    // Cache the results
+    await cacheService.cacheData(symbol, timeframe, data)
+    
+    return NextResponse.json(data)
   } catch (error: any) {
-    console.error("Error fetching market data:", error)
-    return NextResponse.json({ message: "Failed to fetch market data", error: error.message }, { status: 500 })
+    console.error('Error fetching market data:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 

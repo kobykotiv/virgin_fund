@@ -1,22 +1,24 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMarketDataCache extends Document {
-  key: string;
-  data: any;
-  timestamp: Date;
-  expiresAt: Date;
+  symbol: string;
+  timeframe: string;
+  data: any[];
+  lastUpdated: Date;
 }
 
-const MarketDataCacheSchema = new Schema<IMarketDataCache>({
-  key: { type: String, required: true, unique: true },
-  data: { type: Schema.Types.Mixed, required: true },
-  timestamp: { type: Date, default: Date.now },
-  expiresAt: { type: Date, required: true }
+const MarketDataCacheSchema: Schema = new Schema({
+  symbol: { type: String, required: true },
+  timeframe: { type: String, required: true },
+  data: { type: Array, required: true },
+  lastUpdated: { type: Date, default: Date.now }
 });
 
-// Index for faster queries and automatic cache expiry
-MarketDataCacheSchema.index({ key: 1 });
-MarketDataCacheSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index
+// Compound index for efficient lookups
+MarketDataCacheSchema.index({ symbol: 1, timeframe: 1 }, { unique: true });
 
-export default mongoose.models.MarketDataCache || 
+// Check if the model is already defined to prevent recompilation errors
+const MarketDataCache = mongoose.models.MarketDataCache || 
   mongoose.model<IMarketDataCache>('MarketDataCache', MarketDataCacheSchema);
+
+export default MarketDataCache;

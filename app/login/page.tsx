@@ -96,9 +96,9 @@ export default function LoginPage() {
     | "login"
     | "signup"
     | "demos"
-    | "calculators"
-    | "news"
-    | "education"
+    // | "calculators"
+    // | "news"
+    // | "education"
   >("login")
   const [isVisible, setIsVisible] = useState(true)
   const [activeDemo, setActiveDemo] = useState<DemoType | null>(null)
@@ -139,7 +139,7 @@ export default function LoginPage() {
       icon: <Bitcoin className="h-5 w-5 text-orange-500" />,
       tags: ["Crypto", "High Growth"],
       risk: "High",
-      value: "$5,782,910",
+      value: "$15,782,910",
       return: "+22.7%",
       returnClass: "text-green-500",
       chartVariant: "crypto",
@@ -659,7 +659,7 @@ export default function LoginPage() {
   const filteredPortfolios = portfolios.filter((portfolio) => {
     // Filter by category
     if (activeFilter !== "all") {
-      const filterMap = {
+      const filterMap: Record<string, string[]> = {
         stocks: ["Stocks"],
         crypto: ["Crypto"],
         income: ["Income"],

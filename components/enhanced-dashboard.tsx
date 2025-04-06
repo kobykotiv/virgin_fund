@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,8 @@ import {
   RefreshCw,
   Settings,
   Wallet,
+  Play,
+  Trash,
 } from "lucide-react"
 import { LiveTicker } from "@/components/live-ticker"
 import { fetchPortfolio } from "@/services/portfolio-service"
@@ -53,10 +55,11 @@ interface EnhancedDashboardProps {
     baseUrl: string
     isPaper: boolean
   } | null
+  onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => Promise<void>
+  isLoading: boolean
 }
 
-export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
-  const [isLoading, setIsLoading] = useState(true)
+export function EnhancedDashboard({ apiConfig, onBotAction, isLoading }: EnhancedDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview")
   const [portfolio, setPortfolio] = useState<any>(null)
   const [bots, setBots] = useState<any[]>([])
@@ -74,7 +77,6 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
   }
 
   const loadDashboardData = async () => {
-    setIsLoading(true)
     try {
       // Fetch portfolio data
       const portfolioData = await fetchPortfolio()
@@ -156,8 +158,6 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
         description: "Failed to load dashboard data",
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -233,6 +233,32 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
   const formatPercentage = (value: number) => {
     return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`
   }
+
+  // Update bot controls in the UI
+  const renderBotControls = (bot: any) => (
+    <div className="flex items-center space-x-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onBotAction(bot.id, bot.status === 'active' ? 'stop' : 'start')}
+        disabled={isLoading}
+      >
+        {bot.status === 'active' ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onBotAction(bot.id, 'delete')}
+        disabled={isLoading || bot.status === 'active'}
+      >
+        <Trash className="h-4 w-4" />
+      </Button>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
@@ -475,6 +501,9 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                               {new Date(bot.updatedAt).toLocaleTimeString()}
                             </p>
                           </div>
+                          <CardFooter>
+                            {renderBotControls(bot)}
+                          </CardFooter>
                         </div>
                       ))}
                   </div>

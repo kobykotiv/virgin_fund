@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Grid2X2, Pulse, Repeat, ChevronDown } from "lucide-react"
+import { Grid2X2, Pulse, Repeat, ChevronDown, ArrowsUpDown } from "lucide-react"
 import { useState } from "react"
 
 const PARAMETER_SCHEMAS = {
@@ -37,7 +37,32 @@ const PARAMETER_SCHEMAS = {
         { value: "rsi", label: "RSI" }
       ]},
       { name: "period", label: "Period", type: "number", default: 14 },
-      { name: "positionSize", label: "Position Size %", type: "number", default: 10 }
+      { name: "positionSize", label: "Position Size %", type: "number", default: 10 },
+      { 
+        name: "exitStrategy", 
+        label: "Exit Strategy", 
+        type: "select", 
+        options: [
+          { value: "trailing", label: "Trailing Stop" },
+          { value: "fixed", label: "Fixed Take Profit" },
+          { value: "indicator", label: "Counter Indicator" }
+        ]
+      },
+      { name: "stopLoss", label: "Stop Loss %", type: "number", default: 2 },
+      { name: "leverage", label: "Leverage", type: "number", default: 1, max: 10 }
+    ]
+  },
+  arbitrage: {
+    name: "Arbitrage Trading",
+    icon: ArrowsUpDown,
+    params: [
+      { name: "exchanges", label: "Exchanges", type: "multiselect", options: [
+        { value: "binance", label: "Binance" },
+        { value: "coinbase", label: "Coinbase" },
+        { value: "kraken", label: "Kraken" }
+      ]},
+      { name: "minSpread", label: "Minimum Spread %", type: "number", default: 0.5 },
+      { name: "maxSlippage", label: "Max Slippage %", type: "number", default: 0.1 }
     ]
   }
 }

@@ -20,6 +20,11 @@
 export function MockDataWarning() {
   // Check if API credentials are present
   const isMockData = (): boolean => {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      // Server-side rendering, assume mock data is being used
+      return true;
+    }
     return !localStorage.getItem('alpaca_api_key') || !localStorage.getItem('alpaca_secret_key')
   }
   

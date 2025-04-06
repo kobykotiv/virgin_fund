@@ -42,6 +42,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       href: "/dashboard/calculators/retirement",
       title: "Retirement Calculator",
     },
+    {
+      href: "/dashboard/portfolio",
+      title: "Portfolio",
+    },
   ]
 
   return (
@@ -65,6 +69,35 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </aside>
         <main className="flex w-full flex-1 flex-col overflow-hidden py-6">{children}</main>
       </div>
+      
+      {/* Dashboard Footer */}
+      <footer className="border-t bg-muted/40">
+        <div className="container flex flex-col md:flex-row items-center justify-between py-4 text-sm">
+          <div className="flex items-center space-x-4">
+            <Link href="/" className="font-medium hover:underline">
+              Home
+            </Link>
+            <Link href="/dashboard" className="hover:underline">
+              Dashboard
+            </Link>
+            <Link href="/docs" className="hover:underline">
+              Documentation
+            </Link>
+            <Link href="/support" className="hover:underline">
+              Support
+            </Link>
+          </div>
+          
+          <div className="flex items-center space-x-4 mt-4 md:mt-0">
+            <p className="text-muted-foreground">
+              Market data provided by <span className="font-medium">Alpaca</span>
+            </p>
+            <p className="text-muted-foreground">
+              &copy; {new Date().getFullYear()} Virgin Fund. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

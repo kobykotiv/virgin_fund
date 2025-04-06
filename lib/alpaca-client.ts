@@ -22,10 +22,14 @@ export type AlpacaConfig = z.infer<typeof alpacaConfigSchema>
  */
 export class AlpacaClient {
   private static storageKey = "alpaca_config"
-  private static baseUrl = "https://paper-api.alpaca.markets"
+  static baseUrl = "https://paper-api.alpaca.markets"
 
   static saveConfig(config: AlpacaConfig): void {
     localStorage.setItem(this.storageKey, JSON.stringify(config))
+    // Update baseUrl based on isPaper setting
+    this.baseUrl = config.isPaper ? 
+      "https://paper-api.alpaca.markets" : 
+      "https://api.alpaca.markets"
   }
 
   static getConfig(): AlpacaConfig | null {
@@ -34,7 +38,14 @@ export class AlpacaClient {
 
     try {
       const config = JSON.parse(stored)
-      return alpacaConfigSchema.parse(config)
+      const parsedConfig = alpacaConfigSchema.parse(config)
+      
+      // Set the appropriate base URL
+      this.baseUrl = parsedConfig.isPaper ? 
+        "https://paper-api.alpaca.markets" : 
+        "https://api.alpaca.markets"
+        
+      return parsedConfig
     } catch (error) {
       console.error("Invalid Alpaca config:", error)
       return null
@@ -46,8 +57,12 @@ export class AlpacaClient {
   }
 
   static async testConnection(config: AlpacaConfig): Promise<boolean> {
+    const url = config.isPaper ? 
+      "https://paper-api.alpaca.markets" : 
+      "https://api.alpaca.markets"
+    
     try {
-      const response = await fetch(`${this.baseUrl}/v2/account`, {
+      const response = await fetch(`${url}/v2/account`, {
         headers: {
           'APCA-API-KEY-ID': config.apiKey,
           'APCA-API-SECRET-KEY': config.secretKey,

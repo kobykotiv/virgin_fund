@@ -6,6 +6,7 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/comp
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarDays, Clock, User } from "lucide-react"
+import { MagazineHero, MagazineGrid, MagazineFeature } from "./magazine-layout"
 
 export const metadata: Metadata = {
   title: "Blog | GenEric TraDer - Advanced Trading Platform",
@@ -113,92 +114,25 @@ export default function BlogPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* Hero Section - Using Magazine Layout */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Trading Insights & Platform Updates</h1>
-                <p className="max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Stay informed with the latest trading strategies, market analysis, and platform updates from the
-                  GenEric TraDer team.
-                </p>
-              </div>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Link href="/blog/category/trading-strategies">
-                  <Button variant="outline" className="rounded-full">
-                    Trading Strategies
-                  </Button>
-                </Link>
-                <Link href="/blog/category/market-analysis">
-                  <Button variant="outline" className="rounded-full">
-                    Market Analysis
-                  </Button>
-                </Link>
-                <Link href="/blog/category/platform-updates">
-                  <Button variant="outline" className="rounded-full">
-                    Platform Updates
-                  </Button>
-                </Link>
-                <Link href="/blog/category/success-stories">
-                  <Button variant="outline" className="rounded-full">
-                    Success Stories
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            {featuredPosts.length > 0 && (
+              <MagazineHero article={featuredPosts[0]} />
+            )}
           </div>
         </section>
 
-        {/* Featured Posts */}
+        {/* Featured Posts - Using Magazine Grid */}
         <section className="w-full py-12 md:py-16 lg:py-20">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col gap-4 md:gap-8">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight">Featured Articles</h2>
-                <p className="text-muted-foreground">Our most popular and informative content</p>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2">
-                {featuredPosts.map((post) => (
-                  <Card key={post.id} className="overflow-hidden">
-                    <div className="relative h-48 w-full">
-                      <Image src={post.image || "/placeholder.svg"} alt={post.title} fill className="object-cover" />
-                      <div className="absolute top-2 right-2">
-                        <Badge className="bg-primary">{post.category}</Badge>
-                      </div>
-                    </div>
-                    <CardHeader>
-                      <CardTitle>
-                        <Link href={`/blog/${post.slug}`} className="hover:underline">
-                          {post.title}
-                        </Link>
-                      </CardTitle>
-                      <CardDescription>{post.excerpt}</CardDescription>
-                    </CardHeader>
-                    <CardFooter className="flex justify-between">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <User className="mr-1 h-3 w-3" />
-                        {post.author}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center">
-                          <CalendarDays className="mr-1 h-3 w-3" />
-                          {post.date}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="mr-1 h-3 w-3" />
-                          {post.readTime}
-                        </span>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
+          <MagazineGrid 
+            articles={featuredPosts.slice(1)} 
+            title="Featured Articles"
+            description="Our most popular and informative content"
+          />
         </section>
 
-        {/* All Posts */}
+        {/* Recent Posts */}
         <section className="w-full py-12 md:py-16 lg:py-20 bg-muted/30">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col gap-4 md:gap-8">
@@ -312,6 +246,11 @@ export default function BlogPage() {
             </div>
           </div>
         </section>
+
+        {/* Feature Section */}
+        {recentPosts.length > 0 && (
+          <MagazineFeature article={recentPosts[0]} />
+        )}
 
         {/* Newsletter Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground">

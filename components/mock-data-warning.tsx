@@ -1,5 +1,7 @@
 "use client"
 
+import { useState, useEffect } from 'react'
+
 /**
  * Mock Data Warning component
  * 
@@ -18,17 +20,29 @@
  * - Includes aria-live to announce the warning to screen readers
  */
 export function MockDataWarning() {
-  // Check if API credentials are present
-  const isMockData = (): boolean => {
-    // Check if we're in a browser environment
-    if (typeof window === 'undefined') {
-      // Server-side rendering, assume mock data is being used
-      return true;
+  const [isMockingData, setIsMockingData] = useState<boolean>(false)
+  const [mounted, setMounted] = useState<boolean>(false)
+  
+  // First useEffect to handle component mounting
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Second useEffect to check for credentials after mounting
+  useEffect(() => {
+    if (mounted) {
+      const hasCredentials = localStorage.getItem('alpaca_api_key') && 
+                             localStorage.getItem('alpaca_secret_key')
+      setIsMockingData(!hasCredentials)
     }
-    return !localStorage.getItem('alpaca_api_key') || !localStorage.getItem('alpaca_secret_key')
+  }, [mounted])
+  
+  // Don't render anything on the server or before client-side hydration is complete
+  if (!mounted) {
+    return null
   }
   
-  if (!isMockData()) {
+  if (!isMockingData) {
     return null
   }
   

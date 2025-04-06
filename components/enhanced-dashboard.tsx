@@ -49,6 +49,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/providers/auth-provider"
 import { calculateHistoricalPerformance, calculatePositionPerformance } from "@/lib/performance-utils"
 import { runBacktest } from "@/services/backtest-service"
+import { BotHero, BotGrid } from "@/components/bot-management"
 
 interface EnhancedDashboardProps {
   apiConfig?: {
@@ -567,6 +568,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="bots">Bots</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
           <TabsTrigger value="market">Market Data</TabsTrigger>
@@ -868,6 +870,29 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="bots" className="space-y-8">
+          {bots.length > 0 && (
+            <BotHero 
+              bot={bots[0]} 
+              onAction={(action) => onBotAction(bots[0].id, action)}
+              isLoading={isLoading}
+            />
+          )}
+          
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col gap-4 md:gap-8">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Active Bots</h2>
+                <p className="text-muted-foreground">Manage your trading bots and strategies</p>
+              </div>
+              <BotGrid 
+                bots={bots} 
+                onAction={onBotAction}
+              />
+            </div>
+          </div>
         </TabsContent>
 
         {renderPerformanceTab()}

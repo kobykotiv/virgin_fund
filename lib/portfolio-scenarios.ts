@@ -416,6 +416,7 @@ export const PORTFOLIO_SCENARIOS = {
 
             ]
         }]
+    }
 } as const
 
-export type PortfolioScenarios = typeof PORTFOLIO_SCENARIOS;
+export type ScenarioKey = keyof typeof PORTFOLIO_SCENARIOS;

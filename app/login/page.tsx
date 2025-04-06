@@ -818,7 +818,7 @@ export default function LoginPage() {
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            {portfolio.tags.map((tag) => (
+                            {portfolio?.tags?.map((tag) => (
                               <Badge key={tag} variant="outline" className="text-xs">
                                 {tag}
                               </Badge>
@@ -1271,5 +1271,25 @@ export default function LoginPage() {
       {/* <CookieBanner /> */}
     </div>
   )
+}
+
+// Add TypeScript interface for portfolio scenarios
+interface DemoPortfolio {
+  id: string;
+  title: string;
+  description: string;
+  tags?: string[];
+  value?: number;
+  return?: number;
+  risk?: string;
+}
+
+// Update DEMO_SCENARIOS type
+const DEMO_SCENARIOS: Record<string, { 
+  title: string;
+  description: string;
+  portfolios: DemoPortfolio[];
+}> = {
+  // ...existing code...
 }
 

@@ -59,15 +59,34 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
           </div>
         </div>
       </header>
+      
       <div className="container grid flex-1 gap-12 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
         <aside className="hidden w-[200px] flex-col md:flex lg:w-[240px]">
           <DashboardNav items={navItems} />
         </aside>
-        <main className="flex w-full flex-1 flex-col overflow-hidden py-6">{children}</main>
+        <main className="flex w-full flex-1 flex-col overflow-hidden">
+          {/* Magazine Layout for Blog/Education Sections */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {children}
+          </div>
+        </main>
       </div>
       
-      {/* Add the dashboard footer */}
-      <DashboardFooter />
+      <DashboardFooter className="mt-auto py-6 border-t">
+        <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-muted-foreground">
+            <p>Using Demo Data - Connect Alpaca API for live trading</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/docs" className="text-sm hover:underline">
+              Documentation
+            </Link>
+            <Link href="/support" className="text-sm hover:underline">
+              Support
+            </Link>
+          </div>
+        </div>
+      </DashboardFooter>
     </div>
   )
 }

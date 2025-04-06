@@ -2,12 +2,19 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Github, Twitter, Globe, Mail, Heart, Coffee } from "lucide-react"
+import { cn } from "@/lib/utils"
+import type { ReactNode } from "react"
 
-export function DashboardFooter() {
+interface DashboardFooterProps {
+  children: ReactNode
+  className?: string
+}
+
+export function DashboardFooter({ children, className }: DashboardFooterProps) {
   const currentYear = new Date().getFullYear()
   
   return (
-    <footer className="mt-auto border-t bg-muted/20 py-6">
+    <footer className={cn("mt-auto border-t bg-muted/20 py-6 w-full", className)}>
       <div className="container flex flex-col space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-3">

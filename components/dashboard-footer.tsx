@@ -1,139 +1,135 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Github, Twitter, Globe, Mail, Heart, Coffee } from "lucide-react"
-import { cn } from "@/lib/utils"
-import type { ReactNode } from "react"
+"use client"
 
-interface DashboardFooterProps {
-  children: ReactNode
-  className?: string
-}
+import { useEffect, useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { 
+  Clock, 
+  Signal, 
+  ServerOff, 
+  Activity, 
+  CheckCircle2,
+  Globe
+} from "lucide-react"
 
-export function DashboardFooter({ children, className }: DashboardFooterProps) {
-  const currentYear = new Date().getFullYear()
-  
+export function DashboardFooter() {
+  const [marketStatus, setMarketStatus] = useState<"open" | "closed" | "unknown">("unknown")
+  const [serverStatus, setServerStatus] = useState<"connected" | "disconnected" | "pending">("pending")
+  const [currentTime, setCurrentTime] = useState<string>("")
+  const [lastUpdated, setLastUpdated] = useState<string>("")
+  const [apiMode, setApiMode] = useState<"demo" | "paper" | "live" | "disconnected">("disconnected")
+
+  // Update time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date()
+      setCurrentTime(now.toLocaleTimeString())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Check market status and server connection
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        // For demo purposes, we'll simulate random state updates
+        // In production, this would make actual API calls
+        
+        // Simulate market open during normal trading hours
+        const now = new Date()
+        const hours = now.getHours()
+        const isWeekday = now.getDay() > 0 && now.getDay() < 6
+        const isMarketHours = hours >= 9 && hours < 16
+
+        setMarketStatus(isWeekday && isMarketHours ? "open" : "closed")
+        setServerStatus(Math.random() > 0.1 ? "connected" : "disconnected")
+        setApiMode(localStorage.getItem('is_demo_mode') === 'true' 
+          ? "demo" 
+          : localStorage.getItem('alpaca_is_paper') === 'true'
+            ? "paper"
+            : localStorage.getItem('alpaca_api_key') 
+              ? "live" 
+              : "disconnected")
+        
+        setLastUpdated(new Date().toLocaleTimeString())
+      } catch (error) {
+        console.error("Failed to check status:", error)
+        setMarketStatus("unknown")
+        setServerStatus("disconnected")
+      }
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 60000) // Check every minute
+    
+    return () => clearInterval(interval)
+  }, [])
+
   return (
-    <footer className={cn("mt-auto border-t bg-muted/20 py-6 w-full", className)}>
-      <div className="container flex flex-col space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Virgin Fund</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/about" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/support" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  Support
-                </Link>
-              </li>
-            </ul>
+    <footer className="border-t py-2 px-4">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-1">
+            <Clock className="h-3 w-3" />
+            <span>{currentTime}</span>
           </div>
           
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Resources</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/docs" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  Documentation
-                </Link>
-              </li>
-              <li>
-                <Link href="/api" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  API Reference
-                </Link>
-              </li>
-              <li>
-                <Link href="/learn" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  Learning Center
-                </Link>
-              </li>
-            </ul>
+          <div className="flex items-center space-x-1">
+            <Signal className="h-3 w-3" />
+            <span>
+              Market: {" "}
+              {marketStatus === "open" ? (
+                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
+                  Open
+                </Badge>
+              ) : marketStatus === "closed" ? (
+                <Badge variant="outline" className="bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-900">
+                  Closed
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-200 hover:text-gray-900">
+                  Unknown
+                </Badge>
+              )}
+            </span>
           </div>
           
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Legal</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/terms" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/security" className="hover:underline text-muted-foreground hover:text-foreground transition-colors">
-                  Security
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Connect</h3>
-            <div className="flex space-x-3">
-              <Button variant="ghost" size="icon" asChild aria-label="GitHub">
-                <Link href="https://github.com/virginfund" target="_blank" rel="noopener noreferrer">
-                  <Github className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="ghost" size="icon" asChild aria-label="Twitter">
-                <Link href="https://twitter.com/virginfund" target="_blank" rel="noopener noreferrer">
-                  <Twitter className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="ghost" size="icon" asChild aria-label="Website">
-                <Link href="https://virgin-fund.app" target="_blank" rel="noopener noreferrer">
-                  <Globe className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="ghost" size="icon" asChild aria-label="Email">
-                <Link href="mailto:contact@virgin-fund.app">
-                  <Mail className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+          <div className="flex items-center space-x-1">
+            <Globe className="h-3 w-3" />
+            <span>
+              {apiMode === "demo" ? (
+                <Badge variant="outline" className="bg-purple-100 text-purple-800">Demo Mode</Badge>
+              ) : apiMode === "paper" ? (
+                <Badge variant="outline" className="bg-blue-100 text-blue-800">Paper Trading</Badge>
+              ) : apiMode === "live" ? (
+                <Badge variant="outline" className="bg-red-100 text-red-800">Live Trading</Badge>
+              ) : (
+                <Badge variant="outline">Disconnected</Badge>
+              )}
+            </span>
           </div>
         </div>
         
-        <Separator />
-        
-        <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
+        <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
-            <span>© {currentYear} Virgin Fund. All rights reserved.</span>
+            {serverStatus === "connected" ? (
+              <CheckCircle2 className="h-3 w-3 text-green-500" />
+            ) : serverStatus === "disconnected" ? (
+              <ServerOff className="h-3 w-3 text-red-500" />
+            ) : (
+              <Activity className="h-3 w-3 text-amber-500" />
+            )}
+            <span>
+              {serverStatus === "connected" 
+                ? "Server Connected" 
+                : serverStatus === "disconnected" 
+                  ? "Server Disconnected" 
+                  : "Connecting..."}
+            </span>
           </div>
           
-          <div className="flex items-center space-x-1 mt-4 md:mt-0">
-            <span>Powered by</span>
-            <Link href="https://alpaca.markets" target="_blank" rel="noopener noreferrer" className="hover:underline">
-              Alpaca Markets
-            </Link>
-            <span>•</span>
-            <Link href="https://coingecko.com" target="_blank" rel="noopener noreferrer" className="hover:underline">
-              CoinGecko
-            </Link>
-          </div>
-          
-          <div className="flex items-center space-x-2 mt-4 md:mt-0">
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
-              <Heart className="h-3.5 w-3.5 text-red-500" />
-              <span>Sponsor</span>
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
-              <Coffee className="h-3.5 w-3.5" />
-              <span>Buy us a coffee</span>
-            </Button>
+          <div>
+            <span>Last updated: {lastUpdated}</span>
           </div>
         </div>
       </div>

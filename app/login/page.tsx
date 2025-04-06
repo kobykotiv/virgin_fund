@@ -53,6 +53,7 @@ import { CompoundInterestCalculator } from "@/components/calculators/compound-in
 import { InflationCalculator } from "@/components/calculators/inflation-calculator"
 import { RetirementCalculator } from "@/components/calculators/retirement-calculator"
 import { NewsList } from "@/components/news-list"
+import { useToast } from "@/components/ui/use-toast"
 
 const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
 
@@ -116,6 +117,7 @@ export default function LoginPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 9
+  const { toast } = useToast()
 
   // Portfolio data
   const portfolios = [
@@ -725,14 +727,12 @@ export default function LoginPage() {
       try {
         // Check if user is already logged in
         const isAuthenticated = localStorage.getItem("isAuthenticated") === "true"
-
-        // Only redirect if authenticated - remove the hasBeenDismissed check
-        if (isAuthenticated) {
-          router.push("/")
-        }
+        
+        // Remove automatic redirection - let user stay on login page
+        // The previous code was redirecting automatically to home
+        // Remove: router.push("/")
       } catch (error) {
         console.error("Error checking authentication state:", error)
-        // Don't redirect in case of error - let the user try to log in
       }
     }
   }, [router])
@@ -782,13 +782,23 @@ export default function LoginPage() {
 
       await login(email, password)
 
-      // On successful login, mark as dismissed
+      // On successful login, mark as dismissed but DON'T redirect automatically
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")
-
-      // Add a small delay before redirecting to ensure state is updated
-      setTimeout(() => {
-        router.push("/")
-      }, 100)
+      
+      // Remove the automatic redirect
+      // Remove: setTimeout(() => { router.push("/") }, 100)
+      
+      // Instead, show a success message
+      setError(null)
+      toast({
+        title: "Login successful",
+        description: "You are now logged in. You can continue exploring or go to your dashboard.",
+        action: (
+          <Button variant="default" onClick={() => router.push("/dashboard")}>
+            Go to Dashboard
+          </Button>
+        )
+      })
     } catch (err) {
       console.error("Login error:", err)
 
@@ -835,13 +845,22 @@ export default function LoginPage() {
       // Auto-login after signup
       await login(email, password)
 
-      // On successful signup and login, mark as dismissed
+      // On successful signup and login, mark as dismissed but DON'T redirect
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")
-
-      // Add a small delay before redirecting to ensure state is updated
-      setTimeout(() => {
-        router.push("/")
-      }, 100)
+      
+      // Remove automatic redirect
+      // Remove: setTimeout(() => { router.push("/") }, 100)
+      
+      // Show success message instead
+      toast({
+        title: "Account created",
+        description: "Your account has been created successfully. You can now access your dashboard.",
+        action: (
+          <Button variant="default" onClick={() => router.push("/dashboard")}>
+            Go to Dashboard
+          </Button>
+        )
+      })
     } catch (err) {
       console.error("Signup error:", err)
 
@@ -894,10 +913,19 @@ export default function LoginPage() {
       // Enable demo mode in the auth context
       enableDemoMode(demoType)
 
-      // Redirect to dashboard with a small delay to ensure state is updated
-      setTimeout(() => {
-        router.push("/")
-      }, 500) // Increased delay for better state synchronization
+      // Don't automatically redirect after enabling demo mode
+      // Remove: setTimeout(() => { router.push("/") }, 500)
+      
+      // Show success message instead
+      toast({
+        title: "Demo Mode Enabled",
+        description: `You're now using the ${demoType} demo scenario.`,
+        action: (
+          <Button variant="default" onClick={() => router.push("/dashboard")}>
+            Go to Dashboard
+          </Button>
+        )
+      })
     } catch (error) {
       console.error("Demo login error:", error)
       setError(error instanceof Error ? error.message : "Failed to start demo. Please try again.")

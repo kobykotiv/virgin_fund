@@ -14,21 +14,29 @@ export class MarketDataService {
   }
 
   private async fetch(endpoint: string, options: RequestInit = {}) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'APCA-API-KEY-ID': this.apiKey,
-        'APCA-API-SECRET-KEY': this.secretKey,
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    })
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers: {
+          'APCA-API-KEY-ID': this.apiKey,
+          'APCA-API-SECRET-KEY': this.secretKey,
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      })
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`)
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Authentication failed: Invalid API credentials')
+        }
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+      }
+
+      return response.json()
+    } catch (error) {
+      console.error('Error fetching from Alpaca API:', error)
+      throw error
     }
-
-    return response.json()
   }
 
   // Enhanced API methods for comprehensive market data and trading operations

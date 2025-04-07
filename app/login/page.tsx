@@ -61,37 +61,7 @@ import { PortfolioDemoCard } from "@/components/portfolio-demo-card"
 
 const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
 
-type DemoType =
-  | "middle-life"
-  | "signals"
-  | "grid"
-  | "general"
-  | "crypto"
-  | "ai"
-  | "tech-growth"
-  | "dividend-income"
-  | "balanced-allocation"
-  | "conservative-income"
-  | "aggressive-growth"
-  | "crypto-pioneer"
-  | "blue-chip"
-  | "global-equity"
-  | "emerging-markets"
-  | "sustainable"
-  | "hft"
-  | "options"
-  | "microcap"
-  | "real-estate"
-  | "biotech"
-  | "fintech"
-  | "retail"
-  | "energy"
-  | "utilities"
-  | "defi"
-  | "nft"
-  | "commodities"
-  | "international"
-  | "value"
+type DemoType = keyof typeof DEMO_SCENARIOS;
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)

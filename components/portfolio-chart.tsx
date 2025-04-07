@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
+import { useEffect, useState, useCallback } from "react"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { portfolios } from "@/lib/demo-portfolios"
 
 interface PortfolioChartProps {
@@ -9,6 +9,7 @@ interface PortfolioChartProps {
   className?: string
 }
 
+// Color palette for different assets
 const COLORS = [
   "#0088FE", // blue
   "#00C49F", // green
@@ -20,37 +21,69 @@ const COLORS = [
   "#9966FF", // violet
   "#FF66B2", // pink
   "#66B2FF", // light blue
-]
+  "#C2F970", // lime
+  "#FF9F40", // light orange
+  "#EC7C7C", // salmon
+  "#4A90E2", // sky blue
+  "#B07FFF", // lavender
+];
 
 export function PortfolioChart({ portfolioType, className }: PortfolioChartProps) {
-  const [data, setData] = useState<Array<{ name: string; value: number }>>([])
+  const [data, setData] = useState<Array<{ name: string; value: number }>>([]);
 
-  useEffect(() => {
-    // Find the specific portfolio data by ID instead of using generic demo positions
-    const portfolio = portfolios.find(p => p.id === portfolioType)
+  // Find and format allocation data for the specific portfolio
+  const loadPortfolioData = useCallback(() => {
+    const portfolio = portfolios.find(p => p.id === portfolioType);
     
     if (portfolio && portfolio.allocation) {
-      // Use the portfolio-specific allocation data
-      setData(portfolio.allocation)
+      // Map the allocation data to include both symbol and full name when available
+      const allocData = portfolio.allocation.map(item => {
+        // Find the corresponding position to get more data
+        const position = portfolio.positions?.find(pos => pos.symbol === item.name);
+        
+        return {
+          name: position?.name || item.name, // Use full name if available
+          symbol: item.name, // Keep the symbol for tooltip
+          value: item.value,
+          color: getColorForAsset(item.name)
+        };
+      });
+      
+      setData(allocData);
     } else {
       // Fallback to sample data if portfolio not found
       setData([
-        { name: "Tech", value: 35 },
-        { name: "Finance", value: 25 },
-        { name: "Healthcare", value: 20 },
-        { name: "Consumer", value: 15 },
-        { name: "Energy", value: 5 }
-      ])
+        { name: "Tech", value: 35, symbol: "TECH", color: COLORS[0] },
+        { name: "Finance", value: 25, symbol: "FIN", color: COLORS[1] },
+        { name: "Healthcare", value: 20, symbol: "HLTH", color: COLORS[2] },
+        { name: "Consumer", value: 15, symbol: "CONS", color: COLORS[3] },
+        { name: "Energy", value: 5, symbol: "NRG", color: COLORS[4] }
+      ]);
     }
-  }, [portfolioType])
+  }, [portfolioType]);
+
+  useEffect(() => {
+    loadPortfolioData();
+  }, [loadPortfolioData, portfolioType]);
+
+  // Get a consistent color for a specific asset
+  function getColorForAsset(symbol: string): string {
+    // Hash the symbol to always get the same color for the same asset
+    const hash = symbol.split('').reduce((a, b) => {
+      a = (a << 5) - a + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    
+    return COLORS[Math.abs(hash) % COLORS.length];
+  }
 
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
     // Only show label for segments that are large enough (> 5%)
-    if (percent < 0.05) return null
+    if (percent < 0.05) return null;
     
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180))
-    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180))
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
 
     return (
       <text
@@ -64,8 +97,21 @@ export function PortfolioChart({ portfolioType, className }: PortfolioChartProps
       >
         {`${(percent * 100).toFixed(0)}%`}
       </text>
-    )
+    );
   }
+
+  const customTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-card p-2 border rounded shadow-sm">
+          <p className="font-semibold">{data.name} ({data.symbol})</p>
+          <p className="font-normal">{`Allocation: ${data.value}%`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className={`aspect-square w-full ${className}`}>
@@ -83,25 +129,17 @@ export function PortfolioChart({ portfolioType, className }: PortfolioChartProps
             dataKey="value"
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell 
+                key={`cell-${index}`} 
+                fill={entry.color || COLORS[index % COLORS.length]} 
+              />
             ))}
           </Pie>
-          <Tooltip
-            formatter={(value: number) => [`${value}%`, "Allocation"]}
-            contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "6px", border: "none" }}
-          />
-          <Legend 
-            layout="vertical"
-            align="center"
-            verticalAlign="bottom"
-            formatter={(value, entry, index) => {
-              // Truncate long ticker names
-              return value.length > 8 ? value.substring(0, 7) + "..." : value
-            }}
-          />
+          <Tooltip content={customTooltip} />
+          {/* Legend removed */}
         </PieChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
 }
 

@@ -1,20 +1,38 @@
-import { generatePortfolios } from "./utils/portfolio-generator"
+import { generatePortfolios, generatePortfoliosWithRealData } from "./utils/portfolio-generator"
 
 /**
  * Portfolio Collection
  * 
  * This file creates a diverse set of 48 portfolios with various characteristics:
+ * - Real market data when available (prices, allocations)
  * - Different risk profiles (Low, Moderate, High)
  * - Market sentiment indicators (Bullish, Bearish, Neutral)
  * - Fear/Greed index values (0-100)
- * - Multiple asset allocations across different sectors
- * 
- * Each portfolio contains full allocation data, historical performance,
- * and sentiment metrics that can be used in the UI.
+ * - Asset-specific allocations with real asset names and symbols
  */
 
-// Generate 48 diverse portfolios with sentiment indicators and fear/greed index
-export const portfolios = generatePortfolios(48)
+// Use this function to get real data, or fall back to generated data
+let portfoliosPromise: Promise<any[]>;
+
+export async function getPortfolios() {
+  try {
+    // Initialize the promise if it doesn't exist
+    if (!portfoliosPromise) {
+      portfoliosPromise = generatePortfoliosWithRealData(48);
+    }
+    
+    // Return the result of the promise
+    return await portfoliosPromise;
+  } catch (error) {
+    console.error("Error fetching portfolio data:", error);
+    // Fall back to generated data if real data fetching fails
+    return generatePortfolios(48);
+  }
+}
+
+// For immediate SSR/static rendering, provide fallback data
+// This will be hydrated with real data on the client
+export const portfolios = generatePortfolios(48);
 
 // ===== CATEGORIZED COLLECTIONS =====
 // These collections make it easy to display related portfolios together

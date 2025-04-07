@@ -15,28 +15,29 @@ import {
   Droplet,
   Briefcase
 } from "lucide-react"
+import { fetchMarketData, batchFetchMarketData } from "../services/market-data"
 
-// Asset universe
+// Asset universe with ticker symbols for real data
 const ASSET_UNIVERSE = {
   us_tech: ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA", "ADBE", "CRM", "INTC", "AMD", "PYPL"],
   us_blue_chips: ["JNJ", "PG", "KO", "WMT", "PEP", "JPM", "BAC", "V", "MA", "DIS", "HD", "MCD"],
   utilities: ["NEE", "DUK", "SO", "D", "AEP", "XEL", "ED", "EXC", "SRE", "PCG"],
   health: ["UNH", "PFE", "MRK", "ABT", "TMO", "DHR", "LLY", "BMY", "AMGN", "ISRG"],
   industrials: ["HON", "UPS", "BA", "CAT", "DE", "MMM", "LMT", "RTX", "UNP", "FDX"],
-  energy: ["XOM", "CVX", "BP", "RDS.A", "TOT", "ENB", "KMI", "COP", "PSX", "VLO"],
+  energy: ["XOM", "CVX", "BP", "COP", "SLB", "EOG", "KMI", "PSX", "VLO", "OXY"],
   etfs: ["SPY", "QQQ", "DIA", "IWM", "VTI", "VOO", "VGT", "XLK", "XLF", "XLV", "XLE", "XLI", "XLU", "GLD", "SLV"],
   crypto: ["BTC-USD", "ETH-USD", "SOL-USD", "ADA-USD", "DOT-USD", "LINK-USD"],
-  international: ["BABA", "TCEHY", "TSM", "TM", "BP", "SHEL", "NSRGY", "NVO", "ASML", "SAN"],
+  international: ["BABA", "TSM", "TM", "NVO", "ASML", "SAP", "RY", "BP", "SAN", "UL"],
   real_estate: ["AMT", "PLD", "CCI", "EQIX", "PSA", "O", "AVB", "ESS", "DLR", "VTR"]
 }
 
-// Portfolio templates for different strategies
+// Templates for different portfolio types
 const PORTFOLIO_TEMPLATES = [
   {
     name: "Tech Growth",
     focus: "High-growth technology companies",
     risk: "High",
-    assets: [...ASSET_UNIVERSE.us_tech, ...ASSET_UNIVERSE.crypto.slice(0, 2)],
+    assets: [...ASSET_UNIVERSE.us_tech.slice(0, 6)],
     icon: Cpu,
     tags: ["Tech", "Growth", "Innovation"]
   },
@@ -44,7 +45,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Blue Chip Value",
     focus: "Stable dividend-paying companies",
     risk: "Low",
-    assets: ASSET_UNIVERSE.us_blue_chips,
+    assets: ASSET_UNIVERSE.us_blue_chips.slice(0, 6),
     icon: Building2,
     tags: ["Value", "Dividends", "Defensive"]
   },
@@ -52,7 +53,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Balanced Portfolio",
     focus: "Diversified asset allocation",
     risk: "Moderate",
-    assets: [...ASSET_UNIVERSE.us_blue_chips.slice(0, 5), ...ASSET_UNIVERSE.us_tech.slice(0, 3), ...ASSET_UNIVERSE.etfs.slice(0, 2)],
+    assets: [...ASSET_UNIVERSE.us_blue_chips.slice(0, 3), ...ASSET_UNIVERSE.us_tech.slice(0, 3)],
     icon: Scale,
     tags: ["Balanced", "Mixed", "Core"]
   },
@@ -60,7 +61,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Crypto Pioneer",
     focus: "Emerging blockchain technologies",
     risk: "High",
-    assets: ASSET_UNIVERSE.crypto,
+    assets: ASSET_UNIVERSE.crypto.slice(0, 5),
     icon: BitcoinIcon,
     tags: ["Crypto", "Blockchain", "High Risk"]
   },
@@ -68,7 +69,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Global Diversification",
     focus: "International market exposure",
     risk: "Moderate",
-    assets: [...ASSET_UNIVERSE.international, ...ASSET_UNIVERSE.etfs.slice(5, 8)],
+    assets: ASSET_UNIVERSE.international.slice(0, 6),
     icon: Globe,
     tags: ["Global", "International", "Diversified"]
   },
@@ -76,7 +77,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Income Generator",
     focus: "High-yield dividend stocks",
     risk: "Low",
-    assets: [...ASSET_UNIVERSE.utilities, ...ASSET_UNIVERSE.us_blue_chips.slice(0, 5)],
+    assets: [...ASSET_UNIVERSE.utilities.slice(0, 3), ...ASSET_UNIVERSE.us_blue_chips.slice(0, 3)],
     icon: DollarSign,
     tags: ["Income", "Dividends", "Yield"]
   },
@@ -84,7 +85,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Healthcare Innovation",
     focus: "Biotech and healthcare advancements",
     risk: "High",
-    assets: ASSET_UNIVERSE.health,
+    assets: ASSET_UNIVERSE.health.slice(0, 6),
     icon: Gem,
     tags: ["Healthcare", "Biotech", "Growth"]
   },
@@ -92,7 +93,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Energy Transition",
     focus: "Clean energy and traditional producers",
     risk: "Moderate",
-    assets: ASSET_UNIVERSE.energy,
+    assets: ASSET_UNIVERSE.energy.slice(0, 6),
     icon: Zap,
     tags: ["Energy", "Commodities", "Transition"]
   },
@@ -100,7 +101,7 @@ const PORTFOLIO_TEMPLATES = [
     name: "Financial Services",
     focus: "Banking and payment systems",
     risk: "Moderate",
-    assets: ["JPM", "BAC", "WFC", "C", "GS", "MS", "V", "MA", "AXP", "PYPL"],
+    assets: ["JPM", "BAC", "WFC", "C", "GS", "V"],
     icon: Landmark,
     tags: ["Financial", "Banking", "Payments"]
   },
@@ -108,14 +109,30 @@ const PORTFOLIO_TEMPLATES = [
     name: "Cloud Computing",
     focus: "Cloud infrastructure and SaaS",
     risk: "High",
-    assets: ["MSFT", "AMZN", "GOOGL", "CRM", "NET", "DDOG", "SNOW", "ZS", "CRWD", "TEAM"],
+    assets: ["MSFT", "AMZN", "GOOGL", "CRM", "NET", "SNOW"],
     icon: Cloud,
     tags: ["Cloud", "SaaS", "Tech"]
   }
 ]
 
-// Generate 45+ unique portfolios using templates with variations
-export function generatePortfolios(count = 48) {
+// Generate portfolios with real market data when available
+export async function generatePortfoliosWithRealData(count = 48) {
+  // Collect all unique assets we need data for
+  const allAssets = new Set<string>();
+  
+  PORTFOLIO_TEMPLATES.forEach(template => {
+    template.assets.forEach(asset => allAssets.add(asset));
+  });
+  
+  // Fetch market data for all assets in one batch request
+  const marketData = await batchFetchMarketData(Array.from(allAssets));
+  
+  // Now generate portfolios using the real market data
+  return generatePortfolios(count, marketData);
+}
+
+// Generate portfolios with either real or fallback data
+export function generatePortfolios(count = 48, marketData?: Record<string, any>) {
   const portfolios = [];
   
   // First, ensure we have enough templates as a base
@@ -126,7 +143,9 @@ export function generatePortfolios(count = 48) {
     
     // Create variations to make each portfolio unique
     const seed = i / count; // 0 to almost 1
-    const positions = generatePositions(template.assets, seed);
+    
+    // Generate portfolio assets using either real market data or fallback
+    const positions = generatePositions(template.assets, seed, marketData);
     const totalValue = positions.reduce((sum, pos) => sum + pos.value, 0);
     
     // Generate a variety of sentiment indicators
@@ -139,8 +158,7 @@ export function generatePortfolios(count = 48) {
     // Strength varies from 30-95%
     const sentimentStrength = 30 + Math.floor(seed * 65);
     
-    // For fear/greed, create a distribution:
-    // 0-25: Extreme Fear, 25-40: Fear, 40-60: Neutral, 60-75: Greed, 75-100: Extreme Greed
+    // For fear/greed, create a distribution
     let fearGreedIndex;
     if (sentiment === "bearish") {
       // Bearish portfolios have lower fear/greed (more fear)
@@ -204,31 +222,56 @@ export function generatePortfolios(count = 48) {
   return portfolios;
 }
 
-// Generate realistic positions based on asset list
-function generatePositions(assets, seed) {
+// Generate positions with real market data when available
+function generatePositions(assets, seed, marketData?: Record<string, any>) {
   const positions = [];
-  const assetCount = 4 + Math.floor(seed * 6); // 4-10 assets
   
-  // Select random assets based on seed
-  const shuffledAssets = [...assets].sort(() => 0.5 - Math.random());
-  const selectedAssets = shuffledAssets.slice(0, Math.min(assetCount, assets.length));
-  
-  // Create positions with realistic values
-  selectedAssets.forEach(symbol => {
-    const basePrice = getAssetBasePrice(symbol);
-    const quantity = Math.floor(10 + seed * 990); // 10-1000 units
-    const value = basePrice * quantity;
+  assets.forEach(symbol => {
+    // Use real market data if available, otherwise use fallback
+    const price = marketData && marketData[symbol] ? 
+      marketData[symbol].price : 
+      getAssetBasePrice(symbol);
     
+    // Generate a realistic quantity based on seed
+    const maxQuantity = symbol.includes('BTC') ? 10 : 1000;
+    const quantity = Math.max(1, Math.floor(seed * maxQuantity));
+    
+    // Calculate value based on real price and quantity
+    const value = price * quantity;
+    
+    // Add position with real data
     positions.push({
       symbol,
       quantity,
-      avgPrice: basePrice * (0.8 + seed * 0.4), // Some variety in entry price
-      currentPrice: basePrice,
-      value
+      avgPrice: price * (0.8 + seed * 0.4), // Some variety in entry price
+      currentPrice: price,
+      value,
+      name: getAssetName(symbol) // Add readable name for the chart
     });
   });
   
   return positions;
+}
+
+// Get a readable name for an asset symbol
+function getAssetName(symbol: string): string {
+  const nameMap: Record<string, string> = {
+    'AAPL': 'Apple',
+    'MSFT': 'Microsoft',
+    'GOOGL': 'Google',
+    'AMZN': 'Amazon',
+    'META': 'Meta',
+    'NVDA': 'NVIDIA',
+    'TSLA': 'Tesla',
+    'BTC-USD': 'Bitcoin',
+    'ETH-USD': 'Ethereum',
+    'JPM': 'JPMorgan',
+    'V': 'Visa',
+    'WMT': 'Walmart'
+    // Add more mappings as needed
+  };
+  
+  return nameMap[symbol] || symbol;
 }
 
 // Generate historical price data based on sentiment
@@ -267,7 +310,7 @@ function generateHistoricalData(seed, sentiment) {
   return data;
 }
 
-// Get realistic base prices for various assets
+// Get realistic base prices for various assets (fallback when real data unavailable)
 function getAssetBasePrice(symbol) {
   // Common asset prices
   const prices = {

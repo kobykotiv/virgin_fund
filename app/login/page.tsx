@@ -83,7 +83,7 @@ export default function LoginPage() {
   const [activeFilter, setActiveFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 9
+  const itemsPerPage = 16
   const { toast } = useToast()
 
   // Portfolio data
@@ -771,7 +771,7 @@ export default function LoginPage() {
 
               {/* Portfolio grid with pagination */}
               <div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {filteredPortfolios
                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                     .map((portfolio) => (

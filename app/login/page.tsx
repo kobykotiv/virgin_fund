@@ -786,11 +786,11 @@ export default function LoginPage() {
                           value: portfolio.value,
                           return: portfolio.return,
                           returnClass: portfolio.returnClass,
-                          chartVariant: portfolio.chartVariant,
+                          chartVariant: portfolio.chartVariant as "up" | "volatile" | "down",
                           allocation: portfolio.allocation,
                           icon: portfolio.icon,
                           historicalData: portfolio.historicalData,
-                          sentiment: portfolio.sentiment,
+                          sentiment: portfolio.sentiment as "bullish" | "bearish" | "neutral" | undefined,
                           sentimentStrength: portfolio.sentimentStrength,
                           fearGreedIndex: portfolio.fearGreedIndex,
                           fearGreedLabel: portfolio.fearGreedLabel

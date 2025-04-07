@@ -109,3 +109,43 @@ export function AnimatedBackground() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 }
 
+
+    // Create grid-like pattern representing trading charts
+    class GridLine {
+      x1: number
+      y1: number
+      x2: number
+      y2: number
+      color: string
+      opacity: number
+      
+      canvas: HTMLCanvasElement;
+
+      constructor(horizontal: boolean, canvas: HTMLCanvasElement) {
+        this.canvas = canvas;
+        if (horizontal) {
+          this.x1 = 0
+          this.x2 = this.canvas.width
+          this.y1 = Math.random() * this.canvas.height
+          this.y2 = this.y1
+        } else {
+          this.y1 = 0
+          this.y2 = this.canvas.height
+          this.x1 = Math.random() * this.canvas.width
+          this.x2 = this.x1
+        }
+        this.color = "rgba(200, 200, 200, 0.2)" // Light gray color
+        this.opacity = Math.random() * 0.5 + 0.1 // Random opacity between 0.1 and 0.6
+      }
+
+          draw(ctx: CanvasRenderingContext2D) {
+          ctx.strokeStyle = this.color
+          ctx.globalAlpha = this.opacity
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo(this.x1, this.y1)
+          ctx.lineTo(this.x2, this.y2)
+          ctx.stroke()
+          ctx.globalAlpha = 1 // Reset alpha
+          }
+        }

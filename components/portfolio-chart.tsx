@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
-import { getPortfolioAllocation } from "@/services/alpaca-service"
+import { portfolios } from "@/lib/demo-portfolios"
 
 interface PortfolioChartProps {
   portfolioType: string
@@ -26,12 +26,28 @@ export function PortfolioChart({ portfolioType, className }: PortfolioChartProps
   const [data, setData] = useState<Array<{ name: string; value: number }>>([])
 
   useEffect(() => {
-    // Get portfolio allocation data
-    const allocationData = getPortfolioAllocation(portfolioType)
-    setData(allocationData)
+    // Find the specific portfolio data by ID instead of using generic demo positions
+    const portfolio = portfolios.find(p => p.id === portfolioType)
+    
+    if (portfolio && portfolio.allocation) {
+      // Use the portfolio-specific allocation data
+      setData(portfolio.allocation)
+    } else {
+      // Fallback to sample data if portfolio not found
+      setData([
+        { name: "Tech", value: 35 },
+        { name: "Finance", value: 25 },
+        { name: "Healthcare", value: 20 },
+        { name: "Consumer", value: 15 },
+        { name: "Energy", value: 5 }
+      ])
+    }
   }, [portfolioType])
 
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+    // Only show label for segments that are large enough (> 5%)
+    if (percent < 0.05) return null
+    
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5
     const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180))
     const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180))
@@ -52,7 +68,7 @@ export function PortfolioChart({ portfolioType, className }: PortfolioChartProps
   }
 
   return (
-    <div className={`w-full h-64 ${className}`}>
+    <div className={`aspect-square w-full ${className}`}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -61,7 +77,8 @@ export function PortfolioChart({ portfolioType, className }: PortfolioChartProps
             cy="50%"
             labelLine={false}
             label={renderCustomizedLabel}
-            outerRadius={80}
+            outerRadius="80%"
+            innerRadius="40%"
             fill="#8884d8"
             dataKey="value"
           >
@@ -73,7 +90,15 @@ export function PortfolioChart({ portfolioType, className }: PortfolioChartProps
             formatter={(value: number) => [`${value}%`, "Allocation"]}
             contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "6px", border: "none" }}
           />
-          <Legend />
+          <Legend 
+            layout="vertical"
+            align="center"
+            verticalAlign="bottom"
+            formatter={(value, entry, index) => {
+              // Truncate long ticker names
+              return value.length > 8 ? value.substring(0, 7) + "..." : value
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

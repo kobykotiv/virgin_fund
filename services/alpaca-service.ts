@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { generateDemoPositions } from "@/lib/demo-data"
 
 // Types for Alpaca API responses
 export interface AssetData {
@@ -181,47 +182,19 @@ export function useHistoricalBars(symbol: string, timeframe = "day", limit = 30)
 }
 
 // Function to get portfolio allocation data
-export function getPortfolioAllocation(portfolioType: string) {
-  switch (portfolioType) {
-    case "FAANG":
-      return [
-        { name: "META", value: 20 },
-        { name: "AAPL", value: 25 },
-        { name: "AMZN", value: 20 },
-        { name: "NFLX", value: 15 },
-        { name: "GOOGL", value: 20 },
-      ]
-    case "Growth Stocks":
-      return [
-        { name: "TSLA", value: 30 },
-        { name: "NVDA", value: 25 },
-        { name: "AMD", value: 15 },
-        { name: "SHOP", value: 15 },
-        { name: "SQ", value: 15 },
-      ]
-    case "BTC:ETH (3:5)":
-      return [
-        { name: "BTC", value: 37.5 },
-        { name: "ETH", value: 62.5 },
-      ]
-    case "Crypto (Market Cap)":
-      return [
-        { name: "BTC", value: 45 },
-        { name: "ETH", value: 30 },
-        { name: "SOL", value: 15 },
-        { name: "DOGE", value: 5 },
-        { name: "ADA", value: 5 },
-      ]
-    case "WSB Favorites":
-      return [
-        { name: "GME", value: 30 },
-        { name: "AMC", value: 25 },
-        { name: "PLTR", value: 20 },
-        { name: "BB", value: 15 },
-        { name: "WISH", value: 10 },
-      ]
-    default:
-      return [{ name: "Unknown", value: 100 }]
-  }
+export function getPortfolioAllocation(portfolioId: string) {
+  // Get actual positions
+  const positions = generateDemoPositions()
+  
+  // Calculate allocations based on real position values
+  const totalValue = positions.reduce((sum, pos) => sum + pos.value, 0)
+  
+  return positions
+    .map(pos => ({
+      name: pos.symbol,
+      value: Number(((pos.value / totalValue) * 100).toFixed(1))
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8) // Show top 8 positions
 }
 

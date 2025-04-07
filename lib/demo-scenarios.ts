@@ -1,23 +1,24 @@
+import { portfolios } from "./demo-portfolios"
 import { PORTFOLIO_SCENARIOS } from "./portfolio-scenarios"
 
 export const DEMO_SCENARIOS = {
   retail: {
     title: "Retail Investor",
-    description: "Experience trading with a $100k portfolio",
-    tags: ["Stocks", "Growth", "Value"],
-    scenarios: [PORTFOLIO_SCENARIOS.meta2022, PORTFOLIO_SCENARIOS.chipotle2015]
+    description: "Experience trading with a retail portfolio",
+    tags: ["Stocks", "ETFs", "Mutual Funds"],
+    portfolios: portfolios.slice(0, 4)
   },
   institutional: {
-    title: "Institutional Investor", 
-    description: "Manage a $10M portfolio with advanced strategies",
+    title: "Institutional Investor",
+    description: "Manage large-scale investment portfolios",
     tags: ["Professional", "Large Cap", "Diversified"],
-    scenarios: [PORTFOLIO_SCENARIOS.housingMarketLong, PORTFOLIO_SCENARIOS.housingMarketShort]
+    portfolios: portfolios.slice(4, 8)
   },
   crypto: {
     title: "Crypto Trader",
-    description: "Trade cryptocurrencies and digital assets",
-    tags: ["Crypto", "High Risk", "Digital Assets"],
-    scenarios: [PORTFOLIO_SCENARIOS.cryptoIndexFund, PORTFOLIO_SCENARIOS.cryptoMemeIndex]
+    description: "Trade digital assets and cryptocurrencies",
+    tags: ["Crypto", "DeFi", "Web3"],
+    portfolios: portfolios.slice(8, 12)
   },
   recovery: {
     title: "Recovery Plays",

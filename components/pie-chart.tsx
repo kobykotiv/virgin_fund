@@ -22,8 +22,8 @@ export function PieChart({ data = [], width = 300, height = 300 }: PieChartProps
         <RePieChart width={width} height={height}>
           <Pie
             data={data}
-            cx="50%"
-            cy="50%"
+            cx="30%"
+            cy="30%"
             labelLine={false}
             outerRadius={width > 200 ? 80 : 60}
             fill="#8884d8"

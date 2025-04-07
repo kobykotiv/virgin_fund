@@ -56,6 +56,9 @@ import { NewsList } from "@/components/news-list"
 import { useToast } from "@/components/ui/use-toast"
 import { portfolios } from "@/lib/demo-portfolios"
 
+// Add PortfolioDemoCard import
+import { PortfolioDemoCard } from "@/components/portfolio-demo-card"
+
 const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
 
 type DemoType =
@@ -120,26 +123,56 @@ export default function LoginPage() {
   const filteredPortfolios = displayPortfolios.filter((portfolio) => {
     // Filter by category
     if (activeFilter !== "all") {
-      const filterMap: Record<string, string[]> = {
-        stocks: ["Stocks"],
-        crypto: ["Crypto"],
-        income: ["Income"],
-        global: ["Global"],
-        "low-risk": ["Low"],
-        "high-risk": ["High"],
+      const filterMap: Record<string, { 
+        tags?: string[], 
+        risk?: string[],
+        sentiment?: string[],
+        fearGreedRange?: [number, number]
+      }> = {
+        stocks: { tags: ["Stocks", "ETFs"] },
+        crypto: { tags: ["Crypto", "Blockchain"] },
+        income: { tags: ["Income", "Dividends", "Yield"] },
+        global: { tags: ["Global", "International"] },
+        "low-risk": { risk: ["Low"] },
+        "high-risk": { risk: ["High"] },
+        "bullish": { sentiment: ["bullish"] },
+        "bearish": { sentiment: ["bearish"] },
+        "extreme-fear": { fearGreedRange: [0, 25] },
+        "extreme-greed": { fearGreedRange: [75, 100] },
       }
 
-      const filterTerms = filterMap[activeFilter] || []
+      const filterCriteria = filterMap[activeFilter]
+      if (!filterCriteria) return false
 
-      // Check if portfolio matches the filter
-      const matchesFilter = filterTerms.some((term) => {
-        if (term === "Low" || term === "High") {
-          return portfolio.risk.includes(term)
-        }
-        return portfolio.tags.includes(term)
-      })
-
-      if (!matchesFilter) return false
+      // Check if portfolio matches any of the filter criteria
+      if (filterCriteria.tags) {
+        const matchesTags = filterCriteria.tags.some(tag => 
+          portfolio.tags.some(portfolioTag => 
+            portfolioTag.toLowerCase().includes(tag.toLowerCase())
+          )
+        )
+        if (matchesTags) return true
+      }
+      
+      if (filterCriteria.risk) {
+        const matchesRisk = filterCriteria.risk.some(riskLevel => 
+          portfolio.risk.includes(riskLevel)
+        )
+        if (matchesRisk) return true
+      }
+      
+      if (filterCriteria.sentiment) {
+        const matchesSentiment = filterCriteria.sentiment.includes(portfolio.sentiment || '')
+        if (matchesSentiment) return true
+      }
+      
+      if (filterCriteria.fearGreedRange && portfolio.fearGreedIndex) {
+        const [min, max] = filterCriteria.fearGreedRange
+        const matchesFearGreed = portfolio.fearGreedIndex >= min && portfolio.fearGreedIndex <= max
+        if (matchesFearGreed) return true
+      }
+      
+      return false
     }
 
     // Filter by search query
@@ -700,18 +733,34 @@ export default function LoginPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={activeFilter === "income" ? "bg-primary text-primary-foreground" : ""}
-                    onClick={() => setActiveFilter("income")}
+                    className={activeFilter === "bullish" ? "bg-green-500 text-white" : ""}
+                    onClick={() => setActiveFilter("bullish")}
                   >
-                    Income
+                    Bullish
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className={activeFilter === "global" ? "bg-primary text-primary-foreground" : ""}
-                    onClick={() => setActiveFilter("global")}
+                    className={activeFilter === "bearish" ? "bg-red-500 text-white" : ""}
+                    onClick={() => setActiveFilter("bearish")}
                   >
-                    Global
+                    Bearish
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={activeFilter === "extreme-fear" ? "bg-red-700 text-white" : ""}
+                    onClick={() => setActiveFilter("extreme-fear")}
+                  >
+                    Extreme Fear
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={activeFilter === "extreme-greed" ? "bg-green-700 text-white" : ""}
+                    onClick={() => setActiveFilter("extreme-greed")}
+                  >
+                    Extreme Greed
                   </Button>
                   <Button
                     variant="outline"
@@ -756,59 +805,30 @@ export default function LoginPage() {
                   {filteredPortfolios
                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                     .map((portfolio) => (
-                      <Card key={portfolio.id} className="overflow-hidden h-full flex flex-col">
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle className="flex items-center gap-2 text-base">
-                                {portfolio.icon}
-                                {portfolio.name}
-                              </CardTitle>
-                              <CardDescription className="line-clamp-2">{portfolio.focus}</CardDescription>
-                            </div>
-                            <Badge variant={getRiskVariant(portfolio.risk)}>{portfolio.risk}</Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="py-2 flex-grow">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                            <div className="h-24">
-                              <PerformanceChart days={30} variant={portfolio.chartVariant} className="h-full w-full" />
-                            </div>
-                            <div className="h-24 flex items-center justify-center">
-                              <PieChart data={portfolio.allocation} height={90} width={90} />
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {portfolio?.tags?.map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <div>
-                              <p className="font-medium">Value</p>
-                              <p className="text-lg font-bold">{portfolio.value}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">Return</p>
-                              <p className={`text-base font-semibold ${portfolio.returnClass}`}>{portfolio.return}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="pt-0">
-                          <Button
-                            className="w-full"
-                            onClick={() => startDemoAnimation(portfolio.id as DemoType)}
-                            disabled={isLoading || demoAnimation}
-                          >
-                            {isLoading && activeDemo === portfolio.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : null}
-                            Try This Demo
-                          </Button>
-                        </CardFooter>
-                      </Card>
+                      <PortfolioDemoCard
+                        key={portfolio.id}
+                        portfolio={{
+                          id: portfolio.id,
+                          name: portfolio.name,
+                          focus: portfolio.focus,
+                          risk: portfolio.risk,
+                          tags: portfolio.tags,
+                          value: portfolio.value,
+                          return: portfolio.return,
+                          returnClass: portfolio.returnClass,
+                          chartVariant: portfolio.chartVariant,
+                          allocation: portfolio.allocation,
+                          icon: portfolio.icon,
+                          historicalData: portfolio.historicalData,
+                          sentiment: portfolio.sentiment,
+                          sentimentStrength: portfolio.sentimentStrength,
+                          fearGreedIndex: portfolio.fearGreedIndex,
+                          fearGreedLabel: portfolio.fearGreedLabel
+                        }}
+                        onSelect={(id) => startDemoAnimation(id as DemoType)}
+                        isLoading={isLoading}
+                        activeDemo={activeDemo}
+                      />
                     ))}
                 </div>
 
@@ -1237,41 +1257,24 @@ export default function LoginPage() {
 // Add TypeScript interface for portfolio scenarios
 interface DemoPortfolio {
   id: string;
-  title: string;
-  description: string;
-  tags?: string[];
-  value?: number;
-  return?: number;
-  risk?: string;
+  name: string;
+  focus: string;
+  risk: string;
+  tags: string[];
+  value: string;
+  return: string;
+  returnClass: string;
+  chartVariant: "up" | "down" | "volatile";
+  allocation: { name: string; value: number }[];
+  icon: LucideIcon;
+  historicalData?: Array<{ date: string; value: number }>;
+  sentiment?: "bullish" | "bearish" | "neutral";
+  sentimentStrength?: number; // 0-100
+  fearGreedIndex?: number; // 0-100
+  fearGreedLabel?: string; // "Extreme Fear" to "Extreme Greed"
 }
 
-// Update DEMO_SCENARIOS type
-const DEMO_SCENARIOS: Record<string, { 
-  title: string;
-  description: string;
-  portfolios: DemoPortfolio[];
-}> = {
-  // ...existing code...
-}
-
-const filteredScenarios = Object.values(DEMO_SCENARIOS).filter(scenario => {
-  if (!scenario || !scenario.title) return false;
-  return scenario.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         scenario.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         scenario.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
-         false;
-});
-
-// Update interface if not already defined
-interface DemoScenario {
-  title: string;
-  description?: string;
-  tags?: string[];
-  scenarios: Array<{
-    id: string;
-    name: string;
-    focus: string;
-  }>;
-}
+// Remove the standalone filtered scenarios - this functionality should be used
+// directly within the component where searchQuery is available
 
 

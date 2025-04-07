@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { DashboardNav } from "@/components/dashboard-nav" 
 import { UserAccountNav } from "@/components/user-account-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 import { DashboardFooter } from "@/components/dashboard-footer"
+=======
+import type React from "react"
+import { MagazineLayout } from "@/components/dashboard/magazine-layout"
+>>>>>>> origin/v0-patch-1
 import { redirect } from "next/navigation"
 import dynamic from 'next/dynamic'
 
@@ -51,6 +56,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     redirect("/home")
   }
 
+<<<<<<< HEAD
   return (
     <div className="relative min-h-screen flex flex-col">
       <header className="sticky top-0 z-40 w-full border-b bg-background">
@@ -99,5 +105,8 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       </DashboardFooter>
     </div>
   )
+=======
+  return <MagazineLayout>{children}</MagazineLayout>
+>>>>>>> origin/v0-patch-1
 }
 

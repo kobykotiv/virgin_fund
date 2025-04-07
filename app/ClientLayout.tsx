@@ -5,9 +5,9 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/providers/auth-provider"
 import { Toaster } from "@/components/ui/toaster"
-import './globals.css'
+import { CookieBanner } from "@/components/cookie-banner"
 
-const inter = Inter({ subsets: ["latin"] })
+import './globals.css' //add import here
 
 export default function ClientLayout({
   children,

@@ -1,4 +1,3 @@
-// Market data service to fetch data from multiple sources
 import { isDemoMode } from "./demo-service"
 import { Position } from "@/types/portfolio"
 

@@ -1,4 +1,3 @@
-// Bot service to handle bot operations with demo mode support
 import type { Bot, BotStatus, BotType } from "@/types/bot"
 import { isDemoMode, DEMO_BOTS_KEY } from "./demo-service"
 import {

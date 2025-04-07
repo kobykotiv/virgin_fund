@@ -1,7 +1,5 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -9,9 +7,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Loader2, DollarSign, Github, Signal, Grid, X } from "lucide-react"
+import { AlertCircle, Loader2, DollarSign, Github, Signal, Grid, Info, X } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/providers/auth-provider"
 import { CookieBanner } from "@/components/cookie-banner"
@@ -53,11 +51,6 @@ import { CompoundInterestCalculator } from "@/components/calculators/compound-in
 import { InflationCalculator } from "@/components/calculators/inflation-calculator"
 import { RetirementCalculator } from "@/components/calculators/retirement-calculator"
 import { NewsList } from "@/components/news-list"
-import { useToast } from "@/components/ui/use-toast"
-import { portfolios } from "@/lib/demo-portfolios"
-
-// Add PortfolioDemoCard import
-import { PortfolioDemoCard } from "@/components/portfolio-demo-card"
 
 const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
 
@@ -70,9 +63,16 @@ export default function LoginPage() {
     | "login"
     | "signup"
     | "demos"
-    // | "calculators"
-    // | "news"
-    // | "education"
+    | "calculators"
+    | "news"
+    | "education"
+    | "forum"
+    | "api"
+    | "risk"
+    | "calendar"
+    | "performance"
+    | "backtest"
+    | "screener"
   >("login")
   const [isVisible, setIsVisible] = useState(true)
   const [activeDemo, setActiveDemo] = useState<DemoType | null>(null)
@@ -87,7 +87,547 @@ export default function LoginPage() {
   const { toast } = useToast()
 
   // Portfolio data
-  const displayPortfolios = portfolios
+  const portfolios = [
+    {
+      id: "general",
+      name: "$10M Portfolio",
+      focus: "General trading with a large portfolio",
+      icon: <DollarSign className="h-5 w-5 text-green-500" />,
+      tags: ["Stocks", "Balanced"],
+      risk: "Moderate",
+      value: "$10,245,320",
+      return: "+8.2%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Stocks", value: 45, color: "#4f46e5" },
+        { name: "Bonds", value: 30, color: "#10b981" },
+        { name: "Cash", value: 15, color: "#f59e0b" },
+        { name: "Crypto", value: 10, color: "#8b5cf6" },
+      ],
+    },
+    {
+      id: "crypto",
+      name: "Crypto Trading",
+      focus: "High volatility crypto portfolio",
+      icon: <Bitcoin className="h-5 w-5 text-orange-500" />,
+      tags: ["Crypto", "High Growth"],
+      risk: "High",
+      value: "$5,782,910",
+      return: "+22.7%",
+      returnClass: "text-green-500",
+      chartVariant: "crypto",
+      allocation: [
+        { name: "Bitcoin", value: 40, color: "#f7931a" },
+        { name: "Ethereum", value: 30, color: "#627eea" },
+        { name: "Solana", value: 15, color: "#00ffbd" },
+        { name: "Others", value: 15, color: "#8b5cf6" },
+      ],
+    },
+    {
+      id: "signals",
+      name: "Signals Trading",
+      focus: "Automated signal-based trading",
+      icon: <Signal className="h-5 w-5 text-blue-500" />,
+      tags: ["Stocks", "Automated"],
+      risk: "Moderate",
+      value: "$7,124,650",
+      return: "+12.4%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Tech", value: 35, color: "#3b82f6" },
+        { name: "Finance", value: 25, color: "#10b981" },
+        { name: "Energy", value: 20, color: "#f59e0b" },
+        { name: "Healthcare", value: 20, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "grid",
+      name: "1% Grid Trading",
+      focus: "Automated grid-based trading strategy",
+      icon: <Grid className="h-5 w-5 text-primary" />,
+      tags: ["Crypto", "Automated"],
+      risk: "Moderate",
+      value: "$8,356,720",
+      return: "+15.8%",
+      returnClass: "text-green-500",
+      chartVariant: "defi",
+      allocation: [
+        { name: "BTC/USD", value: 30, color: "#f7931a" },
+        { name: "ETH/USD", value: 30, color: "#627eea" },
+        { name: "EUR/USD", value: 20, color: "#0052b4" },
+        { name: "Gold", value: 20, color: "#ffd700" },
+      ],
+    },
+    {
+      id: "middle-life",
+      name: "Middle Life",
+      focus: "Mid-career investment portfolio",
+      icon: <BarChart2Icon className="h-5 w-5 text-green-500" />,
+      tags: ["Stocks", "Bonds", "Balanced"],
+      risk: "Low",
+      value: "$1,245,780",
+      return: "+6.5%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Stocks", value: 40, color: "#4f46e5" },
+        { name: "Bonds", value: 35, color: "#10b981" },
+        { name: "Real Estate", value: 15, color: "#f97316" },
+        { name: "Cash", value: 10, color: "#f59e0b" },
+      ],
+    },
+    {
+      id: "ai",
+      name: "AI-Powered Trading",
+      focus: "Machine learning optimized portfolio",
+      icon: <Cpu className="h-5 w-5 text-purple-500" />,
+      tags: ["Stocks", "Crypto", "AI"],
+      risk: "High",
+      value: "$9,876,540",
+      return: "+18.3%",
+      returnClass: "text-green-500",
+      chartVariant: "defi",
+      allocation: [
+        { name: "Tech", value: 45, color: "#3b82f6" },
+        { name: "AI Stocks", value: 25, color: "#8b5cf6" },
+        { name: "Crypto", value: 20, color: "#f7931a" },
+        { name: "Commodities", value: 10, color: "#f59e0b" },
+      ],
+    },
+    // New portfolios
+    {
+      id: "tech-growth",
+      name: "Tech Growth",
+      focus: "High-growth technology companies",
+      icon: <Zap className="h-5 w-5 text-yellow-500" />,
+      tags: ["Stocks", "Tech"],
+      risk: "High",
+      value: "$4,875,230",
+      return: "+19.7%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Software", value: 40, color: "#3b82f6" },
+        { name: "Hardware", value: 25, color: "#8b5cf6" },
+        { name: "Cloud", value: 20, color: "#06b6d4" },
+        { name: "AI", value: 15, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "dividend-income",
+      name: "Dividend Income",
+      focus: "Stocks with consistent and high dividend yields",
+      icon: <DollarSign className="h-5 w-5 text-green-600" />,
+      tags: ["Stocks", "Income"],
+      risk: "Moderate",
+      value: "$3,456,780",
+      return: "+5.8%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Utilities", value: 30, color: "#10b981" },
+        { name: "REITs", value: 25, color: "#f97316" },
+        { name: "Consumer", value: 25, color: "#3b82f6" },
+        { name: "Energy", value: 20, color: "#f59e0b" },
+      ],
+    },
+    {
+      id: "balanced-allocation",
+      name: "Balanced Allocation",
+      focus: "Even distribution between stocks and cryptocurrencies",
+      icon: <Scale className="h-5 w-5 text-blue-500" />,
+      tags: ["Stocks", "Crypto"],
+      risk: "Moderate",
+      value: "$5,678,900",
+      return: "+11.3%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Stocks", value: 50, color: "#3b82f6" },
+        { name: "Crypto", value: 50, color: "#f7931a" },
+      ],
+    },
+    {
+      id: "conservative-income",
+      name: "Conservative Income",
+      focus: "Low-risk assets with steady income",
+      icon: <Shield className="h-5 w-5 text-blue-600" />,
+      tags: ["Stocks", "Bonds", "Income"],
+      risk: "Low",
+      value: "$2,345,670",
+      return: "+4.2%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Bonds", value: 60, color: "#10b981" },
+        { name: "Dividend", value: 25, color: "#3b82f6" },
+        { name: "Cash", value: 10, color: "#f59e0b" },
+        { name: "REITs", value: 5, color: "#f97316" },
+      ],
+    },
+    {
+      id: "aggressive-growth",
+      name: "Aggressive Growth",
+      focus: "High volatility assets aiming for rapid capital appreciation",
+      icon: <Rocket className="h-5 w-5 text-red-500" />,
+      tags: ["Stocks", "Crypto", "High Growth"],
+      risk: "High",
+      value: "$7,890,120",
+      return: "+27.5%",
+      returnClass: "text-green-500",
+      chartVariant: "crypto",
+      allocation: [
+        { name: "Growth", value: 45, color: "#3b82f6" },
+        { name: "Crypto", value: 35, color: "#f7931a" },
+        { name: "Small Cap", value: 15, color: "#ec4899" },
+        { name: "Options", value: 5, color: "#8b5cf6" },
+      ],
+    },
+    {
+      id: "crypto-pioneer",
+      name: "Crypto Pioneer",
+      focus: "Major and emerging cryptocurrencies",
+      icon: <Bitcoin className="h-5 w-5 text-orange-500" />,
+      tags: ["Crypto", "Emerging"],
+      risk: "High",
+      value: "$4,567,890",
+      return: "+31.2%",
+      returnClass: "text-green-500",
+      chartVariant: "crypto",
+      allocation: [
+        { name: "Bitcoin", value: 30, color: "#f7931a" },
+        { name: "Ethereum", value: 25, color: "#627eea" },
+        { name: "Altcoins", value: 25, color: "#8b5cf6" },
+        { name: "DeFi", value: 20, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "blue-chip",
+      name: "Blue Chip Stocks",
+      focus: "Established, financially sound companies",
+      icon: <Building className="h-5 w-5 text-blue-700" />,
+      tags: ["Stocks", "Blue Chip"],
+      risk: "Low",
+      value: "$6,789,120",
+      return: "+7.8%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Tech", value: 30, color: "#3b82f6" },
+        { name: "Finance", value: 25, color: "#10b981" },
+        { name: "Healthcare", value: 25, color: "#ec4899" },
+        { name: "Consumer", value: 20, color: "#f59e0b" },
+      ],
+    },
+    {
+      id: "global-equity",
+      name: "Global Equity",
+      focus: "Diversified international stock markets",
+      icon: <Globe className="h-5 w-5 text-blue-500" />,
+      tags: ["Stocks", "Global"],
+      risk: "Moderate",
+      value: "$5,432,100",
+      return: "+9.5%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "US", value: 40, color: "#3b82f6" },
+        { name: "Europe", value: 25, color: "#10b981" },
+        { name: "Asia", value: 25, color: "#f59e0b" },
+        { name: "Emerging", value: 10, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "emerging-markets",
+      name: "Emerging Markets",
+      focus: "Stocks from emerging economies",
+      icon: <Sprout className="h-5 w-5 text-green-500" />,
+      tags: ["Stocks", "Emerging Markets"],
+      risk: "High",
+      value: "$3,210,980",
+      return: "+15.7%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "China", value: 30, color: "#ef4444" },
+        { name: "India", value: 25, color: "#10b981" },
+        { name: "Brazil", value: 25, color: "#f59e0b" },
+        { name: "Others", value: 20, color: "#8b5cf6" },
+      ],
+    },
+    {
+      id: "sustainable",
+      name: "Sustainable Investing",
+      focus: "ESG (Environmental, Social, Governance) compliant companies",
+      icon: <Sprout className="h-5 w-5 text-green-600" />,
+      tags: ["Stocks", "ESG"],
+      risk: "Moderate",
+      value: "$4,321,090",
+      return: "+8.9%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Clean Energy", value: 35, color: "#10b981" },
+        { name: "Sustainable", value: 30, color: "#3b82f6" },
+        { name: "Social", value: 20, color: "#ec4899" },
+        { name: "Green Bonds", value: 15, color: "#f59e0b" },
+      ],
+    },
+    {
+      id: "hft",
+      name: "High Frequency Trading",
+      focus: "Short-term trading patterns",
+      icon: <Repeat className="h-5 w-5 text-purple-500" />,
+      tags: ["Stocks", "Crypto", "HFT"],
+      risk: "High",
+      value: "$8,765,430",
+      return: "+24.3%",
+      returnClass: "text-green-500",
+      chartVariant: "crypto",
+      allocation: [
+        { name: "Equities", value: 45, color: "#3b82f6" },
+        { name: "Crypto", value: 30, color: "#f7931a" },
+        { name: "Forex", value: 15, color: "#10b981" },
+        { name: "Futures", value: 10, color: "#f59e0b" },
+      ],
+    },
+    {
+      id: "options",
+      name: "Options & Derivatives",
+      focus: "Incorporates options positions for hedging and speculation",
+      icon: <LineChart className="h-5 w-5 text-yellow-600" />,
+      tags: ["Derivatives", "Options"],
+      risk: "High",
+      value: "$6,543,210",
+      return: "+21.5%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Call Options", value: 40, color: "#3b82f6" },
+        { name: "Put Options", value: 30, color: "#ef4444" },
+        { name: "Futures", value: 20, color: "#f59e0b" },
+        { name: "Stocks", value: 10, color: "#10b981" },
+      ],
+    },
+    {
+      id: "microcap",
+      name: "Microcap Opportunities",
+      focus: "Smaller companies with high growth potential",
+      icon: <Microscope className="h-5 w-5 text-purple-600" />,
+      tags: ["Stocks", "Microcap"],
+      risk: "High",
+      value: "$2,109,870",
+      return: "+29.8%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Tech", value: 35, color: "#3b82f6" },
+        { name: "Healthcare", value: 25, color: "#ec4899" },
+        { name: "Consumer", value: 25, color: "#f59e0b" },
+        { name: "Industrial", value: 15, color: "#10b981" },
+      ],
+    },
+    {
+      id: "real-estate",
+      name: "Real Estate Fund",
+      focus: "REITs and real estate-related securities",
+      icon: <Building2 className="h-5 w-5 text-orange-600" />,
+      tags: ["REITs", "Real Estate"],
+      risk: "Moderate",
+      value: "$3,987,650",
+      return: "+7.2%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Residential", value: 35, color: "#3b82f6" },
+        { name: "Commercial", value: 30, color: "#10b981" },
+        { name: "Industrial", value: 20, color: "#f59e0b" },
+        { name: "Mortgage", value: 15, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "biotech",
+      name: "Biotech Innovation",
+      focus: "Biotechnology and pharmaceutical stocks",
+      icon: <Microscope className="h-5 w-5 text-green-500" />,
+      tags: ["Stocks", "Biotech"],
+      risk: "High",
+      value: "$4,876,540",
+      return: "+18.9%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Pharma", value: 40, color: "#3b82f6" },
+        { name: "Biotech", value: 35, color: "#ec4899" },
+        { name: "Medical", value: 15, color: "#10b981" },
+        { name: "Research", value: 10, color: "#f59e0b" },
+      ],
+    },
+    {
+      id: "fintech",
+      name: "Fintech Focus",
+      focus: "Financial technology companies and startups",
+      icon: <Cpu className="h-5 w-5 text-blue-500" />,
+      tags: ["Stocks", "Fintech"],
+      risk: "Moderate",
+      value: "$5,432,180",
+      return: "+14.7%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Payments", value: 35, color: "#3b82f6" },
+        { name: "Banking", value: 25, color: "#10b981" },
+        { name: "Blockchain", value: 25, color: "#f7931a" },
+        { name: "Insurance", value: 15, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "retail",
+      name: "Retail Sector",
+      focus: "Consumer and retail companies",
+      icon: <Store className="h-5 w-5 text-red-500" />,
+      tags: ["Stocks", "Retail"],
+      risk: "Moderate",
+      value: "$3,765,420",
+      return: "+9.8%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "E-commerce", value: 40, color: "#3b82f6" },
+        { name: "Brick & Mortar", value: 25, color: "#f59e0b" },
+        { name: "Luxury", value: 20, color: "#ec4899" },
+        { name: "Consumer", value: 15, color: "#10b981" },
+      ],
+    },
+    {
+      id: "energy",
+      name: "Energy & Resources",
+      focus: "Energy, utilities, and natural resources",
+      icon: <Droplet className="h-5 w-5 text-blue-600" />,
+      tags: ["Stocks", "Energy"],
+      risk: "Moderate",
+      value: "$4,321,980",
+      return: "+8.5%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Oil & Gas", value: 35, color: "#f59e0b" },
+        { name: "Renewables", value: 30, color: "#10b981" },
+        { name: "Utilities", value: 25, color: "#3b82f6" },
+        { name: "Mining", value: 10, color: "#8b5cf6" },
+      ],
+    },
+    {
+      id: "utilities",
+      name: "Utility Providers",
+      focus: "Stable utility companies",
+      icon: <Lightbulb className="h-5 w-5 text-yellow-500" />,
+      tags: ["Stocks", "Utilities"],
+      risk: "Low",
+      value: "$3,210,870",
+      return: "+5.3%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Electric", value: 40, color: "#f59e0b" },
+        { name: "Water", value: 25, color: "#3b82f6" },
+        { name: "Gas", value: 25, color: "#10b981" },
+        { name: "Telecom", value: 10, color: "#8b5cf6" },
+      ],
+    },
+    {
+      id: "defi",
+      name: "Crypto DeFi",
+      focus: "Decentralized finance projects and tokens",
+      icon: <Wallet className="h-5 w-5 text-purple-600" />,
+      tags: ["Crypto", "DeFi"],
+      risk: "High",
+      value: "$3,876,540",
+      return: "+34.2%",
+      returnClass: "text-green-500",
+      chartVariant: "crypto",
+      allocation: [
+        { name: "Lending", value: 35, color: "#3b82f6" },
+        { name: "DEX", value: 30, color: "#f7931a" },
+        { name: "Yield", value: 25, color: "#10b981" },
+        { name: "Insurance", value: 10, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "nft",
+      name: "NFT & Metaverse",
+      focus: "Emerging investments in NFTs and metaverse-related stocks",
+      icon: <Layers className="h-5 w-5 text-indigo-500" />,
+      tags: ["Stocks", "Crypto", "NFT", "Metaverse"],
+      risk: "High",
+      value: "$2,987,650",
+      return: "+26.8%",
+      returnClass: "text-green-500",
+      chartVariant: "crypto",
+      allocation: [
+        { name: "Gaming", value: 35, color: "#8b5cf6" },
+        { name: "NFT", value: 30, color: "#f7931a" },
+        { name: "Metaverse", value: 25, color: "#3b82f6" },
+        { name: "AR/VR", value: 10, color: "#ec4899" },
+      ],
+    },
+    {
+      id: "commodities",
+      name: "Commodities & Resources",
+      focus: "Investments in commodities such as gold, oil, etc.",
+      icon: <Gold className="h-5 w-5 text-yellow-600" />,
+      tags: ["Commodities", "Resources"],
+      risk: "Moderate",
+      value: "$4,123,870",
+      return: "+7.9%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Gold", value: 35, color: "#f59e0b" },
+        { name: "Oil", value: 25, color: "#3b82f6" },
+        { name: "Metals", value: 25, color: "#8b5cf6" },
+        { name: "Agriculture", value: 15, color: "#10b981" },
+      ],
+    },
+    {
+      id: "international",
+      name: "International Diversified",
+      focus: "Broad mix of global stocks, bonds, and crypto assets",
+      icon: <Globe className="h-5 w-5 text-blue-600" />,
+      tags: ["Stocks", "Bonds", "Crypto", "Global"],
+      risk: "Moderate",
+      value: "$6,543,210",
+      return: "+10.5%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Global Stocks", value: 40, color: "#3b82f6" },
+        { name: "Bonds", value: 30, color: "#10b981" },
+        { name: "Crypto", value: 20, color: "#f7931a" },
+        { name: "Cash", value: 10, color: "#f59e0b" },
+      ],
+    },
+    {
+      id: "value",
+      name: "Value Investing",
+      focus: "Undervalued companies with strong fundamentals",
+      icon: <Landmark className="h-5 w-5 text-blue-700" />,
+      tags: ["Stocks", "Value"],
+      risk: "Moderate",
+      value: "$5,678,910",
+      return: "+8.7%",
+      returnClass: "text-green-500",
+      chartVariant: "default",
+      allocation: [
+        { name: "Finance", value: 35, color: "#3b82f6" },
+        { name: "Industrial", value: 25, color: "#10b981" },
+        { name: "Energy", value: 25, color: "#f59e0b" },
+        { name: "Consumer", value: 15, color: "#ec4899" },
+      ],
+    },
+  ]
 
   // Filter portfolios based on active filter and search query
   const filteredPortfolios = displayPortfolios.filter((portfolio) => {
@@ -412,11 +952,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div id="login-modal" className="fixed inset-0 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
       {/* Blurred background overlay */}
       <div
-        id="login-modal-overlay"
         className="absolute inset-0 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
+        onClick={handleDismiss} // Allow clicking outside to dismiss
       />
 
       {/* Replace the main container div with a full-screen tabbed interface */}
@@ -452,8 +992,8 @@ export default function LoginPage() {
               id="signup-tab-btn"
               className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
                 activeTab === "signup"
-                  ? "border-b-2 border-orange-500 text-orange-500"
-                  : "bg-orange-500 text-white rounded-md mx-1 hover:bg-orange-600"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setActiveTab("signup")}
             >
@@ -472,12 +1012,110 @@ export default function LoginPage() {
             </button>
 
             {/* Additional tabs */}
-
-
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "calculators"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("calculators")}
+            >
+              Calculators
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "news"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("news")}
+            >
+              Market News
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "education"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("education")}
+            >
+              Educational Resources
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "forum"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("forum")}
+            >
+              Community Forum
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "api"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("api")}
+            >
+              API Documentation
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "risk"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("risk")}
+            >
+              Risk Management
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "calendar"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("calendar")}
+            >
+              Economic Calendar
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "performance"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("performance")}
+            >
+              Performance Metrics
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "backtest"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("backtest")}
+            >
+              Backtesting
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "screener"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("screener")}
+            >
+              Asset Screener
+            </button>
           </div>
 
           {/* Close button */}
-          <div className="ml-auto flex-shrink-0 flex items-center pr-4">
+          <div className="ml-auto flex items-center pr-4">
             <button
               onClick={handleDismiss}
               className="rounded-full p-1.5 bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground transition-colors"
@@ -489,10 +1127,10 @@ export default function LoginPage() {
         </div>
 
         {/* Tab content */}
-        <div id="login-tabs-content" className="flex-1 overflow-y-auto p-6 relative z-10">
+        <div className="flex-1 overflow-y-auto p-6 relative z-10">
           {activeTab === "login" && (
-            <div id="login-form-container" className="max-w-md mx-auto">
-              <Card id="login-card">
+            <div className="max-w-md mx-auto">
+              <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
                   <CardDescription>Log in to access your GenEric TraDer account</CardDescription>
@@ -595,25 +1233,37 @@ export default function LoginPage() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="flex flex-col">
-                  <p className="text-xs text-center text-muted-foreground">
-                    By signing in, you agree to our{" "}
-                    <Link href="/terms" className="underline underline-offset-2 hover:text-primary">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className="underline underline-offset-2 hover:text-primary">
-                      Privacy Policy
-                    </Link>
-                  </p>
+                <CardFooter className="flex flex-col space-y-2">
+                  <div className="w-full text-center text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-1">
+                      <p>Demo credentials:</p>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={toggleDemoInfo}>
+                        <Info className="h-3 w-3" />
+                        <span className="sr-only">Demo Info</span>
+                      </Button>
+                    </div>
+                    <p className="font-mono text-xs">admin@example.com / admin123</p>
+                  </div>
+
+                  {showDemoInfo && (
+                    <Alert className="mt-2">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        <p className="text-xs">
+                          Demo accounts provide a simulated trading environment with pre-configured portfolios and
+                          strategies. No real money is used, and all data is reset when you log out.
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </CardFooter>
               </Card>
             </div>
           )}
 
           {activeTab === "signup" && (
-            <div id="signup-form-container" className="max-w-md mx-auto">
-              <Card id="signup-card">
+            <div className="max-w-md mx-auto">
+              <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
                   <CardDescription>Join GenEric TraDer and start your trading journey</CardDescription>
@@ -669,7 +1319,7 @@ export default function LoginPage() {
           {activeTab === "demos" && (
             <div className="container mx-auto">
               <h2 className="text-2xl font-bold mb-4 text-center">Demo Trading Accounts</h2>
-              <p className="text-center text-muted-foreground mb-6">
+              <p className="text-center text-muted-foreground mb-4">
                 Try our demo accounts to experience different trading scenarios without risking real money
               </p>
 
@@ -946,256 +1596,90 @@ export default function LoginPage() {
                   </div>
                 </TabsContent>
 
-        
+                <TabsContent value="forum" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Community Forum</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Connect with other traders and discuss strategies
+                    </p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/forum" target="_blank" rel="noopener noreferrer">
+                          Visit the Forum
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
 
+                <TabsContent value="api" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">API Documentation</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Learn how to integrate with our platform using our API
+                    </p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/api" target="_blank" rel="noopener noreferrer">
+                          View API Documentation
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
 
+                <TabsContent value="risk" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Risk Management</h2>
+                    <p className="text-center text-muted-foreground mb-6">Learn about risk management strategies</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/risk" target="_blank" rel="noopener noreferrer">
+                          View Risk Management
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
 
-           
+                <TabsContent value="calendar" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Economic Calendar</h2>
+                    <p className="text-center text-muted-foreground mb-6">Stay up-to-date with economic events</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/calendar" target="_blank" rel="noopener noreferrer">
+                          View Economic Calendar
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
 
- 
+                <TabsContent value="performance" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Performance Metrics</h2>
+                    <p className="text-center text-muted-foreground mb-6">View performance metrics</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/performance" target="_blank" rel="noopener noreferrer">
+                          View Performance Metrics
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
 
                 <TabsContent value="backtest" className="mt-4">
                   <div className="container mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-center">Backtesting Tool</h2>
-                    <p className="text-center text-muted-foreground mb-6">
-                      Test trading strategies with historical data without creating an account
-                    </p>
-                    
-                    <Card className="mb-6">
-                      <CardContent className="pt-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          <div>
-                            <Label htmlFor="strategy" className="mb-2 block">Select Strategy</Label>
-                            <select id="strategy" className="w-full p-2 border rounded-md bg-background">
-                              <option value="moving-average">Moving Average Crossover</option>
-                              <option value="rsi">RSI Overbought/Oversold</option>
-                              <option value="bollinger">Bollinger Bands Breakout</option>
-                              <option value="macd">MACD Signal Line</option>
-                              <option value="grid-trading">Grid Trading (1%)</option>
-                            </select>
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="portfolio" className="mb-2 block">Select Portfolio/Asset</Label>
-                            <select id="portfolio" className="w-full p-2 border rounded-md bg-background">
-                              <option value="sp500">S&P 500 ETF</option>
-                              <option value="nasdaq">NASDAQ 100</option>
-                              <option value="btc">Bitcoin (BTC/USD)</option>
-                              <option value="eth">Ethereum (ETH/USD)</option>
-                              <option value="tech-stocks">Tech Stocks Basket</option>
-                              <option value="dividend-stocks">Dividend Stocks Basket</option>
-                            </select>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                          <div>
-                            <Label htmlFor="start-date" className="mb-2 block">Start Date</Label>
-                            <Input
-                              id="start-date"
-                              type="date"
-                              defaultValue="2022-01-01"
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="end-date" className="mb-2 block">End Date</Label>
-                            <Input
-                              id="end-date"
-                              type="date"
-                              defaultValue="2023-01-01" 
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="initial-capital" className="mb-2 block">Initial Capital</Label>
-                            <Input
-                              id="initial-capital"
-                              type="number"
-                              defaultValue="10000"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          <div>
-                            <Label htmlFor="param1" className="mb-2 block">Parameter 1</Label>
-                            <div className="flex items-center">
-                              <span className="text-sm text-muted-foreground mr-2">5</span>
-                              <Input
-                                id="param1"
-                                type="range"
-                                min="5"
-                                max="50"
-                                defaultValue="20"
-                                className="flex-grow"
-                              />
-                              <span className="text-sm text-muted-foreground ml-2">50</span>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="param2" className="mb-2 block">Parameter 2</Label>
-                            <div className="flex items-center">
-                              <span className="text-sm text-muted-foreground mr-2">5</span>
-                              <Input
-                                id="param2"
-                                type="range"
-                                min="5"
-                                max="100"
-                                defaultValue="50"
-                                className="flex-grow"
-                              />
-                              <span className="text-sm text-muted-foreground ml-2">100</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <Button className="w-full md:w-auto">Run Backtest</Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      <Card className="lg:col-span-2">
-                        <CardHeader>
-                          <CardTitle>Performance Chart</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="h-[300px] relative flex items-center justify-center bg-muted/20 rounded-md">
-                            <div className="h-64 w-full" style={{ 
-                              backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAzMDAgTDUwIDI2MCBMMTAwIDI0MCBMMTUwIDI0NSBMMjAwIDI2MCBMMjUwIDIzMCBMMzAwIDIyMCBMMzUwIDE5MCBMNDAwIDE4MCBMNDUwIDE3MCBMNTAwIDE1MCBMNTUwIDE2MCBMNjAwIDE0MCBMNjUwIDEyMCBMNzAwIDEwMCBMNzUwIDgwIEw4MDAgNjAgTDgwMCAzMDAgTDAgMzAwIFoiIGZpbGw9InJnYmEoNzksIDcwLCAyMjksIDAuMikiIHN0cm9rZT0icmdiKDc5LCA3MCwgMjI5KSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+')",
-                              backgroundSize: "cover",
-                              backgroundPosition: "center"
-                            }} />
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                              <p className="text-muted-foreground">Run a backtest to see results</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Backtest Results</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <dl className="space-y-4">
-                            <div>
-                              <dt className="text-sm text-muted-foreground">Total Return</dt>
-                              <dd className="text-2xl font-semibold text-green-500">+24.8%</dd>
-                            </div>
-                            
-                            <div>
-                              <dt className="text-sm text-muted-foreground">Annualized Return</dt>
-                              <dd className="text-xl font-semibold">18.3%</dd>
-                            </div>
-                            
-                            <div>
-                              <dt className="text-sm text-muted-foreground">Sharpe Ratio</dt>
-                              <dd className="font-medium">1.42</dd>
-                            </div>
-                            
-                            <div>
-                              <dt className="text-sm text-muted-foreground">Max Drawdown</dt>
-                              <dd className="font-medium text-red-500">-12.6%</dd>
-                            </div>
-                            
-                            <div>
-                              <dt className="text-sm text-muted-foreground">Win Rate</dt>
-                              <dd className="font-medium">68%</dd>
-                            </div>
-                          </dl>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    
-                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Trade History</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="overflow-auto max-h-[200px]">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="text-left border-b">
-                                  <th className="pb-2">Date</th>
-                                  <th className="pb-2">Action</th>
-                                  <th className="pb-2">Price</th>
-                                  <th className="pb-2">Result</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr className="border-b border-border/40">
-                                  <td className="py-2">2022-01-15</td>
-                                  <td className="py-2 text-green-500">Buy</td>
-                                  <td className="py-2">$452.10</td>
-                                  <td className="py-2">-</td>
-                                </tr>
-                                <tr className="border-b border-border/40">
-                                  <td className="py-2">2022-02-20</td>
-                                  <td className="py-2 text-red-500">Sell</td>
-                                  <td className="py-2">$468.35</td>
-                                  <td className="py-2 text-green-500">+3.6%</td>
-                                </tr>
-                                <tr className="border-b border-border/40">
-                                  <td className="py-2">2022-03-10</td>
-                                  <td className="py-2 text-green-500">Buy</td>
-                                  <td className="py-2">$445.20</td>
-                                  <td className="py-2">-</td>
-                                </tr>
-                                <tr className="border-b border-border/40">
-                                  <td className="py-2">2022-04-05</td>
-                                  <td className="py-2 text-red-500">Sell</td>
-                                  <td className="py-2">$439.85</td>
-                                  <td className="py-2 text-red-500">-1.2%</td>
-                                </tr>
-                                <tr>
-                                  <td className="py-2">2022-05-12</td>
-                                  <td className="py-2 text-green-500">Buy</td>
-                                  <td className="py-2">$428.70</td>
-                                  <td className="py-2">-</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Strategy Details</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="font-medium mb-1">Moving Average Crossover</h4>
-                              <p className="text-sm text-muted-foreground">
-                                This strategy generates buy signals when a faster moving average crosses above a slower moving average, 
-                                and sell signals when the faster average crosses below the slower one.
-                              </p>
-                            </div>
-                            
-                            <div>
-                              <h4 className="font-medium mb-1">Parameters</h4>
-                              <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                                <li>Fast MA Period: 20 days</li>
-                                <li>Slow MA Period: 50 days</li>
-                                <li>Position Size: 100%</li>
-                              </ul>
-                            </div>
-                            
-                            <div className="pt-2">
-                              <p className="text-sm">
-                                <span className="text-muted-foreground">Want more strategy options and full customization? </span>
-                                <Button variant="link" className="h-auto p-0" onClick={() => setActiveTab("signup")}>
-                                  Sign up for a free account
-                                </Button>
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                    <h2 className="text-2xl font-bold mb-4 text-center">Backtesting</h2>
+                    <p className="text-center text-muted-foreground mb-6">Backtest your strategies</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/backtest" target="_blank" rel="noopener noreferrer">
+                          View Backtesting
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>

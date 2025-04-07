@@ -182,10 +182,13 @@ export default function BacktestPage() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => router.push("/")}>
+          <Button variant="outline" size="icon" onClick={() => router.push("/dashboard?from=backtest")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold">Strategy Backtesting</h1>
+          <div>
+            <h1 className="text-2xl font-bold">Strategy Backtesting</h1>
+            <p className="text-sm text-muted-foreground">Test your trading strategies against historical data</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant={activeTab === "new" ? "default" : "outline"} onClick={() => setActiveTab("new")}>

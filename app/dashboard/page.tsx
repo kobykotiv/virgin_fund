@@ -21,6 +21,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RefreshCw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 
+// Import the new BacktestTab component
+import BacktestTab from "@/components/dashboard/backtest-tab"
+
+// Import new icons and dropdown menu components
+import { 
+  Bell,
+  BookOpen,
+  Calendar,
+  Download,
+  HelpCircle,
+  History,
+  LineChart,
+  MessageSquare,
+  Share2,
+  Shield,
+  Upload
+} from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 export default function DashboardPage() {
   const [bots, setBots] = useState<Bot[]>([])
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null)
@@ -28,7 +47,7 @@ export default function DashboardPage() {
   const [isApiKeyFormOpen, setIsApiKeyFormOpen] = useState(false)
   const [apiConfigured, setApiConfigured] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "bots" | "strategies" | "performance" | "analytics" | "settings"
+    "dashboard" | "bots" | "strategies" | "performance" | "analytics" | "settings" | "backtest"
   >("dashboard")
   const router = useRouter()
 
@@ -44,6 +63,9 @@ export default function DashboardPage() {
     baseUrl: string
     isPaper: boolean
   } | null>(null)
+
+  const [notifications, setNotifications] = useState<number>(3);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if API keys are configured
@@ -161,6 +183,14 @@ export default function DashboardPage() {
 
   const [isDemoMode, setIsDemoMode] = useState(false)
 
+  useEffect(() => {
+    // Check if we're returning from the backtest page
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("from") === "backtest") {
+      setActiveTab("backtest")
+    }
+  }, [])
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="p-4 border-b flex justify-between items-center">
@@ -168,13 +198,38 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-mono font-bold">Virgin Fund : GenEric TraDer AI</h1>
           <p className="text-muted-foreground text-sm">Alpaca Markets Trading Bot Manager</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2" onClick={() => router.push("/backtest")}>
-            <BarChart2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Backtest</span>
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => setIsApiKeyFormOpen(true)} title="API Settings">
-            <Settings className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {/* Add notification dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="relative">
+                <Bell className="h-4 w-4" />
+                {notifications > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+                    {notifications}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem>
+                <LineChart className="h-4 w-4 mr-2" />
+                New trading signal detected
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Shield className="h-4 w-4 mr-2" />
+                Security alert: New login
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Bot status update available
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Add help button */}
+          <Button variant="outline" size="icon" onClick={() => setShowTutorial(true)}>
+            <HelpCircle className="h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -203,13 +258,81 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab as any} className="flex-1">
-        <TabsList className="w-full justify-start border-b rounded-none px-4">
-          <TabsTrigger value="dashboard">Overview</TabsTrigger>
-          <TabsTrigger value="bots">Bots</TabsTrigger>
-          <TabsTrigger value="strategies">Strategies</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-        </TabsList>
+      {/* Add action buttons under the subscription banner */}
+      <div className="px-4 mb-4 flex flex-wrap gap-2">
+        <Button variant="outline" className="flex items-center gap-2">
+          <Upload className="h-4 w-4" />
+          Import Strategy
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Export Data
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Schedule
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <History className="h-4 w-4" />
+          History
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Share2 className="h-4 w-4" />
+          Share
+        </Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <BookOpen className="h-4 w-4" />
+          Documentation
+        </Button>
+      </div>
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) =>
+          setActiveTab(value as "dashboard" | "bots" | "strategies" | "performance" | "analytics" | "settings")
+        }
+        className="flex-1 flex flex-col"
+      >
+        <div className="border-b px-4">
+          <TabsList className="h-10 flex-wrap">
+            <TabsTrigger
+              value="dashboard"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger
+              value="bots"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Bots
+            </TabsTrigger>
+            <TabsTrigger
+              value="strategies"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Strategies
+            </TabsTrigger>
+            <TabsTrigger
+              value="performance"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Performance
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Settings
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="dashboard" className="flex-1 p-4">
           {apiConfigured && (
@@ -489,42 +612,42 @@ export default function DashboardPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="analytics" className="mt-0 h-full">
-          {apiConfigured && (
-            <div className="h-full p-4">
-              <h2 className="text-xl font-semibold mb-4">Advanced Analytics</h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="border rounded-lg p-4 bg-card md:col-span-2">
-                  <h3 className="font-medium mb-2">Market Correlation</h3>
-                  <div className="h-60 bg-muted rounded flex items-center justify-center">
-                    Correlation Matrix Placeholder
+          <TabsContent value="analytics" className="mt-0 h-full">
+            {apiConfigured && (
+              <div className="h-full p-4">
+                <h2 className="text-xl font-semibold mb-4">Advanced Analytics</h2>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="border rounded-lg p-4 bg-card md:col-span-2">
+                    <h3 className="font-medium mb-2">Market Correlation</h3>
+                    <div className="h-60 bg-muted rounded flex items-center justify-center">
+                      Correlation Matrix Placeholder
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4 bg-card">
+                    <h3 className="font-medium mb-2">Risk Metrics</h3>
+                    <ul className="space-y-2">
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">Sharpe Ratio</span>
+                        <span>1.42</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">Max Drawdown</span>
+                        <span>-8.3%</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">Volatility</span>
+                        <span>12.7%</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span className="text-muted-foreground">Beta</span>
+                        <span>0.85</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
-                <div className="border rounded-lg p-4 bg-card">
-                  <h3 className="font-medium mb-2">Risk Metrics</h3>
-                  <ul className="space-y-2">
-                    <li className="flex justify-between">
-                      <span className="text-muted-foreground">Sharpe Ratio</span>
-                      <span>1.42</span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="text-muted-foreground">Max Drawdown</span>
-                      <span>-8.3%</span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="text-muted-foreground">Volatility</span>
-                      <span>12.7%</span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="text-muted-foreground">Beta</span>
-                      <span>0.85</span>
-                    </li>
-                  </ul>
-                </div>
               </div>
-            </div>
-          )}
-        </TabsContent>
+            )}
+          </TabsContent>
 
         <TabsContent value="settings" className="mt-0 h-full">
           {apiConfigured && (
@@ -592,6 +715,61 @@ export default function DashboardPage() {
               onCancel={() => setIsFormOpen(false)}
               presentationMode={true}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Add tutorial modal */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-lg w-full max-w-lg">
+            <h2 className="text-xl font-semibold mb-4">Welcome to Virgin Fund</h2>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <LineChart className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Create Your First Bot</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get started by creating a trading bot with our pre-built strategies.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Settings className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Configure API Settings</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Connect your Alpaca account to start trading.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <BarChart2 className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Run Backtests</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Test your strategies with historical data before going live.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowTutorial(false)}>
+                Close
+              </Button>
+              <Button onClick={() => {
+                setShowTutorial(false);
+                router.push('/docs/getting-started');
+              }}>
+                Learn More
+              </Button>
+            </div>
           </div>
         </div>
       )}

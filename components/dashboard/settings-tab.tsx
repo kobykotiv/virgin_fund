@@ -39,6 +39,7 @@ export default function SettingsTab() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="api">API Keys</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="backtesting">Backtesting</TabsTrigger>
         </TabsList>
 
         <TabsContent value="account" className="space-y-4">
@@ -144,6 +145,41 @@ export default function SettingsTab() {
 
               <Separator />
 
+              <div className="space-y-2">
+                <Label htmlFor="default-strategy">Default Trading Strategy</Label>
+                <Select defaultValue="mean-reversion">
+                  <SelectTrigger id="default-strategy">
+                    <SelectValue placeholder="Select strategy" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mean-reversion">Mean Reversion</SelectItem>
+                    <SelectItem value="momentum">Momentum</SelectItem>
+                    <SelectItem value="breakout">Breakout</SelectItem>
+                    <SelectItem value="grid">Grid Trading</SelectItem>
+                    <SelectItem value="dca">Dollar Cost Averaging</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="default-timeframe">Default Timeframe</Label>
+                <Select defaultValue="1d">
+                  <SelectTrigger id="default-timeframe">
+                    <SelectValue placeholder="Select timeframe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1m">1 Minute</SelectItem>
+                    <SelectItem value="5m">5 Minutes</SelectItem>
+                    <SelectItem value="15m">15 Minutes</SelectItem>
+                    <SelectItem value="1h">1 Hour</SelectItem>
+                    <SelectItem value="4h">4 Hours</SelectItem>
+                    <SelectItem value="1d">1 Day</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
               <div className="flex items-center space-x-2">
                 <Switch id="auto-trading" defaultChecked />
                 <Label htmlFor="auto-trading">Enable Automated Trading</Label>
@@ -157,6 +193,11 @@ export default function SettingsTab() {
               <div className="flex items-center space-x-2">
                 <Switch id="take-profit" defaultChecked />
                 <Label htmlFor="take-profit">Always Use Take Profit</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch id="trailing-stop" />
+                <Label htmlFor="trailing-stop">Enable Trailing Stop</Label>
               </div>
             </CardContent>
             <CardFooter>
@@ -330,6 +371,64 @@ export default function SettingsTab() {
               <div className="flex items-center space-x-2">
                 <Switch id="animations" defaultChecked />
                 <Label htmlFor="animations">Enable animations</Label>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSave} disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save Changes"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="backtesting" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Backtesting Configuration</CardTitle>
+              <CardDescription>Configure default settings for backtesting</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="default-period">Default Backtest Period</Label>
+                <Select defaultValue="90">
+                  <SelectTrigger id="default-period">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 Days</SelectItem>
+                    <SelectItem value="60">60 Days</SelectItem>
+                    <SelectItem value="90">90 Days</SelectItem>
+                    <SelectItem value="180">6 Months</SelectItem>
+                    <SelectItem value="365">1 Year</SelectItem>
+                    <SelectItem value="730">2 Years</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="default-capital">Default Initial Capital</Label>
+                <Input id="default-capital" type="number" defaultValue="10000" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="slippage">Default Slippage (%)</Label>
+                <Input id="slippage" type="number" defaultValue="0.1" step="0.1" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="commission">Default Commission (%)</Label>
+                <Input id="commission" type="number" defaultValue="0.1" step="0.1" />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center space-x-2">
+                <Switch id="auto-save-backtest" defaultChecked />
+                <Label htmlFor="auto-save-backtest">Auto-save Backtest Results</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch id="compare-benchmark" defaultChecked />
+                <Label htmlFor="compare-benchmark">Compare with Benchmark</Label>
               </div>
             </CardContent>
             <CardFooter>

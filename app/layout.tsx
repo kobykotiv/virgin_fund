@@ -5,14 +5,14 @@ import { Inter } from "next/font/google"
 import { Providers } from "@/providers/providers"
 import "./globals.css"
 import { MockDataWarning } from '../components/mock-data-warning'
+import { ThemeProvider } from "@/providers/theme-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Virgin Fund : GenEric TraDer AI",
-  description: "Self-hosted finance application",
+  description: "Self-hosted AI-powered automated trading platform",
   keywords: "trading, finance, bot trading, copy trading, automated trading, signals, prediction markets, AI",
-  authors: [{ name: "Virgin Fund Team" }],
   openGraph: {
     type: "website",
     locale: "en_US",

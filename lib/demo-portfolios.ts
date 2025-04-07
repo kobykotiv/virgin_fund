@@ -32,7 +32,24 @@ export async function getPortfolios() {
 
 // For immediate SSR/static rendering, provide fallback data
 // This will be hydrated with real data on the client
-export const portfolios = generatePortfolios(48);
+export const portfolios = generatePortfolios(48).map(portfolio => ({
+  ...portfolio,
+  historicalData: [
+    { timestamp: "2023-01-01", value: portfolio.baseValue * 0.85 },
+    { timestamp: "2023-02-01", value: portfolio.baseValue * 0.88 },
+    { timestamp: "2023-03-01", value: portfolio.baseValue * 0.92 },
+    { timestamp: "2023-04-01", value: portfolio.baseValue * 0.97 },
+    { timestamp: "2023-05-01", value: portfolio.baseValue * 0.99 },
+    { timestamp: "2023-06-01", value: portfolio.baseValue * 1.02 },
+    { timestamp: "2023-07-01", value: portfolio.baseValue * 1.05 },
+    { timestamp: "2023-08-01", value: portfolio.baseValue * 1.08 },
+    { timestamp: "2023-09-01", value: portfolio.baseValue * 1.12 },
+    { timestamp: "2023-10-01", value: portfolio.baseValue * 1.15 },
+    { timestamp: "2023-11-01", value: portfolio.baseValue * 1.18 },
+    { timestamp: "2023-12-01", value: portfolio.baseValue }
+  ],
+  costBasis: "$45,500"
+}));
 
 // ===== CATEGORIZED COLLECTIONS =====
 // These collections make it easy to display related portfolios together
@@ -40,7 +57,7 @@ export const portfolios = generatePortfolios(48);
 /**
  * Featured collections - Portfolios for various display purposes
  */
-export const featuredPortfolios = portfolios.slice(0, 8)
+export const featuredPortfolios = portfolios.slice(0, 24)
 
 /**
  * Sentiment-based collections - Grouped by market outlook
@@ -74,9 +91,11 @@ export const fearGreedCollections = {
  * Risk-based collections - Grouped by risk profile
  */
 export const riskBasedCollections = {
+  very_low: portfolios.filter(p => p.risk === "Very Low"),
   low: portfolios.filter(p => p.risk === "Low"),
   moderate: portfolios.filter(p => p.risk === "Moderate"),
-  high: portfolios.filter(p => p.risk === "High")
+  high: portfolios.filter(p => p.risk === "High"),
+  very_high: portfolios.filter(p => p.risk === "Very High")
 }
 
 /**

@@ -48,7 +48,6 @@ export type ActivityType =
   | 'OPASN'
   | 'OPEXP'
   | 'CIL'
-  | 'CSD'
   | 'CSW';
 
 // Account

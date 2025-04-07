@@ -44,7 +44,7 @@ export default function LandingPage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">Virgin Fund : GenEric TraDer AI</span>
+            <span className="text-xl font-bold">Virgin Fund : GenEric Trading Platform</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
@@ -85,7 +85,9 @@ export default function LandingPage() {
                   </Button>
                 </Link>
                 <Link href="/login?tab=signup">
-                  <Button size="sm">Sign Up</Button>
+                  <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500">
+                    Sign Up
+                  </Button>
                 </Link>
               </>
             )}

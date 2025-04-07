@@ -43,45 +43,37 @@ import {
   Scale,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+
+// First, add imports for the calculator components at the top of the file, after the existing imports
+import { SavingsCalculator } from "@/components/calculators/savings-calculator"
+import { CompoundInterestCalculator } from "@/components/calculators/compound-interest-calculator"
+import { InflationCalculator } from "@/components/calculators/inflation-calculator"
+import { RetirementCalculator } from "@/components/calculators/retirement-calculator"
+import { NewsList } from "@/components/news-list"
 
 const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
 
-type DemoType =
-  | "middle-life"
-  | "signals"
-  | "grid"
-  | "general"
-  | "crypto"
-  | "ai"
-  | "tech-growth"
-  | "dividend-income"
-  | "balanced-allocation"
-  | "conservative-income"
-  | "aggressive-growth"
-  | "crypto-pioneer"
-  | "blue-chip"
-  | "global-equity"
-  | "emerging-markets"
-  | "sustainable"
-  | "hft"
-  | "options"
-  | "microcap"
-  | "real-estate"
-  | "biotech"
-  | "fintech"
-  | "retail"
-  | "energy"
-  | "utilities"
-  | "defi"
-  | "nft"
-  | "commodities"
-  | "international"
-  | "value"
+type DemoType = keyof typeof DEMO_SCENARIOS;
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"login" | "signup" | "demos">("login")
+  const [activeTab, setActiveTab] = useState<
+    | "login"
+    | "signup"
+    | "demos"
+    | "calculators"
+    | "news"
+    | "education"
+    | "forum"
+    | "api"
+    | "risk"
+    | "calendar"
+    | "performance"
+    | "backtest"
+    | "screener"
+  >("login")
   const [isVisible, setIsVisible] = useState(true)
   const [activeDemo, setActiveDemo] = useState<DemoType | null>(null)
   const [demoAnimation, setDemoAnimation] = useState(false)
@@ -91,11 +83,11 @@ export default function LoginPage() {
   const [activeFilter, setActiveFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 9
+  const itemsPerPage = 16
+  const { toast } = useToast()
 
   // Portfolio data
   const portfolios = [
-    // Original portfolios
     {
       id: "general",
       name: "$10M Portfolio",
@@ -638,29 +630,59 @@ export default function LoginPage() {
   ]
 
   // Filter portfolios based on active filter and search query
-  const filteredPortfolios = portfolios.filter((portfolio) => {
+  const filteredPortfolios = displayPortfolios.filter((portfolio) => {
     // Filter by category
     if (activeFilter !== "all") {
-      const filterMap = {
-        stocks: ["Stocks"],
-        crypto: ["Crypto"],
-        income: ["Income"],
-        global: ["Global"],
-        "low-risk": ["Low"],
-        "high-risk": ["High"],
+      const filterMap: Record<string, { 
+        tags?: string[], 
+        risk?: string[],
+        sentiment?: string[],
+        fearGreedRange?: [number, number]
+      }> = {
+        stocks: { tags: ["Stocks", "ETFs"] },
+        crypto: { tags: ["Crypto", "Blockchain"] },
+        income: { tags: ["Income", "Dividends", "Yield"] },
+        global: { tags: ["Global", "International"] },
+        "low-risk": { risk: ["Low"] },
+        "high-risk": { risk: ["High"] },
+        "bullish": { sentiment: ["bullish"] },
+        "bearish": { sentiment: ["bearish"] },
+        "extreme-fear": { fearGreedRange: [0, 25] },
+        "extreme-greed": { fearGreedRange: [75, 100] },
       }
 
-      const filterTerms = filterMap[activeFilter] || []
+      const filterCriteria = filterMap[activeFilter]
+      if (!filterCriteria) return false
 
-      // Check if portfolio matches the filter
-      const matchesFilter = filterTerms.some((term) => {
-        if (term === "Low" || term === "High") {
-          return portfolio.risk.includes(term)
-        }
-        return portfolio.tags.includes(term)
-      })
-
-      if (!matchesFilter) return false
+      // Check if portfolio matches any of the filter criteria
+      if (filterCriteria.tags) {
+        const matchesTags = filterCriteria.tags.some(tag => 
+          portfolio.tags.some(portfolioTag => 
+            portfolioTag.toLowerCase().includes(tag.toLowerCase())
+          )
+        )
+        if (matchesTags) return true
+      }
+      
+      if (filterCriteria.risk) {
+        const matchesRisk = filterCriteria.risk.some(riskLevel => 
+          portfolio.risk.includes(riskLevel)
+        )
+        if (matchesRisk) return true
+      }
+      
+      if (filterCriteria.sentiment) {
+        const matchesSentiment = filterCriteria.sentiment.includes(portfolio.sentiment || '')
+        if (matchesSentiment) return true
+      }
+      
+      if (filterCriteria.fearGreedRange && portfolio.fearGreedIndex) {
+        const [min, max] = filterCriteria.fearGreedRange
+        const matchesFearGreed = portfolio.fearGreedIndex >= min && portfolio.fearGreedIndex <= max
+        if (matchesFearGreed) return true
+      }
+      
+      return false
     }
 
     // Filter by search query
@@ -702,14 +724,12 @@ export default function LoginPage() {
       try {
         // Check if user is already logged in
         const isAuthenticated = localStorage.getItem("isAuthenticated") === "true"
-
-        // Only redirect if authenticated - remove the hasBeenDismissed check
-        if (isAuthenticated) {
-          router.push("/")
-        }
+        
+        // Remove automatic redirection - let user stay on login page
+        // The previous code was redirecting automatically to home
+        // Remove: router.push("/")
       } catch (error) {
         console.error("Error checking authentication state:", error)
-        // Don't redirect in case of error - let the user try to log in
       }
     }
   }, [router])
@@ -759,13 +779,23 @@ export default function LoginPage() {
 
       await login(email, password)
 
-      // On successful login, mark as dismissed
+      // On successful login, mark as dismissed but DON'T redirect automatically
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")
-
-      // Add a small delay before redirecting to ensure state is updated
-      setTimeout(() => {
-        router.push("/")
-      }, 100)
+      
+      // Remove the automatic redirect
+      // Remove: setTimeout(() => { router.push("/") }, 100)
+      
+      // Instead, show a success message
+      setError(null)
+      toast({
+        title: "Login successful",
+        description: "You are now logged in. You can continue exploring or go to your dashboard.",
+        action: (
+          <Button variant="default" onClick={() => router.push("/dashboard")}>
+            Go to Dashboard
+          </Button>
+        )
+      })
     } catch (err) {
       console.error("Login error:", err)
 
@@ -812,13 +842,22 @@ export default function LoginPage() {
       // Auto-login after signup
       await login(email, password)
 
-      // On successful signup and login, mark as dismissed
+      // On successful signup and login, mark as dismissed but DON'T redirect
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")
-
-      // Add a small delay before redirecting to ensure state is updated
-      setTimeout(() => {
-        router.push("/")
-      }, 100)
+      
+      // Remove automatic redirect
+      // Remove: setTimeout(() => { router.push("/") }, 100)
+      
+      // Show success message instead
+      toast({
+        title: "Account created",
+        description: "Your account has been created successfully. You can now access your dashboard.",
+        action: (
+          <Button variant="default" onClick={() => router.push("/dashboard")}>
+            Go to Dashboard
+          </Button>
+        )
+      })
     } catch (err) {
       console.error("Signup error:", err)
 
@@ -871,10 +910,19 @@ export default function LoginPage() {
       // Enable demo mode in the auth context
       enableDemoMode(demoType)
 
-      // Redirect to dashboard with a small delay to ensure state is updated
-      setTimeout(() => {
-        router.push("/")
-      }, 500) // Increased delay for better state synchronization
+      // Don't automatically redirect after enabling demo mode
+      // Remove: setTimeout(() => { router.push("/") }, 500)
+      
+      // Show success message instead
+      toast({
+        title: "Demo Mode Enabled",
+        description: `You're now using the ${demoType} demo scenario.`,
+        action: (
+          <Button variant="default" onClick={() => router.push("/dashboard")}>
+            Go to Dashboard
+          </Button>
+        )
+      })
     } catch (error) {
       console.error("Demo login error:", error)
       setError(error instanceof Error ? error.message : "Failed to start demo. Please try again.")
@@ -926,37 +974,145 @@ export default function LoginPage() {
         />
 
         {/* Tabs navigation */}
-        <div className="relative z-10 flex border-b border-border/40 bg-background/60 backdrop-blur-md">
-          <button
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
-              activeTab === "login"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setActiveTab("login")}
-          >
-            Login
-          </button>
-          <button
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
-              activeTab === "signup"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setActiveTab("signup")}
-          >
-            Sign Up
-          </button>
-          <button
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
-              activeTab === "demos"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setActiveTab("demos")}
-          >
-            Demo Accounts
-          </button>
+        <div id="login-tabs-container" className="relative z-10 flex border-b border-border/40 bg-background/60 backdrop-blur-md overflow-x-auto">
+          {/* Main tabs */}
+          <div id="login-tabs-wrapper" className="flex">
+            <button
+              id="login-tab-btn"
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "login"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("login")}
+            >
+              Login
+            </button>
+            <button
+              id="signup-tab-btn"
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "signup"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("signup")}
+            >
+              Sign Up
+            </button>
+            <button
+              id="demos-tab-btn"
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "demos"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("demos")}
+            >
+              Demo Accounts
+            </button>
+
+            {/* Additional tabs */}
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "calculators"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("calculators")}
+            >
+              Calculators
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "news"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("news")}
+            >
+              Market News
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "education"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("education")}
+            >
+              Educational Resources
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "forum"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("forum")}
+            >
+              Community Forum
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "api"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("api")}
+            >
+              API Documentation
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "risk"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("risk")}
+            >
+              Risk Management
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "calendar"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("calendar")}
+            >
+              Economic Calendar
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "performance"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("performance")}
+            >
+              Performance Metrics
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "backtest"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("backtest")}
+            >
+              Backtesting
+            </button>
+            <button
+              className={`px-4 py-3 font-medium text-sm transition-colors whitespace-nowrap ${
+                activeTab === "screener"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab("screener")}
+            >
+              Asset Screener
+            </button>
+          </div>
 
           {/* Close button */}
           <div className="ml-auto flex items-center pr-4">
@@ -1197,18 +1353,34 @@ export default function LoginPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={activeFilter === "income" ? "bg-primary text-primary-foreground" : ""}
-                    onClick={() => setActiveFilter("income")}
+                    className={activeFilter === "bullish" ? "bg-green-500 text-white" : ""}
+                    onClick={() => setActiveFilter("bullish")}
                   >
-                    Income
+                    Bullish
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className={activeFilter === "global" ? "bg-primary text-primary-foreground" : ""}
-                    onClick={() => setActiveFilter("global")}
+                    className={activeFilter === "bearish" ? "bg-red-500 text-white" : ""}
+                    onClick={() => setActiveFilter("bearish")}
                   >
-                    Global
+                    Bearish
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={activeFilter === "extreme-fear" ? "bg-red-700 text-white" : ""}
+                    onClick={() => setActiveFilter("extreme-fear")}
+                  >
+                    Extreme Fear
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={activeFilter === "extreme-greed" ? "bg-green-700 text-white" : ""}
+                    onClick={() => setActiveFilter("extreme-greed")}
+                  >
+                    Extreme Greed
                   </Button>
                   <Button
                     variant="outline"
@@ -1249,63 +1421,34 @@ export default function LoginPage() {
 
               {/* Portfolio grid with pagination */}
               <div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {filteredPortfolios
                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                     .map((portfolio) => (
-                      <Card key={portfolio.id} className="overflow-hidden h-full flex flex-col">
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle className="flex items-center gap-2 text-base">
-                                {portfolio.icon}
-                                {portfolio.name}
-                              </CardTitle>
-                              <CardDescription className="line-clamp-2">{portfolio.focus}</CardDescription>
-                            </div>
-                            <Badge variant={getRiskVariant(portfolio.risk)}>{portfolio.risk}</Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="py-2 flex-grow">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                            <div className="h-24">
-                              <PerformanceChart days={30} variant={portfolio.chartVariant} className="h-full w-full" />
-                            </div>
-                            <div className="h-24 flex items-center justify-center">
-                              <PieChart data={portfolio.allocation} height={90} width={90} />
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {portfolio.tags.map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <div>
-                              <p className="font-medium">Value</p>
-                              <p className="text-lg font-bold">{portfolio.value}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">Return</p>
-                              <p className={`text-base font-semibold ${portfolio.returnClass}`}>{portfolio.return}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="pt-0">
-                          <Button
-                            className="w-full"
-                            onClick={() => startDemoAnimation(portfolio.id as DemoType)}
-                            disabled={isLoading || demoAnimation}
-                          >
-                            {isLoading && activeDemo === portfolio.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : null}
-                            Try This Demo
-                          </Button>
-                        </CardFooter>
-                      </Card>
+                      <PortfolioDemoCard
+                        key={portfolio.id}
+                        portfolio={{
+                          id: portfolio.id,
+                          name: portfolio.name,
+                          focus: portfolio.focus,
+                          risk: portfolio.risk,
+                          tags: portfolio.tags,
+                          value: portfolio.value,
+                          return: portfolio.return,
+                          returnClass: portfolio.returnClass,
+                          chartVariant: portfolio.chartVariant,
+                          allocation: portfolio.allocation,
+                          icon: portfolio.icon,
+                          historicalData: portfolio.historicalData,
+                          sentiment: portfolio.sentiment,
+                          sentimentStrength: portfolio.sentimentStrength,
+                          fearGreedIndex: portfolio.fearGreedIndex,
+                          fearGreedLabel: portfolio.fearGreedLabel
+                        }}
+                        onSelect={(id) => startDemoAnimation(id as DemoType)}
+                        isLoading={isLoading}
+                        activeDemo={activeDemo}
+                      />
                     ))}
                 </div>
 
@@ -1338,11 +1481,254 @@ export default function LoginPage() {
               </div>
             </div>
           )}
+
+          {activeTab === "calculators" && (
+            <div className="container mx-auto">
+              <h2 className="text-2xl font-bold mb-4 text-center">Financial Calculators</h2>
+              <p className="text-center text-muted-foreground mb-6">
+                Explore our suite of financial calculators to help with your investment planning and decision making
+              </p>
+
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid grid-cols-3">
+                  <TabsTrigger value="basic">Basic</TabsTrigger>
+                  <TabsTrigger value="trading">Trading</TabsTrigger>
+                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="basic" className="mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="col-span-1">
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle>Compound Interest</CardTitle>
+                          <CardDescription>Calculate how your investments grow over time</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <CompoundInterestCalculator />
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="col-span-1">
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle>Savings Calculator</CardTitle>
+                          <CardDescription>Plan your savings with regular contributions</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <SavingsCalculator />
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="col-span-1">
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle>Inflation Impact</CardTitle>
+                          <CardDescription>See how inflation affects your purchasing power</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <InflationCalculator />
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="col-span-1">
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle>Retirement Planning</CardTitle>
+                          <CardDescription>Plan for your retirement needs</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <RetirementCalculator />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="news" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Market News</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Stay up-to-date with the latest market news and analysis
+                    </p>
+                    <NewsList />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="education" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Educational Resources</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Learn about trading strategies, risk management, and more
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle>Trading Basics</CardTitle>
+                          <CardDescription>Learn the fundamentals of trading</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p>Learn about trading strategies, risk management, and more.</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle>Technical Analysis</CardTitle>
+                          <CardDescription>Learn about technical analysis</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p>Learn about trading strategies, risk management, and more.</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="h-full">
+                        <CardHeader>
+                          <CardTitle>Risk Management</CardTitle>
+                          <CardDescription>Learn about risk management</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p>Learn about trading strategies, risk management, and more.</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="forum" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Community Forum</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Connect with other traders and discuss strategies
+                    </p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/forum" target="_blank" rel="noopener noreferrer">
+                          Visit the Forum
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="api" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">API Documentation</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Learn how to integrate with our platform using our API
+                    </p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/api" target="_blank" rel="noopener noreferrer">
+                          View API Documentation
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="risk" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Risk Management</h2>
+                    <p className="text-center text-muted-foreground mb-6">Learn about risk management strategies</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/risk" target="_blank" rel="noopener noreferrer">
+                          View Risk Management
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="calendar" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Economic Calendar</h2>
+                    <p className="text-center text-muted-foreground mb-6">Stay up-to-date with economic events</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/calendar" target="_blank" rel="noopener noreferrer">
+                          View Economic Calendar
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="performance" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Performance Metrics</h2>
+                    <p className="text-center text-muted-foreground mb-6">View performance metrics</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/performance" target="_blank" rel="noopener noreferrer">
+                          View Performance Metrics
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="backtest" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Backtesting</h2>
+                    <p className="text-center text-muted-foreground mb-6">Backtest your strategies</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/backtest" target="_blank" rel="noopener noreferrer">
+                          View Backtesting
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="screener" className="mt-4">
+                  <div className="container mx-auto">
+                    <h2 className="text-2xl font-bold mb-4 text-center">Asset Screener</h2>
+                    <p className="text-center text-muted-foreground mb-6">Screen assets</p>
+                    <div className="flex items-center justify-center">
+                      <Button asChild>
+                        <Link href="https://example.com/screener" target="_blank" rel="noopener noreferrer">
+                          View Asset Screener
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
         </div>
       </div>
 
-      <CookieBanner />
+      {/* <CookieBanner /> */}
     </div>
   )
 }
+
+// Add TypeScript interface for portfolio scenarios
+interface DemoPortfolio {
+  id: string;
+  name: string;
+  focus: string;
+  risk: string;
+  tags: string[];
+  value: string;
+  return: string;
+  returnClass: string;
+  chartVariant: "up" | "down" | "volatile";
+  allocation: { name: string; value: number }[];
+  icon: LucideIcon;
+  historicalData?: Array<{ date: string; value: number }>;
+  sentiment?: "bullish" | "bearish" | "neutral";
+  sentimentStrength?: number; // 0-100
+  fearGreedIndex?: number; // 0-100
+  fearGreedLabel?: string; // "Extreme Fear" to "Extreme Greed"
+}
+
+// Remove the standalone filtered scenarios - this functionality should be used
+// directly within the component where searchQuery is available
+
 

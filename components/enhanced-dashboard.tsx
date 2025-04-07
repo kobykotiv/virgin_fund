@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,8 @@ import {
   RefreshCw,
   Settings,
   Wallet,
+  Play,
+  Trash,
 } from "lucide-react"
 import { LiveTicker } from "@/components/live-ticker"
 import { fetchPortfolio } from "@/services/portfolio-service"
@@ -45,6 +47,11 @@ import { getMultipleMarketData } from "@/services/market-data-service"
 import { useToast } from "@/components/ui/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/providers/auth-provider"
+import { calculateHistoricalPerformance, calculatePositionPerformance } from "@/lib/performance-utils"
+import { runBacktest } from "@/services/backtest-service"
+import { BotHero, BotGrid } from "@/components/bot-management"
+import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-views"
+import { BotAnalytics } from "./bot-configuration/bot-analytics"
 
 interface EnhancedDashboardProps {
   apiConfig?: {
@@ -53,18 +60,20 @@ interface EnhancedDashboardProps {
     baseUrl: string
     isPaper: boolean
   } | null
+  onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => Promise<void>
+  isLoading: boolean
 }
 
-export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
-  const [isLoading, setIsLoading] = useState(true)
+export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio }: EnhancedDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview")
-  const [portfolio, setPortfolio] = useState<any>(null)
   const [bots, setBots] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [marketData, setMarketData] = useState<any[]>([])
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const { toast } = useToast()
   const { isDemoMode } = useAuth()
+  const [backtestResults, setBacktestResults] = useState<BacktestResult | null>(null)
+  const [viewMode, setViewMode] = useState<'simple' | 'advanced' | 'expert'>('simple')
 
   // Get unique assets from portfolio and bots
   const getUniqueAssets = () => {
@@ -74,7 +83,6 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
   }
 
   const loadDashboardData = async () => {
-    setIsLoading(true)
     try {
       // Fetch portfolio data
       const portfolioData = await fetchPortfolio()
@@ -156,8 +164,6 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
         description: "Failed to load dashboard data",
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -185,14 +191,8 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
   const totalTrades = bots.reduce((sum, bot) => sum + (bot.performance?.totalTrades || 0), 0)
 
   // Generate performance data for chart
-  const performanceData = bots.map((bot) => ({
-    name: bot.name,
-    performance: bot.performance?.pnlPercentage || 0,
-    trades: bot.performance?.totalTrades || 0,
-  }))
-
-  // Generate mock historical performance data
-  const historicalData = Array.from({ length: 30 }, (_, i) => {
+  const performanceData = portfolio ? calculatePositionPerformance(portfolio.positions) : []
+  const historicalData = portfolio ? calculateHistoricalPerformance(portfolio.positions) : Array.from({ length: 30 }, (_, i) => {
     const date = new Date()
     date.setDate(date.getDate() - (30 - i))
     return {
@@ -234,6 +234,332 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
     return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`
   }
 
+  // Update bot controls in the UI
+  const renderBotControls = (bot: any) => (
+    <div className="flex items-center space-x-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onBotAction(bot.id, bot.status === 'active' ? 'stop' : 'start')}
+        disabled={isLoading}
+      >
+        {bot.status === 'active' ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onBotAction(bot.id, 'delete')}
+        disabled={isLoading || bot.status === 'active'}
+      >
+        <Trash className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+
+  const calculatePortfolioMetrics = (positions: Position[]): { totalValue: number; totalPnL: number; totalPositions: number } => {
+    return positions.reduce((acc, pos) => {
+      if (pos.assetType === 'basket') {
+        const basketMetrics = calculatePortfolioMetrics(pos.positions)
+        return {
+          totalValue: acc.totalValue + basketMetrics.totalValue,
+          totalPnL: acc.totalPnL + basketMetrics.totalPnL,
+          totalPositions: acc.totalPositions + basketMetrics.totalPositions
+        }
+      }
+
+      const value = (pos.currentPrice || 0) * (pos.quantity || 0)
+      const cost = (pos.avgPrice || 0) * (pos.quantity || 0)
+      const pnl = value - cost
+
+      return {
+        totalValue: acc.totalValue + value,
+        totalPnL: acc.totalPnL + pnl,
+        totalPositions: acc.totalPositions + 1
+      }
+    }, { totalValue: 0, totalPnL: 0, totalPositions: 0 })
+  }
+
+  const renderPosition = (position: Position, level = 0) => {
+    if (position.assetType === 'basket') {
+      return (
+        <div key={position.id} className="space-y-2">
+          <div className="font-medium flex items-center space-x-2">
+            <div className="ml-4">{position.name}</div>
+            <Badge variant="outline">Basket</Badge>
+          </div>
+          <div className="pl-8 space-y-2">
+            {position.positions.map(pos => renderPosition(pos, level + 1))}
+          </div>
+        </div>
+      )
+    }
+
+    const value = (position.currentPrice || 0) * (position.quantity || 0)
+    const cost = (position.avgPrice || 0) * (position.quantity || 0)
+    const pnl = value - cost
+    const pnlPercent = (pnl / cost) * 100
+
+    return (
+      <TableRow key={position.id}>
+        <TableCell className="font-medium">{position.ticker}</TableCell>
+        <TableCell>{position.quantity}</TableCell>
+        <TableCell>${position.avgPrice?.toFixed(2)}</TableCell>
+        <TableCell>${position.currentPrice?.toFixed(2)}</TableCell>
+        <TableCell>{formatCurrency(value)}</TableCell>
+        <TableCell className={pnl >= 0 ? "text-green-500" : "text-red-500"}>
+          {formatCurrency(pnl)}
+        </TableCell>
+        <TableCell className={pnl >= 0 ? "text-green-500" : "text-red-500"}>
+          {pnlPercent.toFixed(2)}%
+        </TableCell>
+      </TableRow>
+    )
+  }
+
+  const calculatePositionMetrics = (position: Position) => {
+    if (position.assetType === 'basket') {
+      return position.positions.reduce((acc, pos) => {
+        const metrics = calculatePositionMetrics(pos)
+        return {
+          value: acc.value + metrics.value,
+          pnl: acc.pnl + metrics.pnl,
+          pnlPercent: (acc.pnl / (acc.value - acc.pnl)) * 100,
+          trades: acc.trades + metrics.trades
+        }
+      }, { value: 0, pnl: 0, pnlPercent: 0, trades: 0 })
+    }
+  
+    const value = (position.currentPrice || 0) * (position.quantity || 0)
+    const cost = (position.avgPrice || 0) * (position.quantity || 0)
+    const pnl = value - cost
+    const trades = position.trades?.length || 0
+  
+    return {
+      value,
+      pnl,
+      pnlPercent: (pnl / cost) * 100,
+      trades
+    }
+  }
+  
+  // Add performance metrics calculation
+  const getPortfolioPerformanceData = () => {
+    if (!portfolio?.positions) return []
+    
+    return portfolio.positions.map(position => {
+      const metrics = calculatePositionMetrics(position)
+      return {
+        name: position.assetType === 'basket' ? position.name : position.ticker,
+        type: position.assetType,
+        value: metrics.value,
+        pnl: metrics.pnl,
+        pnlPercent: metrics.pnlPercent,
+        trades: metrics.trades
+      }
+    })
+  }
+  
+  // Update market data fetching for baskets
+  const getMarketDataForPosition = async (position: Position): Promise<any[]> => {
+    if (position.assetType === 'basket') {
+      const promises = position.positions.map(pos => getMarketDataForPosition(pos))
+      return (await Promise.all(promises)).flat()
+    }
+  
+    try {
+      const data = await getMultipleMarketData([position.ticker || ''])
+      return data
+    } catch (error) {
+      console.error(`Error fetching market data for ${position.ticker}:`, error)
+      return []
+    }
+  }
+  
+  // Update the performance tab content
+  const renderPerformanceMetrics = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Position Performance</CardTitle>
+        <CardDescription>Performance metrics by position and basket</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Position</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Value</TableHead>
+              <TableHead>P&L</TableHead>
+              <TableHead>P&L %</TableHead>
+              <TableHead>Trades</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {getPortfolioPerformanceData().map((item) => (
+              <TableRow key={item.name}>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>{formatCurrency(item.value)}</TableCell>
+                <TableCell className={item.pnl >= 0 ? "text-green-500" : "text-red-500"}>
+                  {formatCurrency(item.pnl)}
+                </TableCell>
+                <TableCell className={item.pnlPercent >= 0 ? "text-green-500" : "text-red-500"}>
+                  {item.pnlPercent.toFixed(2)}%
+                </TableCell>
+                <TableCell>{item.trades}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
+  
+  // Update the market data section
+  const renderMarketData = () => {
+    const allPositions = portfolio?.positions.flatMap(pos => 
+      pos.assetType === 'basket' ? pos.positions : [pos]
+    ) || []
+  
+    return (
+      <div className="space-y-4">
+        {allPositions.map(pos => (
+          <Card key={pos.id}>
+            <CardHeader>
+              <CardTitle>{pos.ticker}</CardTitle>
+              <CardDescription>
+                {pos.assetType.charAt(0).toUpperCase() + pos.assetType.slice(1)} Asset
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Market data content */}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  const renderPerformanceTab = () => (
+    <TabsContent value="performance" className="space-y-6">
+      {/* Historical Performance Chart */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Portfolio Performance</CardTitle>
+              <CardDescription>Historical P&L and trade activity</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={isLoading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={historicalData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis yAxisId="left" label={{ value: "P&L ($)", angle: -90, position: "insideLeft" }} />
+                <YAxis yAxisId="right" orientation="right" label={{ value: "Trades", angle: 90, position: "insideRight" }} />
+                <Tooltip />
+                <Legend />
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="value"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary)/0.2)"
+                  name="P&L"
+                />
+                <Bar yAxisId="right" dataKey="trades" fill="#82ca9d" name="Trades" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Position Performance Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Position Performance</CardTitle>
+          <CardDescription>Individual position metrics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Position</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>P&L</TableHead>
+                <TableHead>P&L %</TableHead>
+                <TableHead>Trades</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {performanceData.map((item) => (
+                <TableRow key={item.name}>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{formatCurrency(item.value)}</TableCell>
+                  <TableCell className={item.pnl >= 0 ? "text-green-500" : "text-red-500"}>
+                    {formatCurrency(item.pnl)}
+                  </TableCell>
+                  <TableCell className={item.pnlPercent >= 0 ? "text-green-500" : "text-red-500"}>
+                    {item.pnlPercent.toFixed(2)}%
+                  </TableCell>
+                  <TableCell>{item.trades}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </TabsContent>
+  )
+
+  const handleBacktest = async (options: BacktestOptions) => {
+    try {
+      const results = await runBacktest(options)
+      setBacktestResults(results)
+    } catch (error) {
+      toast({
+        title: "Backtest Error",
+        description: error instanceof Error ? error.message : "Failed to run backtest",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const renderBacktestingTab = () => (
+    <TabsContent value="backtest" className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Strategy Backtesting</CardTitle>
+          <CardDescription>Test your trading strategies with historical data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Add backtesting form and results visualization */}
+        </CardContent>
+      </Card>
+    </TabsContent>
+  )
+
   return (
     <div className="space-y-6">
       {/* Live Ticker Component */}
@@ -242,9 +568,11 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="bots">Bots</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
           <TabsTrigger value="market">Market Data</TabsTrigger>
+          <TabsTrigger value="backtest">Backtest</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -475,6 +803,9 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                               {new Date(bot.updatedAt).toLocaleTimeString()}
                             </p>
                           </div>
+                          <CardFooter>
+                            {renderBotControls(bot)}
+                          </CardFooter>
                         </div>
                       ))}
                   </div>
@@ -541,192 +872,60 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="performance" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Portfolio Performance</CardTitle>
-                  <CardDescription>30-day performance history</CardDescription>
+        <TabsContent value="bots" className="space-y-8">
+          <div className="flex justify-end space-x-2">
+            <Button 
+              variant={viewMode === 'simple' ? 'default' : 'outline'}
+              onClick={() => setViewMode('simple')}
+            >
+              Simple
+            </Button>
+            <Button 
+              variant={viewMode === 'advanced' ? 'default' : 'outline'}
+              onClick={() => setViewMode('advanced')}
+            >
+              Advanced
+            </Button>
+            <Button 
+              variant={viewMode === 'expert' ? 'default' : 'outline'}
+              onClick={() => setViewMode('expert')}
+            >
+              Expert
+            </Button>
+          </div>
+        
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bots.map(bot => (
+              <div key={bot.id}>
+                {viewMode === 'expert' ? (
+                  <ExpertView bot={bot} />
+                ) : viewMode === 'advanced' ? (
+                  <AdvancedView bot={bot} />
+                ) : (
+                  <SimpleView bot={bot} />
+                )}
+                <div className="flex justify-end mt-2">
+                  {renderBotControls(bot)}
                 </div>
-                <Button variant="outline" size="sm" className="h-8" onClick={loadDashboardData} disabled={isLoading}>
-                  {isLoading ? (
-                    <RefreshCw className="h-3.5 w-3.5 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3.5 w-3.5 mr-2" />
-                  )}
-                  Refresh
-                </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-80 w-full" />
-              ) : (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={historicalData}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis label={{ value: "P&L (%)", angle: -90, position: "insideLeft" }} />
-                      <Tooltip />
-                      <Legend />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="hsl(var(--primary))"
-                        fill="hsl(var(--primary)/0.2)"
-                        name="P&L (%)"
-                        activeDot={{ r: 8 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Bot Performance</CardTitle>
-              <CardDescription>Performance comparison across all trading bots</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-80 w-full" />
-              ) : performanceData.length > 0 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={performanceData}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis label={{ value: "Performance (%)", angle: -90, position: "insideLeft" }} />
-                      <Tooltip
-                        formatter={(value, name) => [
-                          `${Number.parseFloat(value as string).toFixed(2)}%`,
-                          "Performance",
-                        ]}
-                      />
-                      <Bar
-                        dataKey="performance"
-                        fill="hsl(var(--primary))"
-                        name="Performance (%)"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center py-10 text-muted-foreground">No performance data available yet</div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Trading Activity</CardTitle>
-              <CardDescription>Number of trades by bot</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-80 w-full" />
-              ) : performanceData.length > 0 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={performanceData}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis label={{ value: "Trades", angle: -90, position: "insideLeft" }} />
-                      <Tooltip formatter={(value) => [value, "Trades"]} />
-                      <Bar dataKey="trades" fill="#82ca9d" name="Trades" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center py-10 text-muted-foreground">No trading activity data available yet</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Price Correlation Analysis</CardTitle>
-              <CardDescription>Correlation between different assets in your portfolio</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-80 w-full" />
-              ) : marketData.length > 1 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart
-                      data={marketData.map((data) => ({
-                        symbol: data.symbol,
-                        price: data.price,
-                        volume: data.volume / 1000000, // Convert to millions for better visualization
-                        change: data.changePercent,
-                      }))}
-                      margin={{
-                        top: 20,
-                        right: 30,
-                        left: 20,
-                        bottom: 20,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="symbol" />
-                      <YAxis yAxisId="left" label={{ value: "Price ($)", angle: -90, position: "insideLeft" }} />
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        label={{ value: "Volume (M)", angle: 90, position: "insideRight" }}
-                      />
-                      <Tooltip
-                        formatter={(value, name, props) => {
-                          if (name === "volume") return [`${value.toFixed(2)}M`, "Volume"]
-                          if (name === "price") return [`$${value.toFixed(2)}`, "Price"]
-                          if (name === "change") return [`${value.toFixed(2)}%`, "Change"]
-                          return [value, name]
-                        }}
-                      />
-                      <Legend />
-                      <Bar yAxisId="right" dataKey="volume" fill="#8884d8" name="Volume (M)" />
-                      <Line yAxisId="left" type="monotone" dataKey="price" stroke="#ff7300" name="Price ($)" />
-                      <Scatter yAxisId="left" dataKey="price" fill="red" name="Current Price" />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center py-10 text-muted-foreground">
-                  Insufficient data for correlation analysis
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+          {selectedBot && (
+            <BotAnalytics 
+              data={{
+                equityCurve: generateEquityCurveData(selectedBot),
+                rollingReturns: generateRollingReturnsData(selectedBot),
+                tradeDistribution: generateTradeDistributionData(selectedBot),
+                tradeTiming: generateTradeTimingData(selectedBot),
+                assetAllocation: generateAssetAllocationData(selectedBot),
+                strategyAttribution: generateStrategyAttributionData(selectedBot),
+                correlationMatrix: generateCorrelationData(selectedBot)
+              }}
+            />
+          )}
         </TabsContent>
+
+        {renderPerformanceTab()}
 
         <TabsContent value="portfolio" className="space-y-6">
           <Card>
@@ -734,96 +933,58 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle>Portfolio Allocation</CardTitle>
-                  <CardDescription>Current asset distribution</CardDescription>
+                  <CardDescription>Current asset distribution including baskets</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="h-8" onClick={loadDashboardData} disabled={isLoading}>
-                  {isLoading ? (
-                    <RefreshCw className="h-3.5 w-3.5 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3.5 w-3.5 mr-2" />
-                  )}
+                <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={isLoading}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-80 w-full" />
-              ) : portfolioAllocationData.length > 0 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={portfolioAllocationData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {portfolioAllocationData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [formatCurrency(Number(value)), "Value"]} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center py-10 text-muted-foreground">No portfolio data available</div>
-              )}
+              {portfolio?.positions?.map(position => renderPosition(position))}
             </CardContent>
           </Card>
-
+          
+          {/* Add trade history for selected position */}
           <Card>
             <CardHeader>
-              <CardTitle>Portfolio Holdings</CardTitle>
-              <CardDescription>Current positions and performance</CardDescription>
+              <CardTitle>Trade History</CardTitle>
+              <CardDescription>Recent trades for selected position</CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : portfolio?.positions?.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Symbol</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Avg Price</TableHead>
-                      <TableHead>Current Price</TableHead>
-                      <TableHead>Market Value</TableHead>
-                      <TableHead>Unrealized P&L</TableHead>
-                      <TableHead>Change</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Side</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Value</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedPosition?.trades?.map(trade => (
+                    <TableRow key={trade.tradeId}>
+                      <TableCell>{new Date(trade.datetime).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={trade.action === 'BUY' ? 'default' : 'secondary'}>
+                          {trade.action}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={trade.side === 'LONG' ? 'success' : 'destructive'}>
+                          {trade.side}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{trade.quantity}</TableCell>
+                      <TableCell>${trade.price.toFixed(2)}</TableCell>
+                      <TableCell>{formatCurrency(trade.quantity * trade.price)}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {portfolio.positions.map((position: any) => (
-                      <TableRow key={position.symbol}>
-                        <TableCell className="font-medium">{position.symbol}</TableCell>
-                        <TableCell>{position.quantity}</TableCell>
-                        <TableCell>${position.averagePrice.toFixed(2)}</TableCell>
-                        <TableCell>${position.currentPrice.toFixed(2)}</TableCell>
-                        <TableCell>{formatCurrency(position.marketValue)}</TableCell>
-                        <TableCell className={position.unrealizedPnL >= 0 ? "text-green-500" : "text-red-500"}>
-                          {formatCurrency(position.unrealizedPnL)}
-                        </TableCell>
-                        <TableCell className={position.percentChange >= 0 ? "text-green-500" : "text-red-500"}>
-                          {formatPercentage(position.percentChange)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">No positions in portfolio</div>
-              )}
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1033,6 +1194,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
             </CardContent>
           </Card>
         </TabsContent>
+        {renderBacktestingTab()}
       </Tabs>
     </div>
   )

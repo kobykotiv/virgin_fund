@@ -11,8 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Virgin Fund : GenEric TraDer AI",
-  description:
-    "Self-hostable finance application bridging bot-based trading and copy trading in an isolated environment",
+  description: "Self-hosted finance application",
   keywords: "trading, finance, bot trading, copy trading, automated trading, signals, prediction markets, AI",
   authors: [{ name: "Virgin Fund Team" }],
   openGraph: {
@@ -32,13 +31,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
-        <AuthProvider>
-          <PerformanceProvider>
-            {children}
-          </PerformanceProvider>
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <MockDataWarning />
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

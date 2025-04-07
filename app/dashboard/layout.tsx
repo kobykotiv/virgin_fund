@@ -3,6 +3,7 @@ import Link from "next/link"
 import { DashboardNav } from "@/components/dashboard-nav"
 import { UserAccountNav } from "@/components/user-account-nav"
 import { ModeToggle } from "@/components/mode-toggle"
+import { DashboardFooter } from "@/components/dashboard-footer"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -42,6 +43,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       href: "/dashboard/calculators/retirement",
       title: "Retirement Calculator",
     },
+    {
+      href: "/dashboard/portfolio",
+      title: "Portfolio",
+    },
   ]
 
   return (
@@ -65,6 +70,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </aside>
         <main className="flex w-full flex-1 flex-col overflow-hidden py-6">{children}</main>
       </div>
+      
+      {/* Add the new dashboard footer */}
+      <DashboardFooter />
     </div>
   )
 }

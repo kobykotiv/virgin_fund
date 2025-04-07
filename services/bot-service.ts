@@ -1,5 +1,5 @@
 // Bot service to handle bot operations with demo mode support
-import type { Bot, BotStatus, BotType } from "@/types/bot"
+import type { Bot, BotStatus, BotType, Position, Trade } from "@/types/bot"
 import { isDemoMode, DEMO_BOTS_KEY } from "./demo-service"
 import {
   fetchBots as fetchRealBots,
@@ -23,7 +23,17 @@ export async function createBot(botData: Partial<Bot>): Promise<Bot> {
   if (isDemoMode()) {
     return createDemoBot(botData)
   } else {
-    return createRealBot(botData)
+    const response = await fetch('/api/bots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(botData)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create bot');
+    }
+
+    return response.json();
   }
 }
 
@@ -32,7 +42,17 @@ export async function updateBot(bot: Bot): Promise<Bot> {
   if (isDemoMode()) {
     return updateDemoBot(bot)
   } else {
-    return updateRealBot(bot)
+    const response = await fetch(`/api/bots/${bot.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bot)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update bot');
+    }
+
+    return response.json();
   }
 }
 
@@ -41,7 +61,13 @@ export async function deleteBot(botId: string): Promise<void> {
   if (isDemoMode()) {
     return deleteDemoBot(botId)
   } else {
-    return deleteRealBot(botId)
+    const response = await fetch(`/api/bots/${botId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete bot');
+    }
   }
 }
 
@@ -52,6 +78,65 @@ export async function toggleBotStatus(botId: string, newStatus: BotStatus): Prom
   } else {
     return toggleRealBotStatus(botId, newStatus)
   }
+}
+
+// Open a position
+export async function openPosition(
+  botId: string, 
+  positionData: Partial<Position>
+): Promise<Position> {
+  const response = await fetch(`/api/bots/${botId}/positions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(positionData)
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to open position');
+  }
+
+  return response.json();
+}
+
+// Close a position
+export async function closePosition(
+  botId: string,
+  positionId: string,
+  closePrice: number
+): Promise<Position> {
+  const response = await fetch(`/api/bots/${botId}/positions/${positionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      status: 'closed',
+      closedAt: new Date().toISOString(),
+      closePrice
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to close position');
+  }
+
+  return response.json();
+}
+
+// Record a trade
+export async function recordTrade(
+  botId: string,
+  tradeData: Partial<Trade>
+): Promise<Trade> {
+  const response = await fetch(`/api/bots/${botId}/trades`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(tradeData)
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to record trade');
+  }
+
+  return response.json();
 }
 
 // Demo mode implementations

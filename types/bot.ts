@@ -1,39 +1,36 @@
-export type BotType =
-  | "basket" // Basket Trading
-  | "grid" // Grid Trading
-  | "dca" // Dollar Cost Averaging
-  | "indicator" // Indicator-Based Trading
-
-export type BotStatus =
-  | "active" // Bot is running
-  | "paused" // Bot is paused
-  | "error" // Bot has encountered an error
+export type BotType = "indicator" | "grid" | "dca" | "basket";
+export type BotStatus = "active" | "paused" | "error";
 
 export type Timeframe = "1min" | "5min" | "15min" | "30min" | "1hour" | "2hour" | "4hour" | "1day" | "1week" | "1month"
 
 export interface IndicatorConfig {
-  type: "rsi" | "macd" | "bollinger"
-  timeframe: Timeframe
-  entryThreshold: number
-  exitThreshold: number
+  type: "rsi" | "macd" | "bollinger";
+  timeframe: string;
+  entryThreshold: number;
+  exitThreshold: number;
+  period?: number;
+  fastPeriod?: number; 
+  slowPeriod?: number;
+  signalPeriod?: number;
+  standardDeviation?: number;
 }
 
 export interface GridConfig {
-  gridSize: number // Grid size in percentage (e.g. 1 for 1%)
-  upperLimit: number // Upper price limit
-  lowerLimit: number // Lower price limit
-  quantity: number // Quantity per order
+  gridSize: number;
+  upperLimit: number;
+  lowerLimit: number; 
+  quantity: number;
 }
 
 export interface DCAConfig {
-  interval: string // Cron expression for scheduling
-  amount: number // Amount per purchase
-  duration?: string // Optional duration (e.g. '30days')
+  interval: string; // Cron expression
+  amount: number;
+  duration?: string;
 }
 
 export interface BasketConfig {
-  rebalancePeriod?: string // Optional rebalance period (cron expression)
-  targetAllocation: Record<string, number> // e.g. {'AAPL': 0.5, 'MSFT': 0.5}
+  rebalancePeriod?: string; // Cron expression
+  targetAllocation: Record<string, number>;
 }
 
 export interface BotPerformance {
@@ -45,25 +42,55 @@ export interface BotPerformance {
 }
 
 export interface Bot {
-  id: string
-  name: string
-  type: BotType
-  status: BotStatus
-  assets: string[] // Stock symbols
-  createdAt: string
-  updatedAt: string
-  performance?: BotPerformance
-  allocation?: number // Capital allocation for the bot (for demo mode)
+  id: string;
+  name: string;
+  type: BotType;
+  status: BotStatus;
+  assets: string[];
+  createdAt: string;
+  updatedAt: string;
+  performance?: {
+    totalPnL: number;
+    pnlPercentage: number;
+    totalTrades: number;
+    winRate: number;
+    lastUpdated: string;
+  };
+  stopLoss?: number;
+  takeProfit?: number;
+  maxDrawdown?: number;
+  indicatorConfig?: IndicatorConfig;
+  gridConfig?: GridConfig;  
+  dcaConfig?: DCAConfig;
+  basketConfig?: BasketConfig;
+  allocation?: number;
+}
 
-  // Risk management
-  stopLoss?: number // Stop loss percentage
-  takeProfit?: number // Take profit percentage
-  maxDrawdown?: number // Maximum drawdown percentage
+export interface Position {
+  id: string;
+  botId: string;
+  symbol: string;
+  entryPrice: number;
+  currentPrice: number;
+  quantity: number;
+  side: "long" | "short";
+  status: "open" | "closed";
+  openedAt: string;
+  closedAt?: string;
+  pnl?: number;
+  pnlPercentage?: number;
+}
 
-  // Bot-specific configs
-  indicatorConfig?: IndicatorConfig
-  gridConfig?: GridConfig
-  dcaConfig?: DCAConfig
-  basketConfig?: BasketConfig
+export interface Trade {
+  id: string;
+  botId: string;
+  positionId: string;
+  type: "entry" | "exit" | "adjust";
+  side: "buy" | "sell";  
+  price: number;
+  quantity: number;
+  timestamp: string;
+  fees?: number;
+  slippage?: number;
 }
 

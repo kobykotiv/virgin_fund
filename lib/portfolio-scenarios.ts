@@ -8,12 +8,13 @@ import {
   BitcoinIcon,
   BrainIcon,
   ActivityIcon,
+  BalanceIcon,
   UtensilsIcon,
   ShoppingCartIcon,
   CloudIcon,
   HomeIcon,
   GlobeIcon,
-//   VrHeadsetIcon,
+  HeadsetIcon,
   ShipIcon,
   CrownIcon,
   Globe2Icon,
@@ -28,7 +29,9 @@ import {
   AtomIcon,
   BuildingIcon,
   ScaleIcon,
-  BriefcaseIcon, // Add fallback icon
+  BriefcaseIcon,
+  HeadphonesIcon,
+  GemIcon, // Add fallback icon
 } from "lucide-react"
 
 // Add helper function for getting scenario icon
@@ -139,7 +142,7 @@ export const PORTFOLIO_SCENARIOS = {
         id: "meta-2022",
         name: "Meta's Metaverse Dip",
         focus: "Meta during peak metaverse skepticism",
-        icon: getScenarioIcon(VirtualRealityIcon),
+        icon: getScenarioIcon(HeadsetIcon),
         tags: ["Tech", "Social", "Recovery"],
         risk: "High",
         value: 1500000,
@@ -677,8 +680,8 @@ export const PORTFOLIO_SCENARIOS = {
     alternativeAssets2022: {
         id: "alt-assets-2022",
         name: "Alternative Assets Mix",
-        focus: "Non-traditional investments",
-        icon: getScenarioIcon(DiamondsIcon),
+        icon: getScenarioIcon(GemIcon),
+        // icon: getScenarioIcon(DiamondsIcon),
         tags: ["Alternative", "Commodities", "Real Assets"],
         risk: "High",
         value: 2200000,
@@ -1878,7 +1881,7 @@ export const PORTFOLIO_SCENARIOS = {
         id: "metaverse-vr",
         name: "Metaverse & VR",
         focus: "Virtual reality and digital worlds",
-        icon: getScenarioIcon(VirtualRealityIcon),
+        icon: getScenarioIcon(HeadphonesIcon),
         tags: ["Technology", "Gaming", "Social"],
         risk: "High",
         value: 1100000,

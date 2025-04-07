@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { generateDemoPositions } from "@/lib/demo-data"
+import WebSocket from 'ws'
+import { MarketDataModel, OrderModel } from '@/lib/auth/models'
 
 // Types for Alpaca API responses
 export interface AssetData {
@@ -197,4 +199,122 @@ export function getPortfolioAllocation(portfolioId: string) {
     .sort((a, b) => b.value - a.value)
     .slice(0, 8) // Show top 8 positions
 }
+
+interface AlpacaConfig {
+  apiKey: string
+  apiSecret: string
+  paper: boolean
+}
+
+export class AlpacaService {
+  private ws: WebSocket | null = null
+  private readonly baseUrl: string
+  private readonly dataUrl: string
+
+  constructor(private config: AlpacaConfig) {
+    this.baseUrl = config.paper ? 
+      'https://paper-api.alpaca.markets' : 
+      'https://api.alpaca.markets'
+    this.dataUrl = 'https://data.alpaca.markets'
+  }
+
+  // Market Data Methods
+  async getHistoricalBars(symbol: string, timeframe: string, start: Date, end: Date) {
+    const response = await fetch(
+      `${this.dataUrl}/v2/stocks/${symbol}/bars?` +
+      `timeframe=${timeframe}&start=${start.toISOString()}&end=${end.toISOString()}`,
+      { headers: this.getHeaders() }
+    )
+    return this.handleResponse(response)
+  }
+
+  async getQuotes(symbols: string[]) {
+    const response = await fetch(
+      `${this.dataUrl}/v2/stocks/quotes/latest?symbols=${symbols.join(',')}`,
+      { headers: this.getHeaders() }
+    )
+    return this.handleResponse(response)
+  }
+
+  // Real-time WebSocket Methods
+  setupMarketDataStream(symbols: string[], callback: (data: any) => void) {
+    this.ws = new WebSocket('wss://stream.data.alpaca.markets/v2/iex')
+
+    this.ws.on('open', () => {
+      this.authenticate()
+      this.subscribe(symbols)
+    })
+
+    this.ws.on('message', (data: string) => {
+      const message = JSON.parse(data)
+      callback(message)
+    })
+
+    return this.ws
+  }
+
+  // Paper Trading Methods
+  async submitOrder(order: any) {
+    const response = await fetch(`${this.baseUrl}/v2/orders`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(order)
+    })
+    return this.handleResponse(response)
+  }
+
+  async getPositions() {
+    const response = await fetch(`${this.baseUrl}/v2/positions`, {
+      headers: this.getHeaders()
+    })
+    return this.handleResponse(response)
+  }
+
+  async getAccount() {
+    const response = await fetch(`${this.baseUrl}/v2/account`, {
+      headers: this.getHeaders()
+    })
+    return this.handleResponse(response)
+  }
+
+  // Helper Methods
+  private getHeaders() {
+    return {
+      'APCA-API-KEY-ID': this.config.apiKey,
+      'APCA-API-SECRET-KEY': this.config.apiSecret,
+      'Content-Type': 'application/json'
+    }
+  }
+
+  private authenticate() {
+    this.ws?.send(JSON.stringify({
+      action: 'auth',
+      key: this.config.apiKey,
+      secret: this.config.apiSecret
+    }))
+  }
+
+  private subscribe(symbols: string[]) {
+    this.ws?.send(JSON.stringify({
+      action: 'subscribe',
+      trades: symbols,
+      quotes: symbols,
+      bars: symbols
+    }))
+  }
+
+  private async handleResponse(response: Response) {
+    if (!response.ok) {
+      throw new Error(`Alpaca API error: ${response.status} ${response.statusText}`)
+    }
+    return response.json()
+  }
+}
+
+// Create singleton instance
+export const alpacaService = new AlpacaService({
+  apiKey: process.env.ALPACA_API_KEY!,
+  apiSecret: process.env.ALPACA_API_SECRET!,
+  paper: process.env.NODE_ENV !== 'production'
+})
 

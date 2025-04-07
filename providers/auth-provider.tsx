@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react"
 import { toast } from "@/components/ui/use-toast"
+import { supabase, connectMongo, getDatabaseStatus } from '@/lib/db-config'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -63,37 +64,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = async (credentials: {apiKey: string, secretKey: string, isPaper: boolean}) => {
+  const login = async (email: string, password: string, dbType: 'sql' | 'nosql' = 'sql') => {
     try {
-      // Verify credentials with Alpaca
-      const isValid = await verifyCredentials(
-        credentials.apiKey, 
-        credentials.secretKey, 
-        credentials.isPaper
-      )
-
-      if (!isValid) throw new Error('Invalid credentials')
-
-      // Store credentials in localStorage
-      localStorage.setItem('alpaca_api_key', credentials.apiKey)
-      localStorage.setItem('alpaca_secret_key', credentials.secretKey)
-      localStorage.setItem('alpaca_is_paper', String(credentials.isPaper))
-      
-      setApiKey(credentials.apiKey)
-      setSecretKey(credentials.secretKey) 
-      setIsPaper(credentials.isPaper)
-      setIsAuthenticated(true)
-      
-      toast({ 
-        title: "Authenticated successfully",
-        description: "You are now connected to Alpaca"
-      })
+      if (dbType === 'sql') {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) throw error
+        return data
+      } else {
+        // MongoDB login through API route
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        })
+        if (!response.ok) throw new Error('Login failed')
+        return await response.json()
+      }
     } catch (error) {
-      toast({ 
-        title: "Authentication failed",
-        description: "Could not verify your Alpaca API credentials",
-        variant: "destructive"
-      })
+      console.error('Login error:', error)
       throw error
     }
   }

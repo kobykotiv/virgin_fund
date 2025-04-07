@@ -1,4 +1,5 @@
-import { generatePortfolios, generatePortfoliosWithRealData } from "./utils/portfolio-generator"
+import { MarketDataService } from "@/services/market-data";
+import { generatePortfolios as generatePortfoliosFromUtil, generatePortfoliosWithRealData } from "./utils/portfolio-generator"
 
 /**
  * Portfolio Collection
@@ -26,30 +27,105 @@ export async function getPortfolios() {
   } catch (error) {
     console.error("Error fetching portfolio data:", error);
     // Fall back to generated data if real data fetching fails
-    return generatePortfolios(48);
+    return generatePortfoliosFromUtil(48);
   }
 }
 
 // For immediate SSR/static rendering, provide fallback data
 // This will be hydrated with real data on the client
-export const portfolios = generatePortfolios(48).map(portfolio => ({
-  ...portfolio,
-  historicalData: [
-    { timestamp: "2023-01-01", value: portfolio.baseValue * 0.85 },
-    { timestamp: "2023-02-01", value: portfolio.baseValue * 0.88 },
-    { timestamp: "2023-03-01", value: portfolio.baseValue * 0.92 },
-    { timestamp: "2023-04-01", value: portfolio.baseValue * 0.97 },
-    { timestamp: "2023-05-01", value: portfolio.baseValue * 0.99 },
-    { timestamp: "2023-06-01", value: portfolio.baseValue * 1.02 },
-    { timestamp: "2023-07-01", value: portfolio.baseValue * 1.05 },
-    { timestamp: "2023-08-01", value: portfolio.baseValue * 1.08 },
-    { timestamp: "2023-09-01", value: portfolio.baseValue * 1.12 },
-    { timestamp: "2023-10-01", value: portfolio.baseValue * 1.15 },
-    { timestamp: "2023-11-01", value: portfolio.baseValue * 1.18 },
-    { timestamp: "2023-12-01", value: portfolio.baseValue }
-  ],
-  costBasis: "$45,500"
-}));
+export const portfolios = generatePortfolios(48).map(portfolio => {
+  const baseValue = portfolio.positions.reduce((sum, pos) => sum + pos.value, 0);
+  return {
+    ...portfolio,
+    quantity: 100, // Default quantity for historical calculations
+    historicalData: async () => {
+      try {
+        // Try to fetch real data from Alpaca
+        const marketDataService = new MarketDataService(
+          process.env.ALPACA_API_KEY || '',
+          process.env.ALPACA_SECRET_KEY || '',
+          true // isPaper mode
+        )
+        const end = new Date().toISOString()
+        const start = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
+        
+        const approvedPositions = [
+            { symbol: 'TSLA', value: 10000 },
+            { symbol: 'AAPL', value: 8000 },
+            { symbol: 'MSFT', value: 12000 },
+            { symbol: 'NVDA', value: 9000 },
+            { symbol: 'AMZN', value: 11000 },
+            { symbol: 'GOOGL', value: 10500 },
+            { symbol: 'SPY', value: 10000 }
+        ];
+        const randomPosition = approvedPositions[Math.floor(Math.random() * approvedPositions.length)];
+        const data = await marketDataService.getHistoricalBars(randomPosition.symbol, '1Month', start, end)
+        
+        return data.map(bar => ({
+          timestamp: new Date(bar.t).toISOString().split('T')[0],
+          value: bar.c * portfolio.quantity
+        }))
+      } catch (error) {
+        console.warn('Falling back to mock historical data:', error)
+        // Fallback to generated data
+        return [
+          { timestamp: "2023-01-01", value: baseValue * 0.85 },
+          { timestamp: "2023-02-01", value: baseValue * 0.88 },
+          { timestamp: "2023-03-01", value: baseValue * 0.92 },
+          { timestamp: "2023-04-01", value: baseValue * 0.97 },
+          { timestamp: "2023-05-01", value: baseValue * 0.99 },
+          { timestamp: "2023-06-01", value: baseValue * 1.02 },
+          { timestamp: "2023-07-01", value: baseValue * 1.05 },
+          { timestamp: "2023-08-01", value: baseValue * 1.08 },
+          { timestamp: "2023-09-01", value: baseValue * 1.12 },
+          { timestamp: "2023-10-01", value: baseValue * 1.15 },
+          { timestamp: "2023-11-01", value: baseValue * 1.18 },
+          { timestamp: "2023-12-01", value: baseValue }
+        ]
+      }
+    },
+    costBasis: async () => {
+      try {
+        const response = await fetch('/api/alpaca/account')
+        const accountData = await response.json()
+        return new Intl.NumberFormat('en-US', { 
+          style: 'currency', 
+          currency: 'USD' 
+        }).format(accountData.cost_basis || 45500)
+      } catch {
+        return "$45,500" // Fallback
+      }
+    },
+    positions: async () => {
+      try {
+        // Try to fetch real positions from Alpaca
+        const response = await fetch('/api/alpaca/positions')
+        const positions = await response.json()
+        return positions.map((pos: any) => ({
+          name: pos.symbol,
+          symbol: pos.symbol,
+          value: parseFloat(pos.market_value)
+        }))
+      } catch (error) {
+        console.warn('Falling back to mock position data:', error)
+        return [
+          { name: "Apple", symbol: "AAPL", value: baseValue * 0.15 },
+          { name: "Microsoft", symbol: "MSFT", value: baseValue * 0.12 },
+          { name: "NVIDIA", symbol: "NVDA", value: baseValue * 0.10 },
+          // Add other fallback positions as needed
+        ]
+      }
+    },
+    returnClass: portfolio.return > 0 ? "positive" : "negative",
+    return: portfolio.return ? `${portfolio.return > 0 ? '+' : ''}${portfolio.return}%` : "+0.00%",
+    chartVariant: "gradient",
+    tags: portfolio.tags || ["stocks"],
+    sentimentStrength: portfolio.sentimentStrength || 50,
+    sentiment: portfolio.sentiment || "neutral",
+    fearGreedIndex: portfolio.fearGreedIndex || 50,
+    fearGreedLabel: portfolio.fearGreedLabel || "Neutral"
+  }
+  });
 
 // ===== CATEGORIZED COLLECTIONS =====
 // These collections make it easy to display related portfolios together
@@ -138,4 +214,17 @@ export function getPortfoliosByFilter(criteria: {
   return criteria.limit ? filtered.slice(0, criteria.limit) : filtered
 }
 
-
+export function generatePortfolios(count: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `portfolio-${i + 1}`,
+    quantity: 100,
+    risk: "Moderate" as "Very Low" | "Low" | "Moderate" | "High" | "Very High",
+    return: Math.random() * 20 - 10,
+    tags: ["stocks"],
+    sentimentStrength: 50,
+    sentiment: "neutral",
+    fearGreedIndex: 50,
+    fearGreedLabel: "Neutral",
+    positions: [{ name: "S&P 500", symbol: "SPY", value: 10000 }]
+  }));
+}

@@ -40,7 +40,7 @@ export function PortfolioDemoCard({ portfolio, onSelect, onPreview, isLoading, a
   const isActive = activeDemo === portfolio.id
   
   // Format allocation data to be compatible with the chart component
-  const formattedAllocation = portfolio.allocation.map(item => ({
+  const formattedAllocation = (portfolio.allocation || []).map(item => ({
     name: item.name || item.label || "",
     value: item.value,
     color: item.color

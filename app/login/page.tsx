@@ -153,8 +153,8 @@ export default function LoginPage() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       return (
-        portfolio.name.toLowerCase().includes(query) ||
-        portfolio.focus.toLowerCase().includes(query) ||
+        // portfolio.name.toLowerCase().includes(query) ||
+        // portfolio.focus.toLowerCase().includes(query) ||
         portfolio.tags.some((tag) => tag.toLowerCase().includes(query))
       )
     }
@@ -241,7 +241,14 @@ export default function LoginPage() {
         return
       }
 
-      await login(email, password)
+      // Try both authentication methods
+      try {
+        // Try SQL (Supabase) auth first
+        await login(email, password, 'sql')
+      } catch (sqlError) {
+        // If SQL fails, try NoSQL (MongoDB) auth
+        await login(email, password, 'nosql')
+      }
 
       // On successful login, mark as dismissed but DON'T redirect automatically
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")
@@ -291,6 +298,7 @@ export default function LoginPage() {
       const email = formData.get("email") as string
       const password = formData.get("password") as string
       const confirmPassword = formData.get("confirmPassword") as string
+      const preferredDb = formData.get("preferredDb") as "sql" | "nosql" // New field
 
       if (!email || !password || !confirmPassword) {
         throw new Error("All fields are required")
@@ -300,11 +308,8 @@ export default function LoginPage() {
         throw new Error("Passwords do not match")
       }
 
-      // In a real app, this would be an API call to register
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Auto-login after signup
-      await login(email, password)
+      // Register user with preferred database
+      await login(email, password, preferredDb)
 
       // On successful signup and login, mark as dismissed but DON'T redirect
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")
@@ -663,6 +668,22 @@ export default function LoginPage() {
                         <Label htmlFor="confirm-password">Confirm Password</Label>
                         <Input id="confirm-password" name="confirmPassword" type="password" required />
                       </div>
+                      {/* New database preference field */}
+                      <div className="space-y-2">
+                        <Label htmlFor="preferred-db">Storage Preference</Label>
+                        <select
+                          id="preferred-db"
+                          name="preferredDb"
+                          className="w-full p-2 border rounded-md bg-background"
+                          required
+                        >
+                          <option value="sql">SQL (Better for structured data)</option>
+                          <option value="nosql">NoSQL (Better for flexible data)</option>
+                        </select>
+                        <p className="text-xs text-muted-foreground">
+                          Choose how you want your data to be stored. You can change this later.
+                        </p>
+                      </div>
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? (
                           <>
@@ -834,10 +855,8 @@ export default function LoginPage() {
                         sentimentStrength: portfolio.sentimentStrength,
                         fearGreedIndex: portfolio.fearGreedIndex,
                         fearGreedLabel: portfolio.fearGreedLabel,
-                        historicalData: portfolio.historicalData?.map(data => ({
-                          timestamp: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString(),
-                          value: data.value
-                        })),
+                        historicalData: portfolio.historicalData,
+                        costBasis: portfolio.costBasis,
                         positions: portfolio.positions || []
                         }}
                         onSelect={(id) => startDemoAnimation(id as DemoType)}
@@ -1285,11 +1304,31 @@ export default function LoginPage() {
         </div>
       </div>
       {/* Portfolio Preview Modal */}
-      {previewPortfolio !== null && (
+      {previewPortfolio !== null && selectedPortfolio && (
         <PortfolioPreviewModal 
           isOpen={true}
           onClose={handleClosePreview}
-          portfolio={selectedPortfolio || null}
+          portfolio={{
+            id: selectedPortfolio.id,
+            name: selectedPortfolio.name || "",
+            focus: selectedPortfolio.description || "",
+            risk: selectedPortfolio.risk,
+            tags: selectedPortfolio.tags || [],
+            value: selectedPortfolio.quantity.toString() || "0",
+            return: selectedPortfolio.return || "0%",
+            returnClass: "neutral",
+            chartVariant: "volatile" as "up" | "volatile" | "down",
+            allocation: [],
+            icon: Building,
+            sentiment: selectedPortfolio.sentiment,
+            sentimentStrength: 0,
+            fearGreedIndex: 0,
+            fearGreedLabel: "",
+            historicalData: [],  // Will be populated by useEffect
+            costBasis: "0",     // Will be populated by useEffect
+            positions: []       // Will be populated by useEffect
+          }}
+          onSelect={(id) => startDemoAnimation(id as DemoType)}
         />
       )}
       {/* Add any additional modals or overlays here */}
@@ -1297,39 +1336,39 @@ export default function LoginPage() {
   )
 }
 // Add TypeScript interface for portfolio scenarios
-interface DemoPortfolio {
-  id: string;
-  name: string; // Changed from title to name
-  focus: string;
-  risk: string;
-  tags: string[];
-  value: string;
-  return: string;
-  returnClass: string;
-  chartVariant: "up" | "down" | "volatile";
-  allocation: Array<{ label: string; value: number }>;
-  icon: LucideIcon;
-  historicalData?: Array<{ timestamp: string; value: number }>;
-  sentiment?: "bullish" | "bearish" | "neutral";
-  sentimentStrength?: number; // 0-100
-  fearGreedIndex?: number; // 0-100
-  fearGreedLabel?: string; // "Extreme Fear" to "Extreme Greed"
-  costBasis?: string; // New field added
-}
+// interface DemoPortfolio {
+//   id: string;
+//   name: string; // Changed from title to name
+//   focus: string;
+//   risk: string;
+//   tags: string[];
+//   value: string;
+//   return: string;
+//   returnClass: string;
+//   chartVariant: "up" | "down" | "volatile";
+//   allocation: Array<{ label: string; value: number }>;
+//   icon: LucideIcon;
+//   historicalData?: Array<{ timestamp: string; value: number }>;
+//   sentiment?: "bullish" | "bearish" | "neutral";
+//   sentimentStrength?: number; // 0-100
+//   fearGreedIndex?: number; // 0-100
+//   fearGreedLabel?: string; // "Extreme Fear" to "Extreme Greed"
+//   costBasis?: string; // New field added
+// }
 
-interface Portfolio {
-  id: string;
-  name: string;
-  focus: string;
-  risk: string;
-  tags: string[];
-  value: string;
-  return: string;
-  returnClass: string;
-  chartVariant: "up" | "volatile" | "down";
-  allocation: { name: string; value: number; color?: string }[];
-  historicalData?: Array<{ timestamp: string; value: number }>;
-  costBasis?: string;
-}
+// interface Portfolio {
+//   id: string;
+//   name: string;
+//   focus: string;
+//   risk: string;
+//   tags: string[];
+//   value: string;
+//   return: string;
+//   returnClass: string;
+//   chartVariant: "up" | "volatile" | "down";
+//   allocation: { name: string; value: number; color?: string }[];
+//   historicalData?: Array<{ timestamp: string; value: number }>;
+//   costBasis?: string;
+// }
 
 

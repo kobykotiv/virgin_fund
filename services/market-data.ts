@@ -1,16 +1,59 @@
-import { MarketDataBar, NewsItem } from '@/types/market'
+import { MarketDataBar, NewsItem, MarketData } from '@/types/market'
+import WebSocket from "ws";
 
 export class MarketDataService {
   private baseUrl: string
   private apiKey: string
   private secretKey: string
+  private ws: WebSocket | null = null;
+  private subscriptions = new Map<string, Set<(data: MarketData) => void>>();
   
-  constructor(apiKey: string, secretKey: string, isPaper: boolean = true) {
+  constructor(apiKey: string, secretKey: string, isPaper: boolean = true, private wsUrl: string) {
     this.apiKey = apiKey
     this.secretKey = secretKey
     this.baseUrl = isPaper ? 
       'https://paper-api.alpaca.markets' : 
       'https://api.alpaca.markets'
+    this.connect();
+  }
+
+  private connect() {
+    this.ws = new WebSocket(this.wsUrl);
+    
+    this.ws.on("message", (data: string) => {
+      const marketData: MarketData = JSON.parse(data);
+      this.notifySubscribers(marketData);
+    });
+
+    this.ws.on("close", () => {
+      setTimeout(() => this.connect(), 5000);
+    });
+  }
+
+  private notifySubscribers(data: MarketData) {
+    const subscribers = this.subscriptions.get(data.symbol);
+    if (subscribers) {
+      subscribers.forEach(callback => callback(data));
+    }
+  }
+
+  subscribe(symbol: string, callback: (data: MarketData) => void) {
+    if (!this.subscriptions.has(symbol)) {
+      this.subscriptions.set(symbol, new Set());
+      this.ws?.send(JSON.stringify({ type: "subscribe", symbol }));
+    }
+    this.subscriptions.get(symbol)?.add(callback);
+  }
+
+  unsubscribe(symbol: string, callback: (data: MarketData) => void) {
+    const subscribers = this.subscriptions.get(symbol);
+    if (subscribers) {
+      subscribers.delete(callback);
+      if (subscribers.size === 0) {
+        this.subscriptions.delete(symbol);
+        this.ws?.send(JSON.stringify({ type: "unsubscribe", symbol }));
+      }
+    }
   }
 
   private async fetch(endpoint: string, options: RequestInit = {}) {
@@ -140,5 +183,22 @@ export class MarketDataService {
       quotes: streams.map(symbol => `Q.${symbol}`),
       bars: streams.map(symbol => `AM.${symbol}`)
     }))
+  }
+
+  async getHistoricalData(
+    symbol: string,
+    startTime: string,
+    endTime: string,
+    interval: string
+  ): Promise<MarketData[]> {
+    const response = await fetch(
+      `/api/market-data/historical?symbol=${symbol}&start=${startTime}&end=${endTime}&interval=${interval}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch historical data');
+    }
+
+    return response.json();
   }
 }

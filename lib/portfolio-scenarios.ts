@@ -8,7 +8,7 @@ import {
   BitcoinIcon,
   BrainIcon,
   ActivityIcon,
-  BalanceIcon,
+//   BalanceIcon,
   UtensilsIcon,
   ShoppingCartIcon,
   CloudIcon,

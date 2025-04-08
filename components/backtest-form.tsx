@@ -41,23 +41,41 @@ export function BacktestForm({ bots, onSubmit, onOptimize, isLoading }: Backtest
   const [optimizationStart, setOptimizationStart] = useState<number>(0)
   const [optimizationEnd, setOptimizationEnd] = useState<number>(0)
   const [optimizationSteps, setOptimizationSteps] = useState<number>(10)
+  const [error, setError] = useState<string | null>(null)
 
   const selectedBot = bots.find((bot) => bot.id === selectedBotId)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
 
-    if (!selectedBotId || !startDate || !endDate) return
+    try {
+      if (!selectedBotId || !startDate || !endDate) {
+        throw new Error("Please fill in all required fields")
+      }
 
-    onSubmit({
-      botId: selectedBotId,
-      startDate: format(startDate, "yyyy-MM-dd"),
-      endDate: format(endDate, "yyyy-MM-dd"),
-      initialCapital,
-      slippage,
-      commission,
-      dataSource,
-    })
+      // Validate dates
+      if (startDate > endDate) {
+        throw new Error("Start date must be before end date")
+      }
+
+      // Validate capital
+      if (initialCapital < 100) {
+        throw new Error("Initial capital must be at least $100")
+      }
+
+      await onSubmit({
+        botId: selectedBotId,
+        startDate: format(startDate, "yyyy-MM-dd"),
+        endDate: format(endDate, "yyyy-MM-dd"),
+        initialCapital,
+        slippage,
+        commission,
+        dataSource,
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    }
   }
 
   const handleOptimize = () => {
@@ -127,6 +145,11 @@ export function BacktestForm({ bots, onSubmit, onOptimize, isLoading }: Backtest
 
           <TabsContent value="basic">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 mb-4 text-sm text-red-500 bg-red-50 rounded-md">
+                  {error}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="bot">Select Bot Strategy</Label>
                 <Select value={selectedBotId} onValueChange={setSelectedBotId}>

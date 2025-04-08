@@ -9,6 +9,17 @@ export const DEMO_ACCOUNT = {
   portfolioValue: 10000000,
 }
 
+export const DEMO_ACCOUNTS = [
+  {
+    id: 'demo-1',
+    name: 'Demo Trading Account',
+    balance: 100000,
+    currency: 'USD',
+    type: 'paper',
+    created: new Date().toISOString()
+  }
+]
+
 // Asset allocation for the demo portfolio
 export const DEMO_ASSETS = [
   { symbol: "AAPL", name: "Apple Inc.", allocation: 0.15, price: 175.25 },
@@ -24,6 +35,13 @@ export const DEMO_ASSETS = [
   { symbol: "JNJ", name: "Johnson & Johnson", allocation: 0.04, price: 152.36 },
   { symbol: "WMT", name: "Walmart Inc.", allocation: 0.04, price: 58.92 },
 ]
+
+export const DEMO_PRICES = {
+  'AAPL': { price: 190.50, change: 2.5 },
+  'MSFT': { price: 340.20, change: 1.8 },
+  'GOOGL': { price: 140.30, change: -0.5 },
+  // Add more demo prices as needed
+}
 
 // Generate demo bots with diverse strategies
 export function generateDemoBots(): Bot[] {

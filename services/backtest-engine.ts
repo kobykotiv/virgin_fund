@@ -173,58 +173,167 @@ export class BacktestEngine {
     currentIndex: number,
     historicalData: Record<string, MarketDataBar[]>
   ) {
-    const signals: {
-      symbol: string;
-      action: 'buy' | 'sell';
-      price: number;
-      shares: number;
-    }[] = []
+    try {
+      const signals = []
+      
+      switch (bot.strategy) {
+        case 'meanReversion':
+          signals.push(...this.generateMeanReversionSignals(bot, snapshot, currentIndex, historicalData))
+          break
+          
+        case 'trendFollowing':
+          signals.push(...this.generateTrendFollowingSignals(bot, snapshot, currentIndex, historicalData))
+          break
+          
+        case 'breakout':
+          signals.push(...this.generateBreakoutSignals(bot, snapshot, currentIndex, historicalData))
+          break
+          
+        case 'rsi':
+          signals.push(...this.generateRSISignals(bot, snapshot, currentIndex, historicalData))
+          break
+          
+        default:
+          throw new Error(`Unsupported strategy type: ${bot.strategy}`)
+      }
+      
+      // Apply position sizing and risk management
+      return this.applyRiskManagement(signals, bot, snapshot)
+      
+    } catch (error) {
+      console.error('Error generating signals:', error)
+      return []
+    }
+  }
+
+  private applyRiskManagement(
+    signals: any[],
+    bot: TradingBot,
+    snapshot: Record<string, MarketDataBar>
+  ) {
+    return signals.map(signal => {
+      // Calculate position size based on risk per trade
+      const riskPerTrade = bot.parameters.riskPerTrade || 0.01 // 1% default risk
+      const accountValue = this.getAccountValue()
+      const riskAmount = accountValue * riskPerTrade
+      
+      // Calculate stop loss distance
+      const stopLoss = this.calculateStopLoss(signal, bot, snapshot)
+      
+      // Calculate position size based on risk
+      const positionSize = Math.floor(riskAmount / (signal.price - stopLoss))
+      
+      return {
+        ...signal,
+        shares: positionSize,
+        stopLoss,
+        takeProfit: this.calculateTakeProfit(signal, stopLoss, bot)
+      }
+    })
+  }
+
+  private calculateStopLoss(signal: any, bot: TradingBot, snapshot: MarketDataBar) {
+    const atr = this.calculateATR(snapshot, bot.parameters.atrPeriod || 14)
+    const stopMultiplier = bot.parameters.stopMultiplier || 2
     
-    // Generate signals based on the bot's strategy
-    switch (bot.strategy) {
-      case 'meanReversion':
-        // Implementation for mean reversion backtest
-        for (const symbol of bot.assets) {
-          if (!snapshot[symbol]) continue
-          
-          // Calculate historical mean
-          const lookback = bot.parameters.period || 14
-          const startIdx = Math.max(0, currentIndex - lookback)
-          const priceHistory = historicalData[symbol]
-            .slice(startIdx, currentIndex + 1)
-            .map(bar => (bar.h + bar.l) / 2)
-          
-          const mean = priceHistory.reduce((sum, price) => sum + price, 0) / priceHistory.length
-          const currentPrice = snapshot[symbol].c
-          const deviation = (currentPrice - mean) / mean * 100
-          
-          if (deviation < -(bot.parameters.threshold || 2)) {
-            // Price is below threshold, buy signal
-            signals.push({
-              symbol,
-              action: 'buy',
-              price: currentPrice,
-              shares: Math.floor((bot.parameters.positionSize || 1000) / currentPrice)
-            })
-          } else if (deviation > (bot.parameters.threshold || 2)) {
-            // Price is above threshold, sell signal
-            signals.push({
-              symbol,
-              action: 'sell',
-              price: currentPrice,
-              shares: Math.floor((bot.parameters.positionSize || 1000) / currentPrice)
-            })
-          }
-        }
-        break
-        
-      // Additional strategy implementations would go here
-        
-      default:
-        // No signals for unknown strategies
-        break
+    return signal.action === 'buy'
+      ? signal.price - (atr * stopMultiplier)
+      : signal.price + (atr * stopMultiplier)
+  }
+
+  private calculateTakeProfit(signal: any, stopLoss: number, bot: TradingBot) {
+    const riskRewardRatio = bot.parameters.riskRewardRatio || 2
+    const risk = Math.abs(signal.price - stopLoss)
+    
+    return signal.action === 'buy'
+      ? signal.price + (risk * riskRewardRatio)
+      : signal.price - (risk * riskRewardRatio)
+  }
+
+  private calculateATR(data: MarketDataBar[], period: number): number {
+    // Implement ATR calculation
+    // ...
+    return 0
+  }
+
+  // Strategy implementations
+  private generateTrendFollowingSignals(
+    bot: TradingBot,
+    snapshot: Record<string, MarketDataBar>,
+    currentIndex: number,
+    historicalData: Record<string, MarketDataBar[]>
+  ) {
+    const signals = []
+    
+    for (const symbol of bot.assets) {
+      if (!snapshot[symbol]) continue
+      
+      const ema20 = this.calculateEMA(historicalData[symbol], 20, currentIndex)
+      const ema50 = this.calculateEMA(historicalData[symbol], 50, currentIndex)
+      
+      if (ema20 > ema50) {
+        signals.push({
+          symbol,
+          action: 'buy',
+          price: snapshot[symbol].c
+        })
+      } else if (ema20 < ema50) {
+        signals.push({
+          symbol,
+          action: 'sell',
+          price: snapshot[symbol].c
+        })
+      }
     }
     
     return signals
+  }
+
+  private generateBreakoutSignals(
+    bot: TradingBot,
+    snapshot: Record<string, MarketDataBar>,
+    currentIndex: number,
+    historicalData: Record<string, MarketDataBar[]>
+  ) {
+    const signals = []
+    const period = bot.parameters.breakoutPeriod || 20
+    
+    for (const symbol of bot.assets) {
+      if (!snapshot[symbol]) continue
+      
+      const highs = historicalData[symbol]
+        .slice(currentIndex - period, currentIndex)
+        .map(bar => bar.h)
+      
+      const lows = historicalData[symbol]
+        .slice(currentIndex - period, currentIndex)
+        .map(bar => bar.l)
+      
+      const resistance = Math.max(...highs)
+      const support = Math.min(...lows)
+      const currentPrice = snapshot[symbol].c
+      
+      if (currentPrice > resistance) {
+        signals.push({
+          symbol,
+          action: 'buy',
+          price: currentPrice
+        })
+      } else if (currentPrice < support) {
+        signals.push({
+          symbol,
+          action: 'sell',
+          price: currentPrice
+        })
+      }
+    }
+    
+    return signals
+  }
+
+  private calculateEMA(data: MarketDataBar[], period: number, currentIndex: number): number {
+    // Implement EMA calculation
+    // ...
+    return 0
   }
 }

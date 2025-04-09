@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +9,8 @@ import { PortfolioChart } from "@/components/portfolio-chart"
 import { PortfolioLineChart } from "@/components/portfolio-line-chart"
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, LucideIcon, Loader2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useMarketData } from '@/hooks/use-market-data';
+import { MarketDataService } from '@/services/market-data';
 
 interface PortfolioPreviewModalProps {
   isOpen: boolean
@@ -36,17 +38,99 @@ interface PortfolioPreviewModalProps {
   onSelect?: (id: string) => void
 }
 
-export function PortfolioPreviewModal({ isOpen, onClose, portfolio, onSelect }: PortfolioPreviewModalProps) {
+export function PortfolioPreviewModal({ 
+  isOpen, 
+  onClose, 
+  portfolio,
+  onSelect 
+}: PortfolioPreviewModalProps) {
   if (!portfolio) return null
 
   const Icon = portfolio.icon
+
+  // Get symbols from portfolio positions
+  const symbols = portfolio?.positions?.map(pos => pos.ticker).filter(Boolean) || [];
+  const { quotes, loading, error } = useMarketData(symbols);
+
+  // State for historical data
+  const [historicalData, setHistoricalData] = React.useState(portfolio.historicalData || []);
+  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+
+  // Fetch historical data from Alpaca if credentials exist
+  useEffect(() => {
+    const fetchHistoricalData = async () => {
+      const apiKey = localStorage.getItem('alpaca_api_key');
+      const secretKey = localStorage.getItem('alpaca_secret_key');
+      
+      if (!apiKey || !secretKey || !symbols.length) return;
+
+      try {
+        setIsLoadingHistory(true);
+        const marketDataService = new MarketDataService(apiKey, secretKey, true);
+        
+        // Get historical data for each symbol
+        const endDate = new Date().toISOString();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 90); // Last 90 days
+        
+        const historicalBars = await Promise.all(
+          symbols.map(symbol => 
+            marketDataService.getHistoricalBars(symbol, '1D', startDate.toISOString(), endDate)
+          )
+        );
+
+        // Combine and process historical data
+        const combinedData = historicalBars.reduce((acc, bars, index) => {
+          const symbol = symbols[index];
+          bars.forEach(bar => {
+            const date = new Date(bar.t).toISOString().split('T')[0];
+            acc[date] = (acc[date] || 0) + (bar.c * (portfolio.positions?.find(p => p.ticker === symbol)?.quantity || 0));
+          });
+          return acc;
+        }, {} as Record<string, number>);
+
+        // Convert to array format
+        const formattedData = Object.entries(combinedData)
+          .map(([timestamp, value]) => ({ timestamp, value }))
+          .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+        setHistoricalData(formattedData);
+      } catch (error) {
+        console.error('Error fetching historical data:', error);
+        // Fallback to mock data
+        setHistoricalData(portfolio.historicalData || []);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    fetchHistoricalData();
+  }, [symbols, portfolio.positions, portfolio.historicalData]);
+
+  // Update positions with real-time data
+  const updatedPositions = portfolio?.positions?.map(position => {
+    if (!position.ticker || !quotes?.[position.ticker]) return position;
+    
+    const quote = quotes[position.ticker];
+    return {
+      ...position,
+      currentPrice: quote.price,
+      value: position.quantity * quote.price
+    };
+  });
 
   // Format allocation data to be compatible with the chart component
   const formattedAllocation = portfolio.allocation.map(item => ({
     name: item.name || item.label || "",
     value: item.value,
     color: item.color
-  }))
+  }));
+
+  // Transform historical data to match expected format
+  const formattedHistoricalData = historicalData?.map(item => ({
+    date: item.timestamp,
+    value: item.value
+  }));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -112,12 +196,10 @@ export function PortfolioPreviewModal({ isOpen, onClose, portfolio, onSelect }: 
             </div>
             
             <div className="aspect-[3/2] bg-muted/30 rounded-lg overflow-hidden">
-              {portfolio.historicalData && portfolio.historicalData.length > 0 ? (
+              {formattedHistoricalData && formattedHistoricalData.length > 0 ? (
                 <PortfolioLineChart 
-                  data={portfolio.historicalData} 
+                  data={formattedHistoricalData} 
                   className="w-full h-full" 
-                  variant={portfolio.chartVariant} 
-                  showTooltip
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">

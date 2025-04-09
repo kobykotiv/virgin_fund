@@ -1,4 +1,5 @@
 import { generatePortfolios, generatePortfoliosWithRealData } from "./utils/portfolio-generator"
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Portfolio Collection
@@ -34,6 +35,7 @@ export async function getPortfolios() {
 // This will be hydrated with real data on the client
 export const portfolios = generatePortfolios(48).map(portfolio => ({
   ...portfolio,
+  id: uuidv4(), // Generate unique ID for each portfolio
   historicalData: [
     { timestamp: "2023-01-01", value: portfolio.baseValue * 0.85 },
     { timestamp: "2023-02-01", value: portfolio.baseValue * 0.88 },

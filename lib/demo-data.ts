@@ -1,7 +1,9 @@
 import type { Bot, BotType, BotStatus } from "@/types/bot"
+import { v4 as uuidv4 } from 'uuid';
 
 // Demo account configuration
 export const DEMO_ACCOUNT = {
+  id: uuidv4(),
   email: "demo@example.com",
   password: "demo123",
   name: "Demo User",
@@ -11,8 +13,8 @@ export const DEMO_ACCOUNT = {
 
 // Asset allocation for the demo portfolio
 export const DEMO_ASSETS = [
-  { symbol: "AAPL", name: "Apple Inc.", allocation: 0.15, price: 175.25 },
-  { symbol: "MSFT", name: "Microsoft Corp.", allocation: 0.15, price: 340.12 },
+  { id: uuidv4(), symbol: "AAPL", name: "Apple Inc.", allocation: 0.15, price: 175.25 },
+  { id: uuidv4(), symbol: "MSFT", name: "Microsoft Corp.", allocation: 0.15, price: 340.12 },
   { symbol: "GOOGL", name: "Alphabet Inc.", allocation: 0.12, price: 132.45 },
   { symbol: "AMZN", name: "Amazon.com Inc.", allocation: 0.12, price: 145.78 },
   { symbol: "TSLA", name: "Tesla Inc.", allocation: 0.08, price: 235.67 },

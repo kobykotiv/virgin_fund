@@ -1,41 +1,42 @@
 import { useState, useEffect } from 'react';
 
-interface MarketDataOptions {
-  symbol?: string;
-  timeframe?: string;
-  start?: string;
-  end?: string;
+interface Quote {
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  timestamp: string;
 }
 
-interface CalendarOptions {
-  start?: string;
-  end?: string;
+interface MarketData {
+  quotes: Record<string, Quote>;
+  loading: boolean;
+  error: string | null;
 }
 
-interface ActivityOptions {
-  type?: string;
-  date?: string;
-}
-
-export function useMarketData<T = any>(endpoint: 'data' | 'calendar' | 'activities', options: MarketDataOptions | CalendarOptions | ActivityOptions) {
-  const [data, setData] = useState<T | null>(null);
+export function useMarketData(symbols: string[]): MarketData {
+  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        const params = new URLSearchParams();
-        
-        // Add all options as query parameters
-        Object.entries(options).forEach(([key, value]) => {
-          if (value) params.append(key, value);
-        });
-        
-        const url = `/api/market/${endpoint}?${params.toString()}`;
-        const response = await fetch(url);
+        if (!symbols.length) {
+          setQuotes({});
+          return;
+        }
+
+        // Filter out any undefined symbols
+        const validSymbols = symbols.filter(Boolean);
+        if (!validSymbols.length) {
+          setQuotes({});
+          return;
+        }
+
+        const response = await fetch(`/api/alpaca/market?symbols=${validSymbols.join(',')}`);
         
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
@@ -47,9 +48,9 @@ export function useMarketData<T = any>(endpoint: 'data' | 'calendar' | 'activiti
           throw new Error(result.error || 'Unknown error occurred');
         }
         
-        setData(result.data);
+        setQuotes(result.data);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'));
+        setError(err instanceof Error ? err.message : 'Unknown error');
         console.error('Error fetching market data:', err);
       } finally {
         setLoading(false);
@@ -57,7 +58,7 @@ export function useMarketData<T = any>(endpoint: 'data' | 'calendar' | 'activiti
     };
     
     fetchData();
-  }, [endpoint, JSON.stringify(options)]);
+  }, [symbols.join(',')]);
   
-  return { data, loading, error };
+  return { quotes, loading, error };
 }

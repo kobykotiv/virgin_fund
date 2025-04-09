@@ -36,6 +36,11 @@ bun.lockb
 /out/
 /build
 
+# Next.js build artifacts
+.next/
+.next/trace
+.next/cache
+
 # Production
 /dist
 

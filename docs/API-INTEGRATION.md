@@ -74,3 +74,32 @@ Planned improvements to the API integration:
 - Enhanced error handling and fallback mechanisms
 - Cached data for offline access
 - Real-time data updates using WebSockets
+
+## API Rate Limits
+
+The Alpaca API has rate limits that you should be aware of:
+
+-   200 requests per minute per API key.
+-   Exceeding the rate limit will result in a 429 error.
+
+The application should handle rate limiting gracefully by:
+
+1.  Implementing retry logic with exponential backoff.
+2.  Caching API responses to reduce the number of requests.
+3.  Displaying informative error messages to the user.
+
+## Data Validation
+
+The application should validate the data received from the Alpaca API to ensure its integrity:
+
+1.  Check for missing or invalid fields.
+2.  Handle unexpected data types.
+3.  Log any validation errors.
+
+## Error Handling
+
+The application should handle API errors gracefully:
+
+1.  Display informative error messages to the user.
+2.  Log errors for debugging purposes.
+3.  Implement fallback mechanisms to prevent the application from crashing.

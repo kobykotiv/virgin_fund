@@ -59,6 +59,8 @@ import { portfolios } from "@/lib/demo-portfolios"
 // Add PortfolioDemoCard import
 import { PortfolioDemoCard } from "@/components/portfolio-demo-card"
 import { PortfolioPreviewModal } from "@/components/portfolio-preview-modal"
+import { DEMO_PORTFOLIO_KEY } from "@/services/demo-service"
+import { useMarketData } from '@/hooks/use-market-data';
 
 const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
 
@@ -67,16 +69,14 @@ type DemoType = keyof typeof DEMO_SCENARIOS;
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [activeDemo, setActiveDemo] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<
     | "login"
     | "signup"
     | "demos"
-    | "calculators"
-    // | "news"
-    // | "education"
+    // | "calculators"
   >("login")
   const [isVisible, setIsVisible] = useState(true)
-  const [activeDemo, setActiveDemo] = useState<DemoType | null>(null)
   const [demoAnimation, setDemoAnimation] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -92,6 +92,36 @@ export default function LoginPage() {
 
   // Add a state to track the currently previewed portfolio
   const [previewPortfolio, setPreviewPortfolio] = useState<string | null>(null)
+
+  // Get symbols from all portfolios
+  const allSymbols = Array.from(new Set(
+    displayPortfolios.flatMap(p => 
+      p.positions?.map(pos => pos.ticker) || []
+    )
+  ));
+
+  // Fetch market data for all symbols
+  const { quotes, loading: marketDataLoading } = useMarketData(allSymbols);
+
+  // Update portfolios with real-time data
+  const portfoliosWithLiveData = displayPortfolios.map(portfolio => ({
+    ...portfolio,
+    positions: portfolio.positions?.map(position => {
+      const quote = quotes[position.ticker];
+      if (quote) {
+        return {
+          ...position,
+          currentPrice: quote.price,
+          value: position.quantity * quote.price
+        };
+      }
+      return position;
+    }),
+    value: portfolio.positions?.reduce((total, position) => {
+      const quote = quotes[position.ticker];
+      return total + (position.quantity * (quote?.price || position.currentPrice));
+    }, 0) || portfolio.value
+  }));
 
   // Filter portfolios based on active filter and search query
   const filteredPortfolios = displayPortfolios.filter((portfolio) => {
@@ -341,62 +371,66 @@ export default function LoginPage() {
   }
 
   // Improved demo login function with better error handling and feedback
-  const handleDemoLogin = async (demoType: DemoType) => {
+  const handleDemoLogin = async (demoId: string) => {
     try {
-      setIsLoading(true)
-      setError(null)
-
-      // Validate that the demo type exists
-      if (!DEMO_SCENARIOS[demoType]) {
-        throw new Error(`Demo scenario "${demoType}" not found. Please try another demo.`)
+      setIsLoading(true);
+      setError(null);
+  
+      const selectedPortfolio = portfolios.find(p => p.id === demoId);
+      if (!selectedPortfolio) {
+        throw new Error('Invalid demo portfolio selected');
       }
-
-      // Store the demo type in localStorage for the dashboard to use
-      localStorage.setItem("demo-scenario", demoType)
-
-      // Create a user object with demo info
+  
+      // Store the selected portfolio as the demo scenario
+      localStorage.setItem(DEMO_PORTFOLIO_KEY, demoId);
+  
+      // Create a user object with portfolio-specific info
       const user = {
-        email: "admin@example.com",
-        name: "Demo User",
+        email: "guest@example.com",
+        name: `Guest - ${selectedPortfolio.name}`,
         image: "/placeholder.svg?height=128&width=128",
+        isGuestAccount: true,
         isDemoAccount: true,
-        demoScenario: demoType,
-      }
-
-      // Save authentication state
-      localStorage.setItem("isAuthenticated", "true")
-      localStorage.setItem("user", JSON.stringify(user))
-      localStorage.setItem("demoMode", "true")
-
-      // Mark login popup as dismissed
-      localStorage.setItem(LOCAL_STORAGE_KEY, "true")
-
-      // Enable demo mode in the auth context
-      await enableDemoMode()
-      setIsLoading(false)
-
-      // Don't automatically redirect after enabling demo mode
-      // Remove: setTimeout(() => { router.push("/") }, 500)
+        demoPortfolio: demoId,
+        portfolioData: {
+          ...selectedPortfolio,
+          positions: portfoliosWithLiveData.find(p => p.id === demoId)?.positions || selectedPortfolio.positions,
+          value: portfoliosWithLiveData.find(p => p.id === demoId)?.value || selectedPortfolio.value
+        }
+      };
+  
+      // Save authentication and portfolio state
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("isGuest", "true");
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("demoMode", "true");
+      localStorage.setItem(LOCAL_STORAGE_KEY, "true");
+  
+      // Enable demo mode as a guest session
+      await enableDemoMode(true);
       
-      // Show success message instead
+      // Auto-redirect to dashboard
+      router.push("/dashboard");
+  
+      // Show success toast with portfolio-specific message
       toast({
-        title: "Demo Mode Enabled",
-        description: `You're now using the ${demoType} demo scenario.`,
+        title: "Demo Portfolio Loaded",
+        description: `You're now exploring the ${selectedPortfolio.name} portfolio as a guest user.`,
         action: (
           <Button variant="default" onClick={() => router.push("/dashboard")}>
-            Go to Dashboard
+            View Portfolio
           </Button>
         )
-      })
+      });
     } catch (error) {
-      console.error("Demo login error:", error)
-      setError(error instanceof Error ? error.message : "Failed to start demo. Please try again.")
-      setIsLoading(false)
+      console.error("Demo portfolio load error:", error);
+      setError(error instanceof Error ? error.message : "Failed to load portfolio. Please try again.");
+      setIsLoading(false);
     }
-  }
+  };
 
-  const startDemoAnimation = (demoType: DemoType) => {
-    setActiveDemo(demoType)
+  const startDemoAnimation = (demoId: string) => {
+    setActiveDemo(demoId)
     setDemoAnimation(true)
   }
 
@@ -819,28 +853,11 @@ export default function LoginPage() {
                       <PortfolioDemoCard
                         key={portfolio.id}
                         portfolio={{
-                        id: portfolio.id,
-                        name: portfolio.name,
-                        focus: portfolio.focus,
-                        risk: portfolio.risk,
-                        tags: portfolio.tags,
-                        value: portfolio.value,
-                        return: portfolio.return,
-                        returnClass: portfolio.returnClass,
-                        chartVariant: portfolio.chartVariant as "up" | "volatile" | "down",
-                        allocation: portfolio.allocation,
-                        icon: portfolio.icon,
-                        sentiment: portfolio.sentiment as "bullish" | "bearish" | "neutral" | undefined,
-                        sentimentStrength: portfolio.sentimentStrength,
-                        fearGreedIndex: portfolio.fearGreedIndex,
-                        fearGreedLabel: portfolio.fearGreedLabel,
-                        historicalData: portfolio.historicalData?.map(data => ({
-                          timestamp: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString(),
-                          value: data.value
-                        })),
-                        positions: portfolio.positions || []
+                        ...portfolio,
+                        value: portfoliosWithLiveData.find(p => p.id === portfolio.id)?.value || portfolio.value,
+                        positions: portfoliosWithLiveData.find(p => p.id === portfolio.id)?.positions || portfolio.positions
                         }}
-                        onSelect={(id) => startDemoAnimation(id as DemoType)}
+                        onSelect={startDemoAnimation}
                         onPreview={handlePreviewPortfolio}
                         isLoading={isLoading}
                         activeDemo={activeDemo}

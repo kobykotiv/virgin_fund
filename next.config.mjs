@@ -22,10 +22,23 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  generateBuildId: () => 'build',
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    instrumentationHook: false,
+    reactRoot: true,
+    scrollRestoration: true,
+  },
+  webpack: (config, { isServer }) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    };
+    return config;
   },
 }
 

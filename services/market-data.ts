@@ -1,16 +1,16 @@
 import { MarketDataBar, NewsItem } from '@/types/market'
 
 export class MarketDataService {
-  private baseUrl: string
-  private apiKey: string
-  private secretKey: string
-  
+  private apiKey: string;
+  private secretKey: string;
+  private baseUrl: string;
+
   constructor(apiKey: string, secretKey: string, isPaper: boolean = true) {
-    this.apiKey = apiKey
-    this.secretKey = secretKey
+    this.apiKey = apiKey;
+    this.secretKey = secretKey;
     this.baseUrl = isPaper ? 
       'https://paper-api.alpaca.markets' : 
-      'https://api.alpaca.markets'
+      'https://api.alpaca.markets';
   }
 
   private async fetch(endpoint: string, options: RequestInit = {}) {
@@ -23,34 +23,50 @@ export class MarketDataService {
           'Content-Type': 'application/json',
           ...options.headers,
         },
-      })
+      });
 
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-          throw new Error('Authentication failed: Invalid API credentials')
+          throw new Error('Authentication failed: Invalid API credentials');
         }
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
-      return response.json()
+      return response.json();
     } catch (error) {
-      console.error('Error fetching from Alpaca API:', error)
-      throw error
+      console.error('Error fetching from Alpaca API:', error);
+      throw error;
     }
   }
 
-  // Enhanced API methods for comprehensive market data and trading operations
-  
-  // Account information
+  // Get latest quote snapshot
+  async getSnapshot(symbols: string[]) {
+    return this.fetch(`/v2/stocks/quotes?symbols=${symbols.join(',')}`);
+  }
+
+  // Get historical bars
+  async getHistoricalBars(symbol: string, timeframe: string, start: string, end: string) {
+    const params = new URLSearchParams({
+      timeframe,
+      start,
+      end,
+      limit: '1000',
+      adjustment: 'all'
+    });
+    
+    return this.fetch(`/v2/stocks/${symbol}/bars?${params.toString()}`);
+  }
+
+  // Get account information
   async getAccount() {
-    return this.fetch('/v2/account')
+    return this.fetch('/v2/account');
   }
-  
-  // Portfolio positions
+
+  // Get account positions
   async getPositions() {
-    return this.fetch('/v2/positions')
+    return this.fetch('/v2/positions');
   }
-  
+
   // Order management
   async getOrders(status = 'open') {
     return this.fetch(`/v2/orders?status=${status}`)
@@ -78,20 +94,10 @@ export class MarketDataService {
   }
   
   // Enhanced market data methods
-  async getHistoricalBars(symbol: string, timeframe: string, start: string, end: string): Promise<MarketDataBar[]> {
-    return this.fetch(`/v2/stocks/${symbol}/bars?timeframe=${timeframe}&start=${start}&end=${end}`)
-  }
-  
   async getMultipleSymbolBars(symbols: string[], timeframe: string, start: string, end: string) {
     // For fetching data for multiple symbols in one request
     const symbolsQuery = symbols.join(',')
     return this.fetch(`/v2/stocks/bars?symbols=${symbolsQuery}&timeframe=${timeframe}&start=${start}&end=${end}`)
-  }
-  
-  async getSnapshot(symbols: string[]) {
-    // Get latest market snapshot for multiple symbols
-    const symbolsQuery = symbols.join(',')
-    return this.fetch(`/v2/stocks/snapshots?symbols=${symbolsQuery}`)
   }
   
   // Calendar and market hours

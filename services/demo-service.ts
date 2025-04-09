@@ -1,8 +1,10 @@
 // Demo mode service to handle switching between real and demo data
 import type { Bot, BotType, BotStatus } from "@/types/bot"
+import { v4 as uuidv4 } from 'uuid';
 
 // Demo mode constants
 export const DEMO_USER = {
+  id: uuidv4(),
   email: "Admin@example.com",
   name: "Demo Admin",
   password: "admin123",
@@ -15,6 +17,7 @@ export const DEMO_ORDERS_KEY = "trading_platform_demo_orders"
 export const DEMO_PORTFOLIO_KEY = "trading_platform_demo_portfolio"
 export const DEMO_WATCHLIST_KEY = "trading_platform_demo_watchlist"
 export const DEMO_SETTINGS_KEY = "trading_platform_demo_settings"
+export const GUEST_SESSION_KEY = "trading_platform_guest_session"
 
 // Check if demo mode is enabled
 export function isDemoMode(): boolean {
@@ -22,48 +25,70 @@ export function isDemoMode(): boolean {
   return localStorage.getItem(DEMO_MODE_KEY) === "true"
 }
 
-// Enable demo mode
-export function enableDemoMode(): void {
+// Check if current session is a guest session
+export function isGuestSession(): boolean {
+  if (typeof window === "undefined") return false
+  return localStorage.getItem(GUEST_SESSION_KEY) === "true"
+}
+
+// Enable demo mode with optional guest session
+export function enableDemoMode(asGuest: boolean = false): void {
   localStorage.setItem(DEMO_MODE_KEY, "true")
+  if (asGuest) {
+    localStorage.setItem(GUEST_SESSION_KEY, "true")
+  }
   initializeDemoData()
 }
 
-// Disable demo mode
+// Disable demo mode and clear guest session
 export function disableDemoMode(): void {
   localStorage.setItem(DEMO_MODE_KEY, "false")
+  localStorage.removeItem(GUEST_SESSION_KEY)
+  clearDemoData()
 }
 
 // Initialize demo data if it doesn't exist
 export function initializeDemoData(): void {
-  // Initialize user
-  if (!localStorage.getItem(DEMO_USER_KEY)) {
+  // Initialize user if not in guest mode
+  if (!isGuestSession() && !localStorage.getItem(DEMO_USER_KEY)) {
     localStorage.setItem(DEMO_USER_KEY, JSON.stringify(DEMO_USER))
   }
 
-  // Initialize bots
+  // Initialize portfolio data
+  if (!localStorage.getItem(DEMO_PORTFOLIO_KEY)) {
+    const selectedPortfolio = JSON.parse(localStorage.getItem("user") || "{}")?.portfolioData
+    if (selectedPortfolio) {
+      localStorage.setItem(DEMO_PORTFOLIO_KEY, JSON.stringify(selectedPortfolio))
+    }
+  }
+
+  // Initialize other demo data
   if (!localStorage.getItem(DEMO_BOTS_KEY)) {
     localStorage.setItem(DEMO_BOTS_KEY, JSON.stringify(generateDemoBots()))
   }
 
-  // Initialize orders
   if (!localStorage.getItem(DEMO_ORDERS_KEY)) {
     localStorage.setItem(DEMO_ORDERS_KEY, JSON.stringify(generateDemoOrders()))
   }
 
-  // Initialize portfolio
-  if (!localStorage.getItem(DEMO_PORTFOLIO_KEY)) {
-    localStorage.setItem(DEMO_PORTFOLIO_KEY, JSON.stringify(generateDemoPortfolio()))
-  }
-
-  // Initialize watchlist
   if (!localStorage.getItem(DEMO_WATCHLIST_KEY)) {
     localStorage.setItem(DEMO_WATCHLIST_KEY, JSON.stringify(generateDemoWatchlist()))
   }
 
-  // Initialize settings
   if (!localStorage.getItem(DEMO_SETTINGS_KEY)) {
     localStorage.setItem(DEMO_SETTINGS_KEY, JSON.stringify(generateDemoSettings()))
   }
+}
+
+// Clear all demo data
+export function clearDemoData(): void {
+  localStorage.removeItem(DEMO_USER_KEY)
+  localStorage.removeItem(DEMO_BOTS_KEY)
+  localStorage.removeItem(DEMO_ORDERS_KEY)
+  localStorage.removeItem(DEMO_PORTFOLIO_KEY)
+  localStorage.removeItem(DEMO_WATCHLIST_KEY)
+  localStorage.removeItem(DEMO_SETTINGS_KEY)
+  localStorage.removeItem(GUEST_SESSION_KEY)
 }
 
 // Generate 10 demo bots with different strategies
@@ -74,7 +99,7 @@ function generateDemoBots(): Bot[] {
   return [
     // 1. RSI Strategy Bot
     {
-      id: "demo-bot-1",
+      id: uuidv4(),
       name: "AAPL RSI Strategy",
       type: "indicator" as BotType,
       status: "active" as BotStatus,

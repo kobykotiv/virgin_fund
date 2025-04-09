@@ -5,8 +5,15 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { portfolios } from "@/lib/demo-portfolios"
 
 interface PortfolioChartProps {
-  portfolioType: string
-  className?: string
+  portfolioType: string;
+  className?: string;
+}
+
+interface AllocationData {
+  name: string;
+  value: number;
+  symbol: string;
+  color?: string;
 }
 
 // Color palette for different assets
@@ -29,7 +36,7 @@ const COLORS = [
 ];
 
 export function PortfolioChart({ portfolioType, className }: PortfolioChartProps) {
-  const [data, setData] = useState<Array<{ name: string; value: number }>>([]);
+  const [data, setData] = useState<AllocationData[]>([]);
 
   // Find and format allocation data for the specific portfolio
   const loadPortfolioData = useCallback(() => {
@@ -37,7 +44,7 @@ export function PortfolioChart({ portfolioType, className }: PortfolioChartProps
     
     if (portfolio && portfolio.allocation) {
       // Map the allocation data to include both symbol and full name when available
-      const allocData = portfolio.allocation.map(item => {
+      const allocData: AllocationData[] = portfolio.allocation.map(item => {
         // Find the corresponding position to get more data
         const position = portfolio.positions?.find(pos => pos.symbol === item.name);
         

@@ -1,123 +1,72 @@
 import { NextResponse } from 'next/server'
 import { MarketDataService } from '@/services/market-data'
-import { MarketDataCacheService } from '@/services/market-data-cache'
+import { marketDataCache } from '@/services/market-data-cache'
 import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   try {
-    // Get query parameters
     const url = new URL(request.url)
-    const symbol = url.searchParams.get('symbol')
-    const timeframe = url.searchParams.get('timeframe') || '1D'
-    const start = url.searchParams.get('start')
-    const end = url.searchParams.get('end')
+    const symbols = url.searchParams.get('symbols')
     
-    if (!symbol || !start || !end) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
+    if (!symbols) {
+      return NextResponse.json({ error: 'Symbols parameter is required' }, { status: 400 })
     }
-    
-    // Extract API credentials from cookies or headers
-    const cookieStore = cookies()
-    const apiKey = cookieStore.get('alpaca_api_key')?.value
-    const secretKey = cookieStore.get('alpaca_secret_key')?.value
-    const isPaper = cookieStore.get('alpaca_is_paper')?.value !== 'false'
-    
-    // If no cookies, try to get from headers
-    const headers = new Headers(request.headers)
-    const authApiKey = headers.get('X-Alpaca-API-Key')
-    const authSecretKey = headers.get('X-Alpaca-API-Secret')
-    
-    const effectiveApiKey = apiKey || authApiKey
-    const effectiveSecretKey = secretKey || authSecretKey
-    
-    // Check if in demo mode or if we have valid credentials
-    const isDemoMode = cookieStore.get('is_demo_mode')?.value === 'true'
-    
-    if (!effectiveApiKey || !effectiveSecretKey) {
-      if (!isDemoMode) {
-        return NextResponse.json({ error: 'API credentials not configured' }, { status: 401 })
-      }
-      
-      // For demo mode, return mock data
-      return NextResponse.json(generateMockMarketData(start, end, timeframe))
+
+    const cookieStore = await cookies()
+    const apiKey = cookieStore?.get('alpaca_api_key')?.value
+    const secretKey = cookieStore?.get('alpaca_secret_key')?.value
+    const isPaper = cookieStore?.get('alpaca_is_paper')?.value !== 'false'
+    const isDemoMode = cookieStore?.get('is_demo_mode')?.value === 'true'
+
+    // If in demo mode or no API credentials, return mock data
+    if (isDemoMode || (!apiKey || !secretKey)) {
+      const mockData = generateMockMarketData(symbols.split(','))
+      return NextResponse.json({ success: true, data: mockData })
     }
+
+    // Get real market data
+    const marketDataService = new MarketDataService(apiKey, secretKey, isPaper)
+    const quotes = await marketDataService.getSnapshot(symbols.split(','))
     
-    // Check cache first
-    const cacheService = new MarketDataCacheService()
-    const cachedData = await cacheService.getCachedData(symbol, timeframe)
-    
-    if (cachedData) {
-      return NextResponse.json(cachedData)
-    }
-    
-    // Fetch from API if not in cache
-    const marketDataService = new MarketDataService(effectiveApiKey, effectiveSecretKey, isPaper)
-    const data = await marketDataService.getHistoricalBars(symbol, timeframe, start, end)
-    
-    // Cache the results
-    await cacheService.cacheData(symbol, timeframe, data)
-    
-    return NextResponse.json(data)
+    return NextResponse.json({ success: true, data: quotes })
   } catch (error: any) {
     console.error('Error fetching market data:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || 'Failed to fetch market data' 
+    }, { status: 500 })
   }
 }
 
 // Helper function to generate mock market data
-function generateMockMarketData(startDate: string, endDate: string, timeframe: string) {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  const data = []
-  let currentDate = new Date(start)
-  let price = 100 + Math.random() * 50 // Random starting price
+function generateMockMarketData(symbols: string[]) {
+  const data: Record<string, any> = {}
   
-  while (currentDate <= end) {
-    // Skip weekends for daily data
-    const day = currentDate.getDay()
-    if (timeframe === '1D' && (day === 0 || day === 6)) {
-      currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1))
-      continue
+  symbols.forEach(symbol => {
+    // Get a base price for the symbol
+    let basePrice = 100
+    switch (symbol) {
+      case 'AAPL': basePrice = 180; break
+      case 'MSFT': basePrice = 350; break
+      case 'GOOGL': basePrice = 130; break
+      case 'AMZN': basePrice = 140; break
+      case 'TSLA': basePrice = 240; break
+      case 'BTC-USD': basePrice = 35000; break
+      case 'ETH-USD': basePrice = 2000; break
     }
     
-    // Random daily change (-2% to +2%)
-    const change = (Math.random() - 0.5) * 4
-    const open = price
-    const close = price * (1 + change / 100)
-    const high = Math.max(open, close) * (1 + Math.random() * 0.01)
-    const low = Math.min(open, close) * (1 - Math.random() * 0.01)
-    const volume = Math.floor(Math.random() * 1000000) + 500000
+    const changePercent = (Math.random() * 6 - 3) // -3% to +3%
+    const change = basePrice * (changePercent / 100)
+    const price = basePrice + change
     
-    data.push({
-      t: currentDate.toISOString(),
-      o: open,
-      h: high,
-      l: low,
-      c: close,
-      v: volume
-    })
-    
-    price = close
-    
-    // Increment date based on timeframe
-    switch (timeframe) {
-      case '1Min':
-        currentDate = new Date(currentDate.setMinutes(currentDate.getMinutes() + 1))
-        break
-      case '5Min':
-        currentDate = new Date(currentDate.setMinutes(currentDate.getMinutes() + 5))
-        break
-      case '15Min':
-        currentDate = new Date(currentDate.setMinutes(currentDate.getMinutes() + 15))
-        break
-      case '1H':
-        currentDate = new Date(currentDate.setHours(currentDate.getHours() + 1))
-        break
-      case '1D':
-      default:
-        currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1))
+    data[symbol] = {
+      price,
+      change,
+      changePercent,
+      volume: Math.floor(Math.random() * 1000000) + 100000,
+      timestamp: new Date().toISOString()
     }
-  }
+  })
   
   return data
 }

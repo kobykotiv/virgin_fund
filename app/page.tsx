@@ -4,11 +4,52 @@ import * as React from "react"
 import { AddBotForm, Grid } from "@/components"
 import { EnhancedDashboard } from "@/components/enhanced-dashboard"
 import { LiveTicker } from "@/components/live-ticker"
+import { AlpacaConfig } from "@/lib/alpaca-client"; // Assuming AlpacaConfig type is exported
 
 const Home: React.FC = () => {
-  const [bots, setBots] = React.useState([
-    { name: "Bot 1", description: "This is bot 1" },
-    { name: "Bot 2", description: "This is bot 2" },
+  const [bots, setBots] = React.useState<any[]>([]); // Initialize with empty array or fetch initial bots
+  const [apiConfig, setApiConfig] = React.useState<AlpacaConfig | null>(null); // State for API config
+  const [isLoadingConfig, setIsLoadingConfig] = React.useState(true);
+
+  // TODO: Fetch or retrieve API config securely, e.g., from context or API route
+  React.useEffect(() => {
+    // Placeholder: Replace with actual logic to get API config
+    const fetchConfig = async () => {
+      try {
+        // Example: Fetch from an API route '/api/user/config'
+        // const response = await fetch('/api/user/config');
+        // if (!response.ok) throw new Error('Failed to fetch config');
+        // const config = await response.json();
+        // setApiConfig(config);
+
+        // For now, using placeholder or null
+        setApiConfig(null); // Or set mock data if needed for development
+      } catch (error) {
+        console.error("Error fetching API config:", error);
+        setApiConfig(null); // Ensure it's null on error
+      } finally {
+        setIsLoadingConfig(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
+  // TODO: Fetch initial bots list
+  React.useEffect(() => {
+    // Placeholder: Fetch bots associated with the user
+    const fetchBots = async () => {
+      // Example: Fetch from '/api/bots'
+      // const response = await fetch('/api/bots');
+      // const userBots = await response.json();
+      // setBots(userBots);
+      setBots([ // Using placeholder data for now
+        { id: '1', name: "Bot 1", description: "This is bot 1", status: 'paused' },
+        { id: '2', name: "Bot 2", description: "This is bot 2", status: 'active' },
+      ]);
+    };
+    fetchBots();
+  }, []);
     // Add more bots as needed
   ])
 
@@ -27,11 +68,15 @@ const Home: React.FC = () => {
       </div>
 
       {/* Main Dashboard */}
-      <EnhancedDashboard
-      apiConfig={apiConfig}
-      onBotAction={async (botId, action) => {
-        // Handle bot actions (start/stop/delete)
-        const bot = bots.find(b => b.id === botId)
+      {isLoadingConfig ? (
+        <div>Loading configuration...</div>
+      ) : (
+        <EnhancedDashboard
+          apiConfig={apiConfig} // Pass the state variable
+          onBotAction={async (botId, action) => {
+            // Handle bot actions (start/stop/delete)
+            // TODO: Replace state update with API calls to backend
+            const bot = bots.find(b => b.id === botId);
         if (bot) {
         switch (action) {
           case 'start':
@@ -50,8 +95,9 @@ const Home: React.FC = () => {
         }
         }
       }}
-      isLoading={false}
-      portfolio={{
+      // Pass isLoading state based on config loading and potentially portfolio loading
+      isLoading={isLoadingConfig /* || isLoadingPortfolio */}
+      portfolio={{ // Placeholder portfolio data
         positions: [],
         totalValue: 0,
         cashBalance: 0
@@ -62,14 +108,17 @@ const Home: React.FC = () => {
       managedBots={bots}
       selectedBot={null}
       onBotSelect={(bot) => {
-        // Handle bot selection
+        console.log("Selected bot:", bot);
+        // Handle bot selection logic
       }}
-      onBotCreate={(botData) => {
+      onBotCreate={async (botData) => {
+        // TODO: Replace with API call to create bot
+        console.log("Creating bot:", botData);
         const newBot = {
-        id: Date.now().toString(),
-        ...botData,
-        status: 'paused',
-        performance: {
+          id: Date.now().toString(), // Use proper ID generation
+          ...botData,
+          status: 'paused',
+          performance: { // Placeholder performance data
           totalValue: 0,
           totalPnL: 0,
           pnlPercentage: 0,
@@ -80,21 +129,26 @@ const Home: React.FC = () => {
         }
         setBots([...bots, newBot])
       }}
-      onBotUpdate={(botId, updates) => {
-        setBots(bots.map(b => 
-        b.id === botId ? {...b, ...updates} : b
-        ))
+      onBotUpdate={async (botId, updates) => {
+        // TODO: Replace with API call to update bot
+        console.log("Updating bot:", botId, updates);
+        setBots(bots.map(b =>
+          b.id === botId ? { ...b, ...updates } : b
+        ));
       }}
-      onBotDelete={(botId) => {
-        setBots(bots.filter(b => b.id !== botId))
+      onBotDelete={async (botId) => {
+        // TODO: Replace with API call to delete bot
+        console.log("Deleting bot:", botId);
+        setBots(bots.filter(b => b.id !== botId));
       }}
       />
+      )}
 
-      {/* Bot Creation Dialog */}
-      <AddBotForm 
-      onSubmit={handleSubmit}
-      availableAssets={[
-        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
+      {/* Bot Creation Dialog - Consider moving inside EnhancedDashboard or managing visibility */}
+      <AddBotForm
+        onSubmit={handleSubmit} // This likely needs adjustment - should call onBotCreate prop
+        availableAssets={[
+          'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
         'BTC/USD', 'ETH/USD', 'SOL/USD'
       ]}
       botTypes={[
@@ -107,7 +161,12 @@ const Home: React.FC = () => {
 
       {/* Live Market Data Ticker */}
       <LiveTicker 
-      symbols={bots.flatMap(bot => bot.assets || [])}
+      // Extract symbols from bots for the ticker
+      symbols={bots.reduce((acc, bot) => {
+        // Assuming bot settings contain symbol or assets array
+        const botSymbols = bot.settings?.symbol ? [bot.settings.symbol] : (bot.settings?.assets || []);
+        return [...acc, ...botSymbols];
+      }, [] as string[])}
       refreshInterval={15000}
       />
     </div>
@@ -115,4 +174,3 @@ const Home: React.FC = () => {
 }
 
 export default Home
-

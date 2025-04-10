@@ -12,7 +12,12 @@ import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface ApiKeyFormProps {
-  onSave: () => void
+  onSave: (config: {
+    keyId: string
+    secretKey: string
+    baseUrl: string
+    isPaper: boolean
+  }) => void
   onCancel: () => void
   currentConfig?: {
     keyId: string
@@ -36,26 +41,21 @@ export function ApiKeyForm({ onSave, onCancel, currentConfig }: ApiKeyFormProps)
     setError(null)
 
     try {
-      const response = await fetch("/api/alpaca/configure", {
+      // Validate credentials with Alpaca before saving
+      const testResponse = await fetch("/api/alpaca/validate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          keyId,
-          secretKey,
-          baseUrl,
-          isPaper,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyId, secretKey, baseUrl, isPaper }),
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to configure API keys")
+      if (!testResponse.ok) {
+        const data = await testResponse.json()
+        throw new Error(data.message || "Invalid API credentials")
       }
 
-      onSave()
+      // Save configuration if validation passes
+      const config = { keyId, secretKey, baseUrl, isPaper }
+      onSave(config)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred")
     } finally {

@@ -1,40 +1,118 @@
-import type { Metadata } from "next"
-import ClientPage from "./clientpage"
+"use client"
 
-export const metadata: Metadata = {
-  title: "Virgin Fund : GenEric TraDer AI | Self-Hosted Automated Trading Platform",
-  description:
-    "Bridge the gap between bot-based trading and copy trading with our self-hosted, isolated trading platform. Connect to Alpaca Markets and CoinGecko for real-time data and paper trading.",
-  keywords:
-    "trading bot, automated trading, copy trading, self-hosted, crypto trading, stock trading, Alpaca Markets, CoinGecko, paper trading, algorithmic trading, fear greed index, trading signals, AI",
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://virgin-fund.app",
-    title: "Virgin Fund : GenEric TraDer AI | Self-Hosted Automated Trading Platform",
-    description:
-      "Bridge the gap between bot-based trading and copy trading with our self-hosted, isolated trading platform.",
-    siteName: "Virgin Fund : GenEric TraDer AI",
-    images: [
-      {
-        url: "/images/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Virgin Fund : GenEric TraDer AI Platform",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Virgin Fund : GenEric TraDer AI | Self-Hosted Automated Trading Platform",
-    description:
-      "Bridge the gap between bot-based trading and copy trading with our self-hosted, isolated trading platform.",
-    images: ["/images/og-image.png"],
-    creator: "@virginfund",
-  },
+import * as React from "react"
+import { AddBotForm, Grid } from "@/components"
+import { EnhancedDashboard } from "@/components/enhanced-dashboard"
+import { LiveTicker } from "@/components/live-ticker"
+
+const Home: React.FC = () => {
+  const [bots, setBots] = React.useState([
+    { name: "Bot 1", description: "This is bot 1" },
+    { name: "Bot 2", description: "This is bot 2" },
+    // Add more bots as needed
+  ])
+
+  const handleSubmit = (formData: any) => {
+    setBots([...bots, formData])
+  }
+
+  return (
+    <div className="container mx-auto py-6 space-y-8">
+      {/* Header Section */}
+      <div className="flex justify-between items-center">
+      <div>
+        <h1 className="text-3xl font-bold">Trading Bots Dashboard</h1>
+        <p className="text-muted-foreground">Create and manage your automated trading strategies</p>
+      </div>
+      </div>
+
+      {/* Main Dashboard */}
+      <EnhancedDashboard
+      apiConfig={apiConfig}
+      onBotAction={async (botId, action) => {
+        // Handle bot actions (start/stop/delete)
+        const bot = bots.find(b => b.id === botId)
+        if (bot) {
+        switch (action) {
+          case 'start':
+          setBots(bots.map(b => 
+            b.id === botId ? {...b, status: 'active'} : b
+          ))
+          break
+          case 'stop':
+          setBots(bots.map(b =>
+            b.id === botId ? {...b, status: 'paused'} : b
+          ))
+          break
+          case 'delete':
+          setBots(bots.filter(b => b.id !== botId))
+          break
+        }
+        }
+      }}
+      isLoading={false}
+      portfolio={{
+        positions: [],
+        totalValue: 0,
+        cashBalance: 0
+      }}
+      scenarios={[]}
+      selectedScenario={null}
+      onScenarioSelect={() => {}}
+      managedBots={bots}
+      selectedBot={null}
+      onBotSelect={(bot) => {
+        // Handle bot selection
+      }}
+      onBotCreate={(botData) => {
+        const newBot = {
+        id: Date.now().toString(),
+        ...botData,
+        status: 'paused',
+        performance: {
+          totalValue: 0,
+          totalPnL: 0,
+          pnlPercentage: 0,
+          totalTrades: 0,
+          winRate: 0,
+          lastUpdated: new Date().toISOString()
+        }
+        }
+        setBots([...bots, newBot])
+      }}
+      onBotUpdate={(botId, updates) => {
+        setBots(bots.map(b => 
+        b.id === botId ? {...b, ...updates} : b
+        ))
+      }}
+      onBotDelete={(botId) => {
+        setBots(bots.filter(b => b.id !== botId))
+      }}
+      />
+
+      {/* Bot Creation Dialog */}
+      <AddBotForm 
+      onSubmit={handleSubmit}
+      availableAssets={[
+        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
+        'BTC/USD', 'ETH/USD', 'SOL/USD'
+      ]}
+      botTypes={[
+        { value: "grid", label: "Grid Trading" },
+        { value: "dca", label: "DCA" },
+        { value: "indicator", label: "Indicator" },
+        { value: "basket", label: "Basket" },
+      ]}
+      />
+
+      {/* Live Market Data Ticker */}
+      <LiveTicker 
+      symbols={bots.flatMap(bot => bot.assets || [])}
+      refreshInterval={15000}
+      />
+    </div>
+  )
 }
 
-export default function LandingPage() {
-  return <ClientPage />
-}
+export default Home
 

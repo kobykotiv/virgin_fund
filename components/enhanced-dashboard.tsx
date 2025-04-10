@@ -52,6 +52,19 @@ import { runBacktest } from "@/services/backtest-service"
 import { BotHero, BotGrid } from "@/components/bot-management"
 import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-views"
 import { BotAnalytics } from "./bot-configuration/bot-analytics"
+import type { BotWithPortfolio } from "@/components/dashboard"
+import type { Portfolio, Position } from "@/types/portfolio"
+import type { BacktestOptions, BacktestResult } from "@/types/bot-analytics"
+import {
+  generateEquityCurveData,
+  generateRollingReturnsData,
+  generateTradeDistributionData,
+  generateTradeTimingData,
+  generateAssetAllocationData,
+  generateStrategyAttributionData,
+  generateCorrelationData,
+  calculatePortfolioMetrics
+} from "@/lib/bot-utils"
 
 interface EnhancedDashboardProps {
   apiConfig?: {
@@ -60,11 +73,44 @@ interface EnhancedDashboardProps {
     baseUrl: string
     isPaper: boolean
   } | null
-  onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => Promise<void>
+  onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => void
   isLoading: boolean
+  portfolio: Portfolio | null
+  scenarios: Record<string, any>
+  selectedScenario: string | null
+  onScenarioSelect: (scenario: string) => void
+  managedBots: BotWithPortfolio[]
+  selectedBot: BotWithPortfolio | null
+  onBotSelect: (bot: BotWithPortfolio | null) => void
+  onBotCreate: (bot: Partial<BotWithPortfolio>) => Promise<void>
+  onBotUpdate: (botId: string, updates: Partial<BotWithPortfolio>) => Promise<void>
+  onBotDelete: (botId: string) => Promise<void>
+  onAddBot: () => void
 }
 
-export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio }: EnhancedDashboardProps) {
+export function EnhancedDashboard({
+  apiConfig,
+  onBotAction,
+  isLoading,
+  portfolio,
+  scenarios,
+  selectedScenario,
+  onScenarioSelect,
+  managedBots,
+  selectedBot,
+  onBotSelect,
+  onBotCreate,
+  onBotUpdate,
+  onBotDelete,
+  onAddBot
+}: EnhancedDashboardProps) {
+  // Ensure selectedBot is set when managedBots changes
+  useEffect(() => {
+    if (!selectedBot && managedBots.length > 0) {
+      onBotSelect(managedBots[0])
+    }
+  }, [managedBots, selectedBot, onBotSelect])
+
   const [activeTab, setActiveTab] = useState("overview")
   const [bots, setBots] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])

@@ -13,6 +13,8 @@ import { Settings, Plus, BarChart2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
 
+import Grid from "@/components/Grid"
+
 // Import the useSubscription hook at the top of the file
 import { useSubscription } from "@/providers/subscription-provider"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +22,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RefreshCw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { BotGrid } from "@/components/bot-management"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function DashboardPage() {
   const [bots, setBots] = useState<Bot[]>([])
@@ -160,6 +164,34 @@ export default function DashboardPage() {
   }
 
   const [isDemoMode, setIsDemoMode] = useState(false)
+
+  const handleCreateBotNew = (bot: Bot) => {
+    if (selectedBot) {
+      setBots(bots.map(b => b.id === bot.id ? bot : b))
+    } else {
+      setBots([...bots, { ...bot, id: Math.random().toString() }])
+    }
+    setIsFormOpen(false)
+    setSelectedBot(null)
+  }
+
+  const handleBotAction = (botId: string, action: string) => {
+    switch (action) {
+      case 'edit':
+        const bot = bots.find(b => b.id === botId)
+        if (bot) {
+          setSelectedBot(bot)
+          setIsFormOpen(true)
+        }
+        break
+      case 'delete':
+        setBots(bots.filter(b => b.id !== botId))
+        break
+      case 'toggle':
+        setBots(bots.map(b => b.id === botId ? { ...b, status: b.status === 'active' ? 'paused' : 'active' } : b))
+        break
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">

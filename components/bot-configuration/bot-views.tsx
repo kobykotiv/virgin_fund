@@ -1,192 +1,280 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+"use client"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  Activity, DollarSign, TrendingUp, TrendingDown, 
-  AlertTriangle, Shield, Settings2, LineChart
+  Activity,
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  Clock,
+  DollarSign,
+  Settings,
 } from "lucide-react"
 
-export function SimpleView({ bot }: { bot: any }) {
+interface BotViewProps {
+  bot: any // We'll properly type this later
+}
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+const formatPercentage = (value: number) => {
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`
+}
+
+export function SimpleView({ bot }: BotViewProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "text-green-500"
+      case "paused":
+        return "text-yellow-500"
+      case "error":
+        return "text-red-500"
+      default:
+        return "text-gray-500"
+    }
+  }
+
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{bot.name}</CardTitle>
-        <CardDescription>{bot.type}</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{bot.name}</CardTitle>
+        <Activity className={`h-4 w-4 ${getStatusColor(bot.status)}`} />
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span>Status</span>
-            <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
-              {bot.status}
-            </Badge>
-          </div>
-          <div className="flex justify-between">
-            <span>P&L</span>
-            <span className={bot.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-              {bot.pnl >= 0 ? '+' : ''}{bot.pnl.toFixed(2)}%
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span>Trades</span>
-            <span>{bot.totalTrades}</span>
-          </div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm text-muted-foreground">Today's P&L</span>
+          <span
+            className={`font-medium ${
+              bot.performance?.dailyPnL >= 0
+                ? "text-green-500"
+                : "text-red-500"
+            }`}
+          >
+            {formatCurrency(bot.performance?.dailyPnL || 0)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-muted-foreground">Win Rate</span>
+          <span className="font-medium">
+            {((bot.performance?.winRate || 0) * 100).toFixed(1)}%
+          </span>
         </div>
       </CardContent>
     </Card>
   )
 }
 
-export function AdvancedView({ bot }: { bot: any }) {
+export function AdvancedView({ bot }: BotViewProps) {
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle>{bot.name}</CardTitle>
-            <CardDescription>{bot.strategy}</CardDescription>
-          </div>
-          <div className="space-y-1 text-right">
-            <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
-              {bot.status}
-            </Badge>
-            <p className="text-xs text-muted-foreground">
-              Running since {new Date(bot.startDate).toLocaleDateString()}
+            <CardTitle className="text-sm font-medium">{bot.name}</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              {bot.strategy.type}
             </p>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-3 gap-4">
-          <MetricCard
-            label="Win Rate"
-            value={`${(bot.metrics.winRate * 100).toFixed(1)}%`}
-            icon={Activity}
-            trend={bot.metrics.winRate > 0.5 ? 'up' : 'down'}
-          />
-          <MetricCard
-            label="Profit Factor"
-            value={bot.metrics.profitFactor.toFixed(2)}
-            icon={DollarSign}
-            trend={bot.metrics.profitFactor > 1 ? 'up' : 'down'}
-          />
-          <MetricCard
-            label="Active Trades"
-            value={bot.metrics.activeTrades}
-            icon={LineChart}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Capital Usage</span>
-            <span>{bot.capitalUsage}%</span>
-          </div>
-          <Progress value={bot.capitalUsage} />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-export function ExpertView({ bot }: { bot: any }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between">
-          <div>
-            <CardTitle>{bot.name}</CardTitle>
-            <CardDescription>Advanced Analytics</CardDescription>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Shield className={`h-5 w-5 ${bot.riskScore < 50 ? 'text-green-500' : 'text-yellow-500'}`} />
-            <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
-              {bot.status}
-            </Badge>
-          </div>
+          <Badge
+            variant={bot.status === "active" ? "default" : "secondary"}
+            className="capitalize"
+          >
+            {bot.status}
+          </Badge>
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="metrics">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="metrics">Metrics</TabsTrigger>
-            <TabsTrigger value="risk">Risk</TabsTrigger>
-            <TabsTrigger value="trades">Trades</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="metrics" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <MetricCard
-                label="CAGR"
-                value={`${bot.metrics.cagr.toFixed(2)}%`}
-                icon={TrendingUp}
-                trend={bot.metrics.cagr > 0 ? 'up' : 'down'}
-              />
-              <MetricCard
-                label="Max Drawdown"
-                value={`${bot.metrics.maxDrawdown.toFixed(2)}%`}
-                icon={TrendingDown}
-                trend="down"
-              />
-              <MetricCard
-                label="Sharpe Ratio"
-                value={bot.metrics.sharpeRatio.toFixed(2)}
-                icon={Activity}
-                trend={bot.metrics.sharpeRatio > 1 ? 'up' : 'down'}
-              />
-              <MetricCard
-                label="Risk Score"
-                value={`${bot.riskScore}/100`}
-                icon={Shield}
-                trend={bot.riskScore < 50 ? 'up' : 'down'}
-              />
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between items-baseline mb-1">
+              <span className="text-sm text-muted-foreground">Performance</span>
+              <span
+                className={`text-sm font-medium ${
+                  bot.performance?.totalPnL >= 0
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
+              >
+                {formatCurrency(bot.performance?.totalPnL || 0)}
+              </span>
             </div>
-          </TabsContent>
+            <Progress
+              value={bot.performance?.successRate * 100 || 0}
+              className="h-1"
+            />
+          </div>
 
-          <TabsContent value="risk" className="space-y-4">
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Position Risk</div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex justify-between text-sm">
-                  <span>Capital at Risk</span>
-                  <span>{bot.riskMetrics.capitalAtRisk}%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Leverage Used</span>
-                  <span>{bot.riskMetrics.leverageUsed}x</span>
-                </div>
-              </div>
-              <Progress 
-                value={bot.riskMetrics.capitalAtRisk} 
-                className="h-2"
-                variant={bot.riskMetrics.capitalAtRisk > 75 ? 'destructive' : 'default'}
-              />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Win Rate</p>
+              <p className="text-sm font-medium">
+                {((bot.performance?.winRate || 0) * 100).toFixed(1)}%
+              </p>
             </div>
-          </TabsContent>
-
-          <TabsContent value="trades" className="space-y-4">
-            {/* Trade history table */}
-          </TabsContent>
-        </Tabs>
+            <div>
+              <p className="text-xs text-muted-foreground">Trades</p>
+              <p className="text-sm font-medium">
+                {bot.performance?.totalTrades || 0}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Avg. Return</p>
+              <p className="text-sm font-medium">
+                {formatPercentage(bot.performance?.avgReturn || 0)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Last Trade</p>
+              <p className="text-sm font-medium">
+                {bot.lastTrade
+                  ? new Date(bot.lastTrade).toLocaleDateString()
+                  : "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )
 }
 
-function MetricCard({ label, value, icon: Icon, trend }: any) {
+export function ExpertView({ bot }: BotViewProps) {
   return (
-    <div className="p-4 border rounded-lg space-y-2">
-      <div className="flex justify-between items-center">
-        <Icon className="h-4 w-4 text-muted-foreground" />
-        <span className={`text-sm ${
-          trend === 'up' ? 'text-green-500' : 
-          trend === 'down' ? 'text-red-500' : 
-          'text-muted-foreground'
-        }`}>{value}</span>
-      </div>
-      <div className="text-sm font-medium">{label}</div>
-    </div>
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-sm font-medium">{bot.name}</CardTitle>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="outline" className="text-xs">
+                {bot.strategy.type}
+              </Badge>
+              <Badge
+                variant={bot.status === "active" ? "default" : "secondary"}
+                className="text-xs capitalize"
+              >
+                {bot.status}
+              </Badge>
+            </div>
+          </div>
+          {bot.status === "error" && (
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <DollarSign className="h-4 w-4 mr-1" />
+                Daily P&L
+              </div>
+              <p
+                className={`text-lg font-medium ${
+                  bot.performance?.dailyPnL >= 0
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
+              >
+                {formatCurrency(bot.performance?.dailyPnL || 0)}
+                <span className="text-xs ml-1">
+                  ({formatPercentage(bot.performance?.dailyReturn || 0)})
+                </span>
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Activity className="h-4 w-4 mr-1" />
+                Total P&L
+              </div>
+              <p
+                className={`text-lg font-medium ${
+                  bot.performance?.totalPnL >= 0
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
+              >
+                {formatCurrency(bot.performance?.totalPnL || 0)}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between items-baseline mb-1">
+              <span className="text-sm text-muted-foreground">Success Rate</span>
+              <span className="text-sm font-medium">
+                {((bot.performance?.successRate || 0) * 100).toFixed(1)}%
+              </span>
+            </div>
+            <Progress
+              value={bot.performance?.successRate * 100 || 0}
+              className="h-1"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Win Rate</p>
+              <p className="text-sm font-medium">
+                {((bot.performance?.winRate || 0) * 100).toFixed(1)}%
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Total Trades</p>
+              <p className="text-sm font-medium">
+                {bot.performance?.totalTrades || 0}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Avg. Return</p>
+              <p className="text-sm font-medium">
+                {formatPercentage(bot.performance?.avgReturn || 0)}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Assets</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {bot.assets?.map((asset: string) => (
+                  <Badge key={asset} variant="outline" className="text-xs">
+                    {asset}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Last Activity</p>
+              <div className="flex items-center mt-1">
+                <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
+                <span className="text-xs">
+                  {bot.lastActivity
+                    ? new Date(bot.lastActivity).toLocaleString()
+                    : "N/A"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {bot.status === "error" && (
+            <div className="mt-2 p-2 bg-red-50 text-red-700 rounded text-xs">
+              {bot.errorMessage || "An error occurred with this bot"}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }

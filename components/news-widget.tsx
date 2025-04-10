@@ -1,151 +1,162 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { RefreshCw, Newspaper, ExternalLink, AlertCircle } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { getLatestNews, getBreakingNews, formatRelativeTime, type NewsArticle, NewsSentiment } from "@/lib/news-service"
+import { Clock, Trending } from "lucide-react"
+
+interface NewsItem {
+  id: string
+  title: string
+  summary: string
+  source: string
+  url: string
+  sentiment: "positive" | "negative" | "neutral"
+  impactScore: number
+  timestamp: string
+  symbols: string[]
+}
 
 interface NewsWidgetProps {
-  ticker?: string
   limit?: number
 }
 
-export function NewsWidget({ ticker, limit = 5 }: NewsWidgetProps) {
-  const [news, setNews] = useState<NewsArticle[]>([])
-  const [breakingNews, setBreakingNews] = useState<NewsArticle[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
+export function NewsWidget({ limit = 5 }: NewsWidgetProps) {
+  const [news, setNews] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadNews()
-  }, [ticker])
-
-  const loadNews = async () => {
-    setIsLoading(true)
+  const fetchNews = async () => {
     try {
-      // Load breaking news
-      const breaking = await getBreakingNews(2)
-      setBreakingNews(breaking)
-
-      // Load latest news or ticker-specific news
-      let articles: NewsArticle[]
-      if (ticker) {
-        articles = await getLatestNews(limit)
-        // Filter for the ticker
-        articles = articles.filter(
-          (article) =>
-            article.tickers.includes(ticker) || article.title.includes(ticker) || article.summary.includes(ticker),
-        )
-      } else {
-        articles = await getLatestNews(limit)
-      }
-
-      setNews(articles)
+      const response = await fetch(`/api/market-news?limit=${limit}`)
+      if (!response.ok) throw new Error("Failed to fetch news")
+      const data = await response.json()
+      setNews(data)
     } catch (error) {
-      console.error("Error loading news:", error)
+      console.error("Error fetching news:", error)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const getSentimentColor = (sentiment?: NewsSentiment) => {
-    switch (sentiment) {
-      case NewsSentiment.POSITIVE:
-        return "text-green-500"
-      case NewsSentiment.NEGATIVE:
-        return "text-red-500"
-      default:
-        return "text-gray-500"
+  useEffect(() => {
+    fetchNews()
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchNews, 300000)
+    return () => clearInterval(interval)
+  }, [limit])
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`
     }
+    
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) {
+      return `${diffInHours}h ago`
+    }
+
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+    })
+  }
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment) {
+      case "positive":
+        return "bg-green-100 text-green-800 hover:bg-green-200"
+      case "negative":
+        return "bg-red-100 text-red-800 hover:bg-red-200"
+      default:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-200"
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(limit)].map((_, i) => (
+          <Card key={i} className="p-4 animate-pulse">
+            <div className="h-4 w-3/4 bg-muted rounded mb-2"></div>
+            <div className="h-4 w-1/2 bg-muted rounded"></div>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  if (news.length === 0) {
+    return (
+      <Card className="p-6 text-center text-muted-foreground">
+        No recent news available
+      </Card>
+    )
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-base">Market News</CardTitle>
-            <CardDescription>{ticker ? `Latest news for ${ticker}` : "Latest market news"}</CardDescription>
-          </div>
-          <Button variant="outline" size="sm" onClick={loadNews} disabled={isLoading}>
-            <RefreshCw className={`h-3.5 w-3.5 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="pb-2">
-        {breakingNews.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium mb-2 flex items-center">
-              <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-              Breaking News
-            </h3>
-            <div className="space-y-2">
-              {breakingNews.map((article) => (
-                <div key={article.id} className="p-3 border rounded-md bg-red-50">
-                  <h4 className="font-medium text-sm">{article.title}</h4>
-                  <div className="flex justify-between items-center mt-1">
-                    <div className="text-xs text-muted-foreground">
-                      {article.source} • {formatRelativeTime(article.publishedAt)}
-                    </div>
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {article.tickers[0]}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+    <div className="space-y-4">
+      {news.map((item) => (
+        <Card key={item.id} className="p-4 hover:bg-muted/50 transition-colors">
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-4">
+              <h3 className="font-medium line-clamp-2">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  {item.title}
+                </a>
+              </h3>
+              <Badge
+                variant="secondary"
+                className={`shrink-0 ${getSentimentColor(item.sentiment)}`}
+              >
+                {item.sentiment}
+              </Badge>
             </div>
-          </div>
-        )}
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: limit }).map((_, i) => (
-              <div key={i} className="flex gap-2">
-                <Skeleton className="h-12 w-12 rounded-md" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-3 w-2/3" />
-                </div>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {item.summary}
+            </p>
+
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {formatTimestamp(item.timestamp)}
+                </span>
+                <span>{item.source}</span>
               </div>
-            ))}
-          </div>
-        ) : news.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">No news articles found</div>
-        ) : (
-          <div className="space-y-4">
-            {news.map((article) => (
-              <div key={article.id} className="flex gap-3">
-                <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-md flex items-center justify-center">
-                  <Newspaper className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium truncate">{article.title}</h3>
-                  <div className="flex justify-between items-center mt-1">
-                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span>{article.source}</span>
-                      <span>•</span>
-                      <span>{formatRelativeTime(article.publishedAt)}</span>
-                    </div>
-                    <div className={`text-xs ${getSentimentColor(article.sentiment)}`}>{article.sentiment}</div>
-                  </div>
-                </div>
+
+              {item.impactScore > 7 && (
+                <span className="flex items-center text-orange-500">
+                  <Trending className="h-3 w-3 mr-1" />
+                  High Impact
+                </span>
+              )}
+            </div>
+
+            {item.symbols.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {item.symbols.map((symbol) => (
+                  <Badge key={symbol} variant="outline" className="text-xs">
+                    {symbol}
+                  </Badge>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </CardContent>
-      <CardFooter className="pt-2">
-        <Button variant="outline" size="sm" className="w-full" onClick={() => router.push("/news")}>
-          <ExternalLink className="h-4 w-4 mr-2" />
-          View All News
-        </Button>
-      </CardFooter>
-    </Card>
+        </Card>
+      ))}
+    </div>
   )
 }
 

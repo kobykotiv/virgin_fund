@@ -6,15 +6,23 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Play, Pause, Trash, RefreshCw } from "lucide-react"
 
-interface BasicDashboardProps {
+export interface BasicDashboardProps {
   apiConfig?: {
     keyId: string
     secretKey: string
     baseUrl: string
     isPaper: boolean
   } | null
-  onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => Promise<void>
+  onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => void
   isLoading: boolean
+  portfolio: Portfolio | null
+  scenarios: Record<string, any>
+  selectedScenario: string | null
+  onScenarioSelect: (scenario: string) => void
+  managedBots: BotWithPortfolio[]
+  selectedBot: BotWithPortfolio | null
+  onBotSelect: (bot: BotWithPortfolio | null) => void
+  onAddBot: () => void
 }
 
 export function BasicDashboard({ apiConfig, onBotAction, isLoading }: BasicDashboardProps) {

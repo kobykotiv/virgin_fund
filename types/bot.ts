@@ -1,13 +1,6 @@
-export type BotType =
-  | "basket" // Basket Trading
-  | "grid" // Grid Trading
-  | "dca" // Dollar Cost Averaging
-  | "indicator" // Indicator-Based Trading
+export type BotType = 'grid' | 'dca' | 'momentum' | 'trend' | 'custom'
 
-export type BotStatus =
-  | "active" // Bot is running
-  | "paused" // Bot is paused
-  | "error" // Bot has encountered an error
+export type BotStatus = 'active' | 'paused' | 'error'
 
 export type Timeframe = "1min" | "5min" | "15min" | "30min" | "1hour" | "2hour" | "4hour" | "1day" | "1week" | "1month"
 
@@ -42,6 +35,15 @@ export interface BotPerformance {
   totalTrades: number
   winRate: number
   lastUpdated: string
+  dailyPnL?: number
+  dailyReturn?: number
+  trades?: {
+    timestamp: string
+    type: 'buy' | 'sell'
+    price: number
+    quantity: number
+    pnl?: number
+  }[]
 }
 
 export interface Bot {
@@ -49,21 +51,35 @@ export interface Bot {
   name: string
   type: BotType
   status: BotStatus
-  assets: string[] // Stock symbols
+  assets: string[]
   createdAt: string
   updatedAt: string
-  performance?: BotPerformance
-  allocation?: number // Capital allocation for the bot (for demo mode)
-
-  // Risk management
-  stopLoss?: number // Stop loss percentage
-  takeProfit?: number // Take profit percentage
-  maxDrawdown?: number // Maximum drawdown percentage
-
-  // Bot-specific configs
+  settings: Record<string, any>
   indicatorConfig?: IndicatorConfig
   gridConfig?: GridConfig
   dcaConfig?: DCAConfig
   basketConfig?: BasketConfig
+  performance?: BotPerformance
+  riskSettings?: {
+    maxDrawdown: number
+    stopLoss: number
+    takeProfit: number
+    positionSize: number
+    maxPositions: number
+    enableEmergencyStop: boolean
+    volatilityAdjustment: boolean
+  }
+}
+
+export interface BotWithPortfolio extends Bot {
+  portfolio?: any[]
+  performance?: {
+    totalValue: number
+    totalPnL: number
+    pnlPercentage: number
+    totalTrades: number
+    winRate: number
+    lastUpdated: string
+  }
 }
 

@@ -1,232 +1,393 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+"use client"
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie,
-  Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ScatterChart, Scatter, ComposedChart
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+  Scatter,
+  ScatterChart,
 } from "recharts"
 
-export function BotAnalytics({ data }: { data: any }) {
+interface BotAnalyticsData {
+  equityCurve: Array<{
+    date: string
+    equity: number
+    drawdown: number
+  }>
+  rollingReturns: Array<{
+    date: string
+    daily: number
+    weekly: number
+    monthly: number
+  }>
+  tradeDistribution: Array<{
+    range: string
+    count: number
+    pnl: number
+  }>
+  tradeTiming: Array<{
+    hour: number
+    winRate: number
+    volume: number
+  }>
+  assetAllocation: Array<{
+    asset: string
+    allocation: number
+    pnl: number
+  }>
+  strategyAttribution: Array<{
+    strategy: string
+    contribution: number
+  }>
+  correlationMatrix: Array<{
+    x: number
+    y: number
+    value: number
+  }>
+}
+
+interface BotAnalyticsProps {
+  data: BotAnalyticsData
+}
+
+export function BotAnalytics({ data }: BotAnalyticsProps) {
+  const COLORS = [
+    "#0088FE",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#8884D8",
+    "#82CA9D",
+  ]
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
+
+  const formatPercentage = (value: number) => {
+    return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`
+  }
+
   return (
-    <Card className="w-full">
+    <Card className="mt-6">
       <CardHeader>
-        <CardTitle>Trading Analytics</CardTitle>
-        <CardDescription>Detailed performance metrics and visualizations</CardDescription>
+        <CardTitle>Bot Analytics</CardTitle>
+        <CardDescription>Detailed performance metrics and analysis</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="performance">
+        <Tabs defaultValue="performance" className="space-y-4">
           <TabsList>
             <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="trades">Trade Analysis</TabsTrigger>
-            <TabsTrigger value="distribution">Distribution</TabsTrigger>
+            <TabsTrigger value="trades">Trades</TabsTrigger>
+            <TabsTrigger value="allocation">Allocation</TabsTrigger>
             <TabsTrigger value="correlation">Correlation</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="performance">
-            <div className="grid gap-4">
-              {/* Equity Curve */}
+          <TabsContent value="performance" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Equity Curve</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Equity Curve
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={data.equityCurve}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis yAxisId="left" />
-                      <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip />
-                      <Legend />
-                      <Area
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="equity"
-                        fill="hsl(var(--primary)/0.2)"
-                        stroke="hsl(var(--primary))"
-                      />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="drawdown"
-                        stroke="#ef4444"
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={data.equityCurve}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value: number) => [
+                            formatCurrency(value),
+                            "Equity",
+                          ]}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="equity"
+                          stroke="#0088FE"
+                          fill="#0088FE"
+                          fillOpacity={0.1}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="drawdown"
+                          stroke="#FF0000"
+                          fill="#FF0000"
+                          fillOpacity={0.1}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Rolling Returns */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Rolling Returns</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Rolling Returns
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data.rollingReturns}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="daily"
-                        stroke="#3b82f6"
-                        name="Daily"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="weekly"
-                        stroke="#10b981"
-                        name="Weekly"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="monthly"
-                        stroke="#6366f1"
-                        name="Monthly"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={data.rollingReturns}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value: number) => [
+                            formatPercentage(value),
+                            "Return",
+                          ]}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="daily"
+                          stroke="#0088FE"
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="weekly"
+                          stroke="#00C49F"
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="monthly"
+                          stroke="#FFBB28"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="trades">
-            <div className="grid gap-4">
-              {/* Trade Distribution */}
+          <TabsContent value="trades" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Trade Distribution</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Trade Distribution
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.tradeDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="range" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar
-                        dataKey="count"
-                        fill="hsl(var(--primary))"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.tradeDistribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="range" />
+                        <YAxis yAxisId="left" />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          tickFormatter={formatCurrency}
+                        />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          yAxisId="left"
+                          dataKey="count"
+                          fill="#0088FE"
+                          name="Number of Trades"
+                        />
+                        <Bar
+                          yAxisId="right"
+                          dataKey="pnl"
+                          fill="#00C49F"
+                          name="P&L"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Trade Timing */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Trade Timing Analysis</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Trade Timing
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="h-[300px]">
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={data.tradeTiming}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="hour"
+                          tickFormatter={(hour) =>
+                            `${hour.toString().padStart(2, "0")}:00`
+                          }
+                        />
+                        <YAxis
+                          yAxisId="left"
+                          tickFormatter={(value) => `${value}%`}
+                        />
+                        <YAxis yAxisId="right" orientation="right" />
+                        <Tooltip />
+                        <Legend />
+                        <Line
+                          yAxisId="left"
+                          type="monotone"
+                          dataKey="winRate"
+                          stroke="#0088FE"
+                          name="Win Rate"
+                        />
+                        <Line
+                          yAxisId="right"
+                          type="monotone"
+                          dataKey="volume"
+                          stroke="#00C49F"
+                          name="Volume"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="allocation" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">
+                    Asset Allocation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={data.assetAllocation}
+                          dataKey="allocation"
+                          nameKey="asset"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={(entry) =>
+                            `${entry.asset} (${formatPercentage(
+                              entry.allocation
+                            )})`
+                          }
+                        >
+                          {data.assetAllocation.map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number) => [
+                            formatPercentage(value),
+                            "Allocation",
+                          ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">
+                    Strategy Attribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.strategyAttribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="strategy" />
+                        <YAxis tickFormatter={(value) => `${value}%`} />
+                        <Tooltip
+                          formatter={(value: number) => [
+                            formatPercentage(value),
+                            "Contribution",
+                          ]}
+                        />
+                        <Bar dataKey="contribution">
+                          {data.strategyAttribution.map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="correlation" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  Strategy Correlation Matrix
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" dataKey="entryPrice" name="Entry Price" />
-                      <YAxis type="number" dataKey="exitPrice" name="Exit Price" />
-                      <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                      <XAxis type="number" dataKey="x" name="X" />
+                      <YAxis type="number" dataKey="y" name="Y" />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          formatPercentage(value),
+                          "Correlation",
+                        ]}
+                      />
                       <Scatter
-                        data={data.tradeTiming}
-                        fill="hsl(var(--primary))"
+                        data={data.correlationMatrix}
+                        fill="#0088FE"
+                        fillOpacity={0.6}
                       />
                     </ScatterChart>
                   </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="distribution">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Asset Allocation */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Asset Allocation</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={data.assetAllocation}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        label
-                      >
-                        {data.assetAllocation.map((entry: any, index: number) => (
-                          <Cell key={entry.name} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Strategy Attribution */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Strategy Attribution</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data.strategyAttribution}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" />
-                      <Tooltip />
-                      <Bar
-                        dataKey="value"
-                        fill="hsl(var(--primary))"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="correlation">
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Correlation Matrix</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      type="number" 
-                      dataKey="x" 
-                      name="Asset 1 Returns" 
-                      domain={[-1, 1]} 
-                    />
-                    <YAxis 
-                      type="number" 
-                      dataKey="y" 
-                      name="Asset 2 Returns" 
-                      domain={[-1, 1]} 
-                    />
-                    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                    <Scatter
-                      data={data.correlationMatrix}
-                      fill="hsl(var(--primary))"
-                    />
-                  </ScatterChart>
-                </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

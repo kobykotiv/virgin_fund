@@ -1,52 +1,30 @@
 export interface Trade {
   tradeId: string
+  datetime: string
   action: 'BUY' | 'SELL'
   side: 'LONG' | 'SHORT'
   quantity: number
   price: number
-  datetime: string
 }
 
-export interface BasePosition {
+export interface Position {
   id: string
-  assetType: 'stock' | 'crypto' | 'basket'
   ticker?: string
   quantity?: number
   avgPrice?: number
   currentPrice?: number
+  assetType: 'stock' | 'crypto' | 'basket'
+  name?: string
+  positions?: Position[]
   trades?: Trade[]
-}
-
-export interface SinglePosition extends BasePosition {
-  assetType: 'stock' | 'crypto'
-  basket: null
-}
-
-export interface BasketPosition extends BasePosition {
-  assetType: 'basket'
-  name: string
-  positions: SinglePosition[]
-}
-
-export type Position = SinglePosition | BasketPosition
-
-export interface AllocationItem {
-  name: string
-  value: number
-  color: string
 }
 
 export interface Portfolio {
   id: string
   name: string
-  focus: string
-  icon: string
-  tags: string[]
-  risk: 'Low' | 'Moderate' | 'High'
-  value: number
-  return: number
-  returnClass: string
-  chartVariant: string
-  allocation: AllocationItem[]
+  totalValue: number
+  cashBalance: number
   positions: Position[]
+  createdAt: string
+  updatedAt: string
 }

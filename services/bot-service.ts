@@ -1,172 +1,63 @@
-// Bot service to handle bot operations with demo mode support
-import type { Bot, BotStatus, BotType } from "@/types/bot"
-import { isDemoMode, DEMO_BOTS_KEY } from "./demo-service"
-import {
-  fetchBots as fetchRealBots,
-  createBot as createRealBot,
-  updateBot as updateRealBot,
-  deleteBot as deleteRealBot,
-  toggleBotStatus as toggleRealBotStatus,
-} from "@/lib/bot-api"
+import { Bot, BotType, BotStatus } from '@/types/bot';
 
-// Fetch bots
-export async function fetchBots(): Promise<Bot[]> {
-  if (isDemoMode()) {
-    return fetchDemoBots()
-  } else {
-    return fetchRealBots()
+export class BotService {
+  // Store bot data in memory for MVP
+  private static bots: Map<string, Bot> = new Map();
+
+  static async createBot(botData: Partial<Bot>): Promise<Bot> {
+    const bot: Bot = {
+      id: crypto.randomUUID(),
+      name: botData.name || 'Untitled Bot',
+      type: botData.type || 'basket',
+      status: 'paused',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      settings: botData.settings || {},
+      ...botData
+    };
+    
+    this.bots.set(bot.id, bot);
+    return bot;
   }
-}
 
-// Create a new bot
-export async function createBot(botData: Partial<Bot>): Promise<Bot> {
-  if (isDemoMode()) {
-    return createDemoBot(botData)
-  } else {
-    return createRealBot(botData)
+  static async getBot(id: string): Promise<Bot | null> {
+    return this.bots.get(id) || null;
   }
-}
 
-// Update an existing bot
-export async function updateBot(bot: Bot): Promise<Bot> {
-  if (isDemoMode()) {
-    return updateDemoBot(bot)
-  } else {
-    return updateRealBot(bot)
+  static async listBots(): Promise<Bot[]> {
+    return Array.from(this.bots.values());
   }
-}
 
-// Delete a bot
-export async function deleteBot(botId: string): Promise<void> {
-  if (isDemoMode()) {
-    return deleteDemoBot(botId)
-  } else {
-    return deleteRealBot(botId)
+  static async updateBot(id: string, updates: Partial<Bot>): Promise<Bot | null> {
+    const bot = this.bots.get(id);
+    if (!bot) return null;
+
+    const updatedBot = {
+      ...bot,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    
+    this.bots.set(id, updatedBot);
+    return updatedBot;
   }
-}
 
-// Toggle bot status
-export async function toggleBotStatus(botId: string, newStatus: BotStatus): Promise<Bot> {
-  if (isDemoMode()) {
-    return toggleDemoBotStatus(botId, newStatus)
-  } else {
-    return toggleRealBotStatus(botId, newStatus)
+  static async deleteBot(id: string): Promise<boolean> {
+    return this.bots.delete(id);
   }
-}
 
-// Demo mode implementations
-function fetchDemoBots(): Promise<Bot[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const bots = JSON.parse(localStorage.getItem(DEMO_BOTS_KEY) || "[]")
-      resolve(bots)
-    }, 500)
-  })
-}
+  static async toggleBotStatus(id: string, newStatus: BotStatus): Promise<Bot | null> {
+    const bot = this.bots.get(id);
+    if (!bot) return null;
 
-function createDemoBot(botData: Partial<Bot>): Promise<Bot> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const bots = JSON.parse(localStorage.getItem(DEMO_BOTS_KEY) || "[]")
-      const now = new Date().toISOString()
+    const updatedBot = {
+      ...bot,
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    };
 
-      const newBot: Bot = {
-        id: `demo-bot-${Date.now()}`,
-        name: botData.name || "New Bot",
-        type: botData.type || ("indicator" as BotType),
-        status: "paused" as BotStatus,
-        assets: botData.assets || ["AAPL"],
-        createdAt: now,
-        updatedAt: now,
-        performance: {
-          totalPnL: 0,
-          pnlPercentage: 0,
-          totalTrades: 0,
-          winRate: 0,
-          lastUpdated: now,
-        },
-        stopLoss: botData.stopLoss,
-        takeProfit: botData.takeProfit,
-        maxDrawdown: botData.maxDrawdown,
-        indicatorConfig: botData.indicatorConfig,
-        gridConfig: botData.gridConfig,
-        dcaConfig: botData.dcaConfig,
-        basketConfig: botData.basketConfig,
-      }
-
-      bots.push(newBot)
-      localStorage.setItem(DEMO_BOTS_KEY, JSON.stringify(bots))
-
-      resolve(newBot)
-    }, 500)
-  })
-}
-
-function updateDemoBot(bot: Bot): Promise<Bot> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const bots = JSON.parse(localStorage.getItem(DEMO_BOTS_KEY) || "[]")
-      const index = bots.findIndex((b: Bot) => b.id === bot.id)
-
-      if (index === -1) {
-        reject(new Error(`Bot with ID ${bot.id} not found`))
-        return
-      }
-
-      const updatedBot = {
-        ...bot,
-        updatedAt: new Date().toISOString(),
-      }
-
-      bots[index] = updatedBot
-      localStorage.setItem(DEMO_BOTS_KEY, JSON.stringify(bots))
-
-      resolve(updatedBot)
-    }, 500)
-  })
-}
-
-function deleteDemoBot(botId: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const bots = JSON.parse(localStorage.getItem(DEMO_BOTS_KEY) || "[]")
-      const index = bots.findIndex((b: Bot) => b.id === botId)
-
-      if (index === -1) {
-        reject(new Error(`Bot with ID ${botId} not found`))
-        return
-      }
-
-      bots.splice(index, 1)
-      localStorage.setItem(DEMO_BOTS_KEY, JSON.stringify(bots))
-
-      resolve()
-    }, 500)
-  })
-}
-
-function toggleDemoBotStatus(botId: string, newStatus: BotStatus): Promise<Bot> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const bots = JSON.parse(localStorage.getItem(DEMO_BOTS_KEY) || "[]")
-      const index = bots.findIndex((b: Bot) => b.id === botId)
-
-      if (index === -1) {
-        reject(new Error(`Bot with ID ${botId} not found`))
-        return
-      }
-
-      const updatedBot = {
-        ...bots[index],
-        status: newStatus,
-        updatedAt: new Date().toISOString(),
-      }
-
-      bots[index] = updatedBot
-      localStorage.setItem(DEMO_BOTS_KEY, JSON.stringify(bots))
-
-      resolve(updatedBot)
-    }, 500)
-  })
+    this.bots.set(id, updatedBot);
+    return updatedBot;
+  }
 }
 

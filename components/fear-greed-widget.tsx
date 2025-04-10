@@ -1,91 +1,108 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Card } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+
+interface SentimentData {
+  value: number
+  classification: string
+  timestamp: string
+  previousClose: number
+  previousWeek: number
+  previousMonth: number
+}
 
 export function FearGreedWidget() {
-  const [fearGreedValue, setFearGreedValue] = useState(50)
-  const [fearGreedLabel, setFearGreedLabel] = useState("Neutral")
+  const [data, setData] = useState<SentimentData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchSentimentData = async () => {
+    try {
+      const response = await fetch("/api/market-sentiment")
+      if (!response.ok) throw new Error("Failed to fetch sentiment data")
+      const data = await response.json()
+      setData(data)
+    } catch (error) {
+      console.error("Error fetching sentiment data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // In a real app, you would fetch this data from an API
-    // For demo purposes, we're using a random value
-    const fetchFearGreedIndex = () => {
-      // Random value between 0 and 100
-      const randomValue = Math.floor(Math.random() * 100)
-      setFearGreedValue(randomValue)
-      
-      // Set the label based on the value
-      if (randomValue <= 25) setFearGreedLabel("Extreme Fear")
-      else if (randomValue <= 40) setFearGreedLabel("Fear")
-      else if (randomValue <= 60) setFearGreedLabel("Neutral")
-      else if (randomValue <= 80) setFearGreedLabel("Greed")
-      else setFearGreedLabel("Extreme Greed")
-    }
-
-    fetchFearGreedIndex()
-    
-    // Simulate data updates
-    const interval = setInterval(fetchFearGreedIndex, 30000)
-    
+    fetchSentimentData()
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchSentimentData, 300000)
     return () => clearInterval(interval)
   }, [])
 
-  // Calculate the gauge position and color
-  const gaugeRotation = (fearGreedValue / 100) * 180 - 90
-  const gaugeColor = getColorForValue(fearGreedValue)
-  
-  function getColorForValue(value: number) {
-    if (value <= 25) return "#FF4136" // Red for Extreme Fear
-    if (value <= 40) return "#FF851B" // Orange for Fear
-    if (value <= 60) return "#FFDC00" // Yellow for Neutral
-    if (value <= 80) return "#2ECC40" // Green for Greed
-    return "#3D9970" // Dark Green for Extreme Greed
+  const getClassification = (value: number) => {
+    if (value <= 20) return { text: "Extreme Fear", color: "bg-red-500" }
+    if (value <= 40) return { text: "Fear", color: "bg-orange-500" }
+    if (value <= 60) return { text: "Neutral", color: "bg-yellow-500" }
+    if (value <= 80) return { text: "Greed", color: "bg-green-500" }
+    return { text: "Extreme Greed", color: "bg-emerald-500" }
   }
 
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-4">
-      <h3 className="text-xl font-bold mb-2">Crypto Fear & Greed Index</h3>
-      
-      <div className="relative w-48 h-24 mb-6">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-          {/* Gauge background */}
-          <div className="absolute top-0 left-0 w-full h-full bg-muted rounded-t-full"></div>
-          
-          {/* Gauge levels */}
-          <div className="absolute top-0 left-0 w-full h-full">
-            <div className="absolute top-0 left-0 w-1/5 h-full bg-red-500 opacity-20 rounded-tl-full"></div>
-            <div className="absolute top-0 left-1/5 w-1/5 h-full bg-orange-400 opacity-20"></div>
-            <div className="absolute top-0 left-2/5 w-1/5 h-full bg-yellow-400 opacity-20"></div>
-            <div className="absolute top-0 left-3/5 w-1/5 h-full bg-green-400 opacity-20"></div>
-            <div className="absolute top-0 left-4/5 w-1/5 h-full bg-green-600 opacity-20 rounded-tr-full"></div>
-          </div>
-          
-          {/* Gauge needle */}
-          <div 
-            className="absolute bottom-0 left-1/2 w-1 h-24 bg-foreground origin-bottom"
-            style={{ transform: `translateX(-50%) rotate(${gaugeRotation}deg)` }}
-          ></div>
-          
-          {/* Gauge center point */}
-          <div className="absolute bottom-0 left-1/2 w-4 h-4 rounded-full bg-foreground transform -translate-x-1/2 translate-y-1/2"></div>
+  const formatDate = (timestamp: string) => {
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-4 w-32 bg-muted rounded"></div>
+        <div className="h-8 w-full bg-muted rounded"></div>
+        <div className="space-y-2">
+          <div className="h-4 w-24 bg-muted rounded"></div>
+          <div className="h-4 w-full bg-muted rounded"></div>
         </div>
       </div>
-      
-      <div className="text-center">
-        <div className="text-3xl font-bold mb-1">{fearGreedValue}</div>
-        <div className="text-lg font-medium" style={{ color: gaugeColor }}>{fearGreedLabel}</div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <Card className="p-6 text-center text-muted-foreground">
+        Unable to load market sentiment data
+      </Card>
+    )
+  }
+
+  const classification = getClassification(data.value)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-baseline">
+        <h3 className="font-medium">{classification.text}</h3>
+        <span className="text-2xl font-bold">{Math.round(data.value)}</span>
       </div>
-      
-      <div className="w-full mt-6 grid grid-cols-5 text-xs text-center">
-        <div className="text-red-500">Extreme<br/>Fear</div>
-        <div className="text-orange-400">Fear</div>
-        <div className="text-yellow-400">Neutral</div>
-        <div className="text-green-400">Greed</div>
-        <div className="text-green-600">Extreme<br/>Greed</div>
+
+      <Progress
+        value={data.value}
+        className="h-2"
+        indicatorClassName={classification.color}
+      />
+
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p className="text-muted-foreground">Previous Close</p>
+          <p className="font-medium">{Math.round(data.previousClose)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">1 Week Ago</p>
+          <p className="font-medium">{Math.round(data.previousWeek)}</p>
+        </div>
       </div>
-      
-      <div className="mt-4 text-xs text-muted-foreground">
-        Last updated: {new Date().toLocaleString()}
+
+      <div className="text-xs text-muted-foreground">
+        Last updated: {formatDate(data.timestamp)}
       </div>
     </div>
   )

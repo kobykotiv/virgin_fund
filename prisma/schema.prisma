@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Choose one of the following data sources (PostgreSQL or MongoDB)
+
+// For PostgreSQL:
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// For MongoDB (uncomment if using MongoDB):
+// datasource db {
+//   provider = "mongodb"
+//   url      = env("DATABASE_URL")
+// }
+
+// User model to store user information and encrypted API credentials
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Hashed password for email/password auth
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Encrypted Alpaca API credentials
+  alpacaApiKey       String?
+  alpacaSecretKey    String?
+  alpacaIsPaper      Boolean  @default(true)
+  tradingEnabled     Boolean  @default(false)
+  
+  // Auth relations
+  accounts      Account[]
+  sessions      Session[]
+  
+  // App relations
+  bots          TradingBot[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token          String?  @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Bot model to store trading bot configurations
+model TradingBot {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String
+  status      String   @default("paused")
+  strategy    String
+  active      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  
+  // Volatility tracking fields
+  executionHistory Json[]  // Store execution records with volatility data
+  volatilityMetrics Json?  // Store latest volatility calculations
+  lastVolatilityCheck DateTime? // Last time volatility was calculated
+  
+  // Define relationships
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades      Trade[]
+  positions   Position[]
+  settings    Json?    // Store bot-specific settings as JSON
+
+  @@index([userId])
+}
+
+// Position model to track open trading positions
+model Position {
+  id          String   @id @default(cuid())
+  symbol      String
+  quantity    Float
+  entryPrice  Float
+  currentPrice Float?
+  direction   String   // LONG or SHORT
+  status      String   // OPEN, CLOSED
+  openedAt    DateTime @default(now())
+  closedAt    DateTime?
+  botId       String
+  pnl         Float?   // Profit or loss
+  
+  // Volatility tracking
+  entryVolatility Float?  // Volatility at position entry
+  currentVolatility Float? // Current volatility
+  
+  // Define relationships
+  bot         TradingBot @relation(fields: [botId], references: [id])
+  trades      Trade[]
+
+  @@index([botId])
+  @@index([symbol])
+}
+
+// Trade model to store individual trades
+model Trade {
+  id          String   @id @default(cuid())
+  symbol      String
+  quantity    Float
+  price       Float
+  direction   String   // BUY or SELL
+  executedAt  DateTime @default(now())
+  botId       String
+  positionId  String?
+  
+  // Volatility data at time of trade
+  volatility  Float?
+  volatilityAdjustment Float? // How much the order was adjusted
+  
+  // Define relationships
+  bot         TradingBot @relation(fields: [botId], references: [id])
+  position    Position? @relation(fields: [positionId], references: [id])
+
+  @@index([botId])
+  @@index([positionId])
+}
+
+// Market data model to cache market information
+model MarketData {
+  id          String   @id @default(cuid())
+  symbol      String   @unique
+  lastPrice   Float
+  dailyHigh   Float?
+  dailyLow    Float?
+  volume      Float?
+  updatedAt   DateTime @default(now())
+  source      String   // ALPACA, COINGECKO, etc.
+  metadata    Json?    // Additional market data
+  
+  // Volatility metrics
+  historicalVolatility Float?
+  impliedVolatility   Float?
+  volatilityUpdatedAt DateTime?
+}

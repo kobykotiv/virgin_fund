@@ -1,73 +1,165 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { PrismaClient, Prisma } from '@prisma/client';
-import { z } from 'zod';
-
-const prisma = new PrismaClient();
-
-// Validation schema for updating bot status
-const updateStatusSchema = z.object({
-  active: z.boolean(), // Expecting a boolean 'active' field in the request body
-});
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { createBotManager } from "@/lib/services/bot-manager";
+import prisma from "@/lib/db/prisma";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  const botId = params.id;
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const body = await request.json();
-    const validatedData = updateStatusSchema.parse(body);
-
-    // Ensure the bot exists and belongs to the user before updating status
-    const existingBot = await prisma.tradingBot.findUnique({
-       where: { id: botId, userId: session.user.id },
-       select: { id: true, status: true } // Select current status if needed for logic
-    });
-
-    if (!existingBot) {
-       return NextResponse.json({ error: 'Bot not found or not owned by user' }, { status: 404 });
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Determine the new status based on the 'active' flag
-    // You might add more complex logic here, e.g., checking if credentials are set
-    const newStatus = validatedData.active ? 'active' : 'paused';
+    const { active } = await request.json();
+    
+    if (typeof active !== "boolean") {
+      return new NextResponse("Invalid status value", { status: 400 });
+    }
 
-    const updatedBot = await prisma.tradingBot.update({
+    // Get the bot and ensure it belongs to the user
+    const bot = await prisma.bot.findUnique({
       where: { 
-        id: botId,
-      },
-      data: {
-        active: validatedData.active,
-        status: newStatus, // Update status along with active flag
-      },
+        id: params.id,
+        userId: session.user.id
+      }
     });
 
-     // Convert settings and executionHistory from Prisma JsonValue if needed
-     const formattedBot = {
-        ...updatedBot,
-        settings: updatedBot.settings as Prisma.JsonObject | null, // Type assertion
-        executionHistory: updatedBot.executionHistory as Prisma.JsonArray | null // Type assertion
-    };
+    if (!bot) {
+      return new NextResponse("Bot not found", { status: 404 });
+    }
 
-    return NextResponse.json(formattedBot);
+    const botManager = await createBotManager(bot.id);
+
+    // Validate settings before activation
+    if (active) {
+      const errors = await botManager.validateSettings();
+      if (errors.length > 0) {
+        return NextResponse.json(
+          { errors },
+          { status: 400 }
+        );
+      }
+
+      // Check if user has necessary trading account and API keys
+      const tradingAccount = await prisma.tradingAccount.findFirst({
+        where: {
+          userId: session.user.id,
+          status: 'active'
+        }
+      });
+
+      if (!tradingAccount) {
+        return NextResponse.json({
+          error: "No active trading account found. Please set up your trading account first."
+        }, { status: 400 });
+      }
+
+      const apiKey = await prisma.apiKey.findFirst({
+        where: {
+          userId: session.user.id,
+          provider: tradingAccount.provider,
+          status: 'active'
+        }
+      });
+
+      if (!apiKey) {
+        return NextResponse.json({
+          error: "No valid API key found. Please configure your API keys first."
+        }, { status: 400 });
+      }
+
+      // Update bot status to running
+      await botManager.updateStatus({
+        state: 'running',
+        message: 'Bot activated',
+        lastUpdate: new Date(),
+        performance: {
+          totalTrades: 0,
+          winRate: 0,
+          totalProfit: 0,
+          totalFees: 0
+        }
+      });
+    } else {
+      // Cancel any open orders before deactivating
+      const openOrders = await botManager.getOpenOrders();
+      if (openOrders.length > 0) {
+        // TODO: Implement order cancellation logic
+        console.log(`Cancelling ${openOrders.length} open orders for bot ${bot.id}`);
+      }
+
+      // Update bot status to idle
+      await botManager.updateStatus({
+        state: 'idle',
+        message: 'Bot deactivated',
+        lastUpdate: new Date()
+      });
+    }
+
+    // Update the bot's active status
+    const updatedBot = await prisma.bot.update({
+      where: { id: params.id },
+      data: { 
+        active,
+        updatedAt: new Date()
+      }
+    });
+
+    return NextResponse.json({
+      ...updatedBot,
+      message: active ? 'Bot activated successfully' : 'Bot deactivated successfully'
+    });
 
   } catch (error) {
-    console.error(`Error updating bot status ${botId}:`, error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
+    console.error("Error updating bot status:", error);
+    return new NextResponse(
+      error instanceof Error ? error.message : "Internal server error",
+      { status: 500 }
+    );
+  }
+}
+
+// Get bot status
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
-     // Handle potential Prisma errors
-     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        return NextResponse.json({ error: 'Bot not found' }, { status: 404 });
-     }
-    return NextResponse.json({ error: 'Failed to update bot status' }, { status: 500 });
+
+    const botManager = await createBotManager(params.id);
+    
+    // Get bot performance metrics for the last 24 hours
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    const performance = await botManager.getPerformance({
+      start: yesterday,
+      end: now
+    });
+
+    const recentTrades = await botManager.getRecentTrades(5);
+    const openOrders = await botManager.getOpenOrders();
+
+    return NextResponse.json({
+      performance,
+      recentTrades,
+      openOrders
+    });
+
+  } catch (error) {
+    console.error("Error fetching bot status:", error);
+    return new NextResponse(
+      error instanceof Error ? error.message : "Internal server error",
+      { status: 500 }
+    );
   }
 }

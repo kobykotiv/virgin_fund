@@ -1,88 +1,176 @@
-export type BotType = 'grid' | 'dca' | 'momentum' | 'trend' | 'custom' | 'basket' | 'indicator'
-
-export type BotStatus = 'active' | 'paused' | 'error'
-
-export type Timeframe = "1min" | "5min" | "15min" | "30min" | "1hour" | "2hour" | "4hour" | "1day" | "1week" | "1month"
-
-export interface IndicatorConfig {
-  type: "rsi" | "macd" | "bollinger"
-  timeframe: Timeframe
-  entryThreshold: number
-  exitThreshold: number
-}
-
-export interface GridConfig {
-  gridSize: number // Grid size in percentage (e.g. 1 for 1%)
-  upperLimit: number // Upper price limit
-  lowerLimit: number // Lower price limit
-  quantity: number // Quantity per order
-}
-
-export interface DCAConfig {
-  interval: string // Cron expression for scheduling
-  amount: number // Amount per purchase
-  duration?: string // Optional duration (e.g. '30days')
-}
-
-export interface BasketConfig {
-  rebalancePeriod?: string // Optional rebalance period (cron expression)
-  targetAllocation: Record<string, number> // e.g. {'AAPL': 0.5, 'MSFT': 0.5}
-}
-
-export interface BotPerformance {
-  totalPnL: number
-  pnlPercentage: number
-  totalTrades: number
-  winRate: number
-  lastUpdated: string
-  dailyPnL?: number
-  dailyReturn?: number
-  trades?: {
-    timestamp: string
-    type: 'buy' | 'sell'
-    price: number
-    quantity: number
-    pnl?: number
-  }[]
-}
-
 export interface Bot {
-  id: string
-  name: string
-  type: BotType
-  status: BotStatus
-  assets: string[]
-  createdAt: string
-  updatedAt: string
-  settings: Record<string, any>
-  strategy?: string
-  description?: string
-  allocation?: number  // Added for demo mode support
-  indicatorConfig?: IndicatorConfig
-  gridConfig?: GridConfig
-  dcaConfig?: DCAConfig
-  basketConfig?: BasketConfig
-  performance?: BotPerformance
-  riskSettings?: {
-    maxDrawdown: number
-    stopLoss: number
-    takeProfit: number
-    positionSize: number
-    maxPositions: number
-    enableEmergencyStop: boolean
-    volatilityAdjustment: boolean
-  }
+  id: string;
+  name: string;
+  description?: string;
+  type: BotType['value'];
+  strategy?: string;
+  settings: BotSettings;
+  userId: string;
+  active: boolean;
+  status?: BotStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  lastExecuted?: Date;
 }
 
-export interface BotWithPortfolio extends Bot {
-  portfolio?: any[]
+export interface BotType {
+  value: string;
+  label: string;
+  description?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  features?: string[];
+}
+
+export type BotStatus = {
+  state: 'idle' | 'running' | 'error' | 'paused';
+  message?: string;
+  lastUpdate: Date;
   performance?: {
-    totalValue: number
-    totalPnL: number
-    pnlPercentage: number
-    totalTrades: number
-    winRate: number
-    lastUpdated: string
-  }
+    totalTrades: number;
+    winRate: number;
+    totalProfit: number;
+    totalFees: number;
+  };
+};
+
+// Base settings interface that all bot types extend
+interface BaseBotSettings {
+  enabled: boolean;
+  maxDrawdown?: number;
+  stopLoss?: number;
+  takeProfit?: number;
 }
 
+export interface DCASettings extends BaseBotSettings {
+  symbol: string;
+  amount: number;
+  interval: 'hourly' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  maxPositionSize?: number;
+}
+
+export interface GridSettings extends BaseBotSettings {
+  symbol: string;
+  upperPrice: number;
+  lowerPrice: number;
+  gridLines: number;
+  investmentAmount: number;
+  profitTarget?: number;
+}
+
+export interface IndicatorSettings extends BaseBotSettings {
+  symbol: string;
+  timeframe: '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
+  entryAmount: number;
+  indicators: {
+    rsi?: {
+      period: number;
+      overbought: number;
+      oversold: number;
+    };
+    macd?: {
+      fastPeriod: number;
+      slowPeriod: number;
+      signalPeriod: number;
+    };
+    ma?: {
+      type: 'sma' | 'ema';
+      period: number;
+    };
+  };
+}
+
+export interface BasketSettings extends BaseBotSettings {
+  assets: Array<{
+    symbol: string;
+    weight: number;
+    minWeight?: number;
+    maxWeight?: number;
+  }>;
+  rebalanceThreshold: number;
+  rebalanceInterval: 'daily' | 'weekly' | 'monthly';
+  totalAmount: number;
+  maxAssets?: number;
+}
+
+export type BotSettings = 
+  | DCASettings
+  | GridSettings
+  | IndicatorSettings
+  | BasketSettings;
+
+export const BOT_TYPES: BotType[] = [
+  {
+    value: 'dca',
+    label: 'DCA Bot',
+    description: 'Dollar Cost Averaging bot for automated periodic investments',
+    minAmount: 10,
+    features: [
+      'Automated periodic investments',
+      'Customizable intervals',
+      'Position size management',
+      'Market condition checks'
+    ]
+  },
+  {
+    value: 'grid',
+    label: 'Grid Trading',
+    description: 'Create a grid of buy/sell orders across a price range',
+    minAmount: 100,
+    features: [
+      'Automatic grid generation',
+      'Dynamic grid spacing',
+      'Profit per grid calculation',
+      'Risk management rules'
+    ]
+  },
+  {
+    value: 'indicator',
+    label: 'Indicator Bot',
+    description: 'Trade based on technical indicators (RSI, MACD, etc.)',
+    minAmount: 50,
+    features: [
+      'Multiple indicator support',
+      'Custom signal generation',
+      'Backtesting capabilities',
+      'Risk management tools'
+    ]
+  },
+  {
+    value: 'basket',
+    label: 'Basket Trading',
+    description: 'Manage a portfolio of assets with periodic rebalancing',
+    minAmount: 500,
+    features: [
+      'Portfolio rebalancing',
+      'Asset correlation analysis',
+      'Risk-adjusted weighting',
+      'Automatic diversification'
+    ]
+  }
+];
+
+// Helper type for extracting settings type based on bot type
+export type SettingsForType<T extends BotType['value']> = 
+  T extends 'dca' ? DCASettings :
+  T extends 'grid' ? GridSettings :
+  T extends 'indicator' ? IndicatorSettings :
+  T extends 'basket' ? BasketSettings :
+  never;
+
+// Helper functions for type checking
+export function isDCASettings(settings: BotSettings): settings is DCASettings {
+  return 'interval' in settings;
+}
+
+export function isGridSettings(settings: BotSettings): settings is GridSettings {
+  return 'gridLines' in settings;
+}
+
+export function isIndicatorSettings(settings: BotSettings): settings is IndicatorSettings {
+  return 'timeframe' in settings && 'indicators' in settings;
+}
+
+export function isBasketSettings(settings: BotSettings): settings is BasketSettings {
+  return 'assets' in settings && Array.isArray((settings as BasketSettings).assets);
+}

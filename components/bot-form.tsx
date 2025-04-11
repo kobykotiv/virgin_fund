@@ -2,7 +2,59 @@
 
 import { useState, useEffect } from 'react';
 import { Bot } from '@/app/(dashboard)/bots/page'; // Import Bot type
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DollarSign, 
+  Grid, 
+  BarChart2, 
+  PieChart as PieChartIcon,
+  RefreshCcw,
+  TrendingUp,
+  Network,
+  Brain,
+  CandlestickChart
+} from 'lucide-react';
+
+// Helper function to generate consistent avatar colors
+function getAvatarColor(type: string, strategy: string): string {
+  const colors = {
+    dca: 'bg-blue-500',
+    grid: 'bg-green-500',
+    indicator: 'bg-purple-500',
+    basket: 'bg-orange-500',
+    momentum: 'bg-red-500'
+  };
+  return colors[type as keyof typeof colors] || 'bg-gray-500';
+}
+
+// Helper function to get icon based on bot type
+function getBotIcon(type: string) {
+  const icons = {
+    dca: DollarSign,
+    grid: Grid,
+    indicator: BarChart2,
+    basket: PieChartIcon,
+    momentum: TrendingUp,
+    arbitrage: RefreshCcw,
+    ml: Brain,
+    custom: CandlestickChart
+  };
+  const Icon = icons[type as keyof typeof icons] || CandlestickChart;
+  return <Icon className="h-4 w-4" />;
+}
+
+// Helper function to get strategy avatar abbreviation
+function getStrategyAbbr(strategy: string): string {
+  if (!strategy) return '??';
+  return strategy
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { TradingViewWidget } from "@/components/trading-view-widget";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -16,6 +68,39 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { useEffect, useState } from 'react';
+
+// Custom hook for responsive chart sizing
+function useChartDimensions(defaultHeight: number) {
+  const [dimensions, setDimensions] = useState({ height: defaultHeight });
+
+  useEffect(() => {
+    function handleResize() {
+      const width = window.innerWidth;
+      // Adjust height based on screen size
+      if (width < 640) { // Mobile
+        setDimensions({ height: Math.min(defaultHeight * 0.6, 300) });
+      } else if (width < 1024) { // Tablet
+        setDimensions({ height: Math.min(defaultHeight * 0.8, 350) });
+      } else { // Desktop
+        setDimensions({ height: defaultHeight });
+      }
+    }
+
+    handleResize(); // Initial sizing
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [defaultHeight]);
+
+  return dimensions;
+}
+
+// Colors for the pie chart
+const COLORS = [
+  '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8',
+  '#82CA9D', '#F06292', '#BA68C8', '#4DD0E1', '#FFA726'
+];
 
 // Asset selection component
 function AssetSelect({
@@ -212,7 +297,7 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
         if (assets.length < 2) errors.assets = "At least 2 assets required";
         if (assets.length > 20) errors.assets = "Maximum 20 assets allowed";
         
-        const totalWeight = assets.reduce((sum: number, asset: { weight: number }) => sum + (asset.weight ?? 0), 0);
+        const totalWeight = assets.reduce((sum: number, asset: { weight: number }) => sum + (asset.weight || 0), 0);
         if (Math.abs(totalWeight - 100) > 0.01) errors.weights = "Total weight must equal 100%";
         
         if (!basketSettings.rebalanceInterval) errors.rebalanceInterval = "Rebalance interval is required";
@@ -418,12 +503,10 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
             throw new Error("Basket must contain between 2 and 10 assets.");
           }
           const totalWeight = basketSettings.assets.reduce((sum, asset) => sum + (asset.weight || 0), 0);
-          if (Math.abs(totalWeight - 100) > 0.01) {
-            throw new Error("Total weight must equal 100%.");
-          }
-          if (basketSettings.totalAmount <= 0) {
-            throw new Error("Total investment amount must be greater than 0.");
-          }
+          if (Math.abs(totalWeight - 100) > 0.01) errors.weights = "Total weight must equal 100%";
+          
+          if (!basketSettings.rebalanceInterval) errors.rebalanceInterval = "Rebalance interval is required";
+          if (!basketSettings.totalAmount || basketSettings.totalAmount <= 0) errors.totalAmount = "Investment amount must be greater than 0";
           break;
         }
         default:
@@ -483,9 +566,16 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{bot ? 'Edit Bot' : 'Create New Bot'}</CardTitle>
-        <CardDescription>Configure your trading bot details.</CardDescription>
+      <CardHeader className="flex flex-row items-center gap-4">
+        <Avatar className={cn("h-12 w-12", getAvatarColor(type, strategy))}>
+          <AvatarFallback className="text-background">
+            {getBotIcon(type)}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <CardTitle>{bot ? 'Edit Bot' : 'Create New Bot'}</CardTitle>
+          <CardDescription>Configure your trading bot details.</CardDescription>
+        </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -495,6 +585,8 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
                     <HelpCircle className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
@@ -539,24 +631,51 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
              <div className="space-y-1">
                <Label htmlFor="type">Bot Type</Label>
                <Select value={type} onValueChange={setType} disabled={isLoading || !!bot}> {/* Disable type change when editing */}
-                 <SelectTrigger id="type">
-                   <SelectValue placeholder="Select type" />
+                 <SelectTrigger id="type" className="flex gap-2">
+                   <SelectValue placeholder="Select type">
+                     <div className="flex items-center gap-2">
+                       {type && (
+                         <Avatar className={cn("h-6 w-6", getAvatarColor(type, ''))}>
+                           <AvatarFallback className="text-background">
+                             {getBotIcon(type)}
+                           </AvatarFallback>
+                         </Avatar>
+                       )}
+                       <span>{botTypes.find(t => t.value === type)?.label || 'Select type'}</span>
+                     </div>
+                   </SelectValue>
                  </SelectTrigger>
                  <SelectContent>
                    {botTypes.map(({ value, label }) => (
-                     <SelectItem key={value} value={value}>{label}</SelectItem>
-                   ))}
-                 </SelectContent>
-               </Select>
-             </div>
-             <div className="space-y-1">
-               <Label htmlFor="strategy">Strategy</Label>
+                     <SelectItem key={value} value={value} className="flex items-center gap-2">
+                       <Avatar className={cn("h-6 w-6", getAvatarColor(value, ''))}>
+                         <AvatarFallback className="text-background">
                <Select value={strategy} onValueChange={setStrategy} disabled={isLoading || availableStrategies.length === 0}>
-                 <SelectTrigger id="strategy">
-                   <SelectValue placeholder="Select strategy" />
-                 </SelectTrigger>
+                   <SelectTrigger id="strategy" className="flex gap-2">
+                     <SelectValue placeholder="Select strategy">
+                       <div className="flex items-center gap-2">
+                         {strategy && (
+                           <Avatar className={cn("h-6 w-6", getAvatarColor(type, strategy))}>
+                             <AvatarFallback className="text-background">
+                               {getStrategyAbbr(strategy)}
+                             </AvatarFallback>
+                           </Avatar>
+                         )}
+                         <span>{strategy || 'Select strategy'}</span>
+                       </div>
+                     </SelectValue>
+                   </SelectTrigger>
                  <SelectContent>
-                   {availableStrategies.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                   {availableStrategies.map(s => (
+                     <SelectItem key={s} value={s} className="flex items-center gap-2">
+                       <Avatar className={cn("h-6 w-6", getAvatarColor(type, s))}>
+                         <AvatarFallback className="text-background">
+                           {getStrategyAbbr(s)}
+                         </AvatarFallback>
+                       </Avatar>
+                       {s}
+                     </SelectItem>
+                   ))}
                  </SelectContent>
                </Select>
              </div>
@@ -656,6 +775,16 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
                       </div>
                    </div>
                </div>
+
+               {/* Chart for selected asset */}
+               {settings.symbol && (
+                 <div className="mt-4">
+                   <Label>Price Chart</Label>
+                   <div className="h-[400px] w-full mt-2 rounded-lg overflow-hidden border">
+                     <TradingViewWidget symbol={settings.symbol} theme="dark" />
+                   </div>
+                 </div>
+               )}
             </Card>
           )}
           {/* Grid Trading Settings */}
@@ -852,6 +981,16 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
                   </div>
                 )}
               </div>
+
+              {/* Chart for selected asset */}
+              {settings.symbol && (
+                <div className="mt-4">
+                  <Label>Price Chart</Label>
+                  <div className="h-[400px] w-full mt-2 rounded-lg overflow-hidden border">
+                    <TradingViewWidget symbol={settings.symbol} theme="dark" />
+                  </div>
+                </div>
+              )}
             </Card>
           )}
 
@@ -1156,6 +1295,16 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
                   </div>
                 )}
               </div>
+
+              {/* Chart for selected asset */}
+              {settings.symbol && (
+                <div className="mt-4">
+                  <Label>Price Chart</Label>
+                  <div className="h-[400px] w-full mt-2 rounded-lg overflow-hidden border">
+                    <TradingViewWidget symbol={settings.symbol} theme="dark" />
+                  </div>
+                </div>
+              )}
             </Card>
           )}
 
@@ -1283,6 +1432,54 @@ export default function BotForm({ bot, onSuccess, onCancel, availableAssets, bot
                       </div>
                     )}
                   </div>
+
+                  {/* Portfolio Allocation Pie Chart */}
+                  {settings.assets?.some(asset => asset.symbol && asset.weight > 0) && (
+                    <div className="mt-4 p-4 bg-background/50 rounded-lg">
+                      <h4 className="mb-2 font-medium text-sm">Portfolio Allocation</h4>
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={settings.assets
+                                .filter(asset => asset.symbol && asset.weight > 0)
+                                .map((asset, index) => ({
+                                  name: asset.symbol,
+                                  value: asset.weight,
+                                }))}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              paddingAngle={5}
+                              dataKey="value"
+                              label={({ name, value }) => `${name} (${value}%)`}
+                            >
+                              {settings.assets
+                                .filter(asset => asset.symbol && asset.weight > 0)
+                                .map((_, index) => (
+                                  <Cell 
+                                    key={`cell-${index}`} 
+                                    fill={COLORS[index % COLORS.length]} 
+                                  />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value: number) => `${value.toFixed(1)}%`}
+                              contentStyle={{ 
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '8px'
+                              }}
+                            />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot } from "@/app/(dashboard)/bots/page";
+import { Bot } from "@prisma/client";
 import { Card } from "@/components/ui/card";
 import { getBots, toggleBotStatus } from "@/lib/bot-api";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,23 +22,35 @@ import {
   PieChart,
   RefreshCcw,
   TrendingUp,
-  Network,
   Brain,
   CandlestickChart,
   Pencil,
-  Trash2
+  Trash2,
+  MoreVertical,
+  LineChart,
+  History
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BotStatusCard } from "@/components/bot-status-card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface BotListProps {
   onEdit: (bot: Bot) => void;
   onDelete: (bot: Bot) => void;
+  onViewDetails?: (bot: Bot) => void;
+  onViewTrades?: (bot: Bot) => void;
 }
 
-// Helper function to get icon based on bot type
 function getBotIcon(type: string) {
   const icons = {
     dca: DollarSign,
@@ -46,7 +58,6 @@ function getBotIcon(type: string) {
     indicator: BarChart2,
     basket: PieChart,
     momentum: TrendingUp,
-    arbitrage: RefreshCcw,
     ml: Brain,
     custom: CandlestickChart
   };
@@ -54,7 +65,6 @@ function getBotIcon(type: string) {
   return <Icon className="h-4 w-4" />;
 }
 
-// Helper function to generate consistent avatar colors
 function getAvatarColor(type: string): string {
   const colors = {
     dca: 'bg-blue-500',
@@ -62,25 +72,13 @@ function getAvatarColor(type: string): string {
     indicator: 'bg-purple-500',
     basket: 'bg-orange-500',
     momentum: 'bg-red-500',
-    arbitrage: 'bg-yellow-500',
     ml: 'bg-indigo-500',
     custom: 'bg-gray-500'
   };
   return colors[type as keyof typeof colors] || 'bg-gray-500';
 }
 
-// Helper function to get strategy abbreviation
-function getStrategyAbbr(strategy: string): string {
-  if (!strategy) return '??';
-  return strategy
-    .split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-export function BotList({ onEdit, onDelete }: BotListProps) {
+export function BotList({ onEdit, onDelete, onViewDetails, onViewTrades }: BotListProps) {
   const [bots, setBots] = useState<Bot[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState<{[key: string]: boolean}>({});
@@ -119,7 +117,7 @@ export function BotList({ onEdit, onDelete }: BotListProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update bot status",
+        description: error instanceof Error ? error.message : "Failed to update bot status",
         variant: "destructive",
       });
     } finally {
@@ -154,8 +152,8 @@ export function BotList({ onEdit, onDelete }: BotListProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Bot</TableHead>
-            <TableHead>Strategy</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Performance</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -176,46 +174,73 @@ export function BotList({ onEdit, onDelete }: BotListProps) {
                         {getBotIcon(bot.type)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col">
                       <span>{bot.name}</span>
-                      <span className="text-xs text-muted-foreground">{bot.description}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {bot.strategy || 'No strategy'}
+                        </Badge>
+                        {bot.description && (
+                          <span className="text-xs text-muted-foreground">
+                            {bot.description}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary" className="font-mono">
-                    {bot.strategy || 'No strategy'}
-                  </Badge>
+                  <div className="flex w-[200px] items-center gap-2">
+                    <Switch
+                      checked={bot.active}
+                      onCheckedChange={() => handleStatusToggle(bot)}
+                      disabled={statusUpdating[bot.id]}
+                      className={cn(
+                        bot.active ? "bg-green-500" : "",
+                        statusUpdating[bot.id] && "opacity-50 cursor-not-allowed"
+                      )}
+                    />
+                    <BotStatusCard bot={bot} compact />
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <Switch
-                    checked={bot.active}
-                    onCheckedChange={() => handleStatusToggle(bot)}
-                    disabled={statusUpdating[bot.id]}
-                    className={cn(
-                      bot.active ? "bg-green-500" : "",
-                      statusUpdating[bot.id] && "opacity-50 cursor-not-allowed"
-                    )}
-                  />
+                  <BotStatusCard bot={bot} compact />
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => onEdit(bot)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => onDelete(bot)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Bot Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => onEdit(bot)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      {onViewDetails && (
+                        <DropdownMenuItem onClick={() => onViewDetails(bot)}>
+                          <LineChart className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                      )}
+                      {onViewTrades && (
+                        <DropdownMenuItem onClick={() => onViewTrades(bot)}>
+                          <History className="mr-2 h-4 w-4" />
+                          View Trades
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onDelete(bot)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))

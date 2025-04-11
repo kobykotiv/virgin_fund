@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,43 +10,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String?   // Hashed password for email/password auth
-  image         String?
-  emailVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Encrypted Alpaca API credentials
-  alpacaApiKey       String? // Encrypted
-  alpacaSecretKey    String? // Encrypted - Renamed from alpacaSecret
-  alpacaIsPaper      Boolean   @default(true)
-  tradingEnabled     Boolean   @default(false) // User must enable after adding keys
-
-  // Auth relations
-  accounts      Account[]
-  sessions      Session[]
-
-  // App relations
-  bots          TradingBot[]
-}
-
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -58,6 +37,19 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model User {
+  id              String           @id @default(cuid())
+  name            String?
+  email           String?          @unique
+  emailVerified   DateTime?
+  image           String?
+  accounts        Account[]
+  sessions        Session[]
+  bots            Bot[]
+  tradingAccounts TradingAccount[]
+  apiKeys         ApiKey[]
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -66,80 +58,106 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Bot model to store trading bot configurations
-model TradingBot {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  type        String   // e.g., 'DCA', 'Indicator', 'BasketRebalance'
-  status      String   @default("paused") // e.g., 'active', 'paused', 'error'
-  strategy    String   // Name or identifier of the specific strategy logic
-  active      Boolean  @default(false) // Whether the bot is currently running
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String
-  lastRunAt   DateTime? // Track when the bot logic last executed
-
-  // Bot-specific settings stored as JSON
-  // Example for DCA: { symbol: "AAPL", amount: 100, interval: "weekly" }
-  // Example for Indicator: { symbol: "BTC/USD", indicator: "RSI", buyThreshold: 30, sellThreshold: 70 }
-  settings    Json?
-
-  // Store execution records with relevant data
-  executionHistory Json[] @default([]) // Array of execution records
-
-  // Define relationships
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trades      Trade[]
-  positions   Position[] // Track positions managed *by this specific bot*
+model Bot {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  type         String
+  strategy     String?
+  settings     Json      @default("{}")
+  status       Json?     @default("{\"state\": \"idle\", \"lastUpdate\": null}")
+  active       Boolean   @default(false)
+  lastExecuted DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades       Trade[]
+  orders       Order[]
 
   @@index([userId])
-  @@index([status])
+  @@index([type])
   @@index([active])
 }
 
-// Position model to track open trading positions *managed by a specific bot*
-model Position {
-  id          String   @id @default(cuid())
-  symbol      String
-  quantity    Float    // Can be fractional
-  entryPrice  Float
-  currentPrice Float?   // Optional: Can be updated periodically
-  direction   String   // LONG or SHORT (though SHORT might be restricted by Alpaca rules)
-  status      String   // OPEN, CLOSED
-  openedAt    DateTime @default(now())
-  closedAt    DateTime?
-  botId       String
-  pnl         Float?   // Realized or unrealized Profit or Loss
+model Trade {
+  id         String    @id @default(cuid())
+  botId      String
+  bot        Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  symbol     String
+  side       String
+  quantity   Float
+  price      Float
+  timestamp  DateTime
+  status     String
+  profitLoss Float?
+  commission Float?
+  orderId    String?
+  order      Order?    @relation(fields: [orderId], references: [id])
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  // Define relationships
-  bot         TradingBot @relation(fields: [botId], references: [id], onDelete: Cascade) // Cascade delete if bot is deleted
-  trades      Trade[]    // Trades that contributed to this position
+  @@index([botId])
+  @@index([symbol])
+  @@index([timestamp])
+}
+
+model Order {
+  id         String    @id @default(cuid())
+  botId      String
+  bot        Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  externalId String?
+  symbol     String
+  side       String
+  type       String
+  quantity   Float
+  price      Float?
+  status     String
+  filledQty  Float     @default(0)
+  avgPrice   Float?
+  trades     Trade[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  expiresAt  DateTime?
 
   @@index([botId])
   @@index([symbol])
   @@index([status])
 }
 
-// Trade model to store individual trades executed by bots
-model Trade {
-  id          String   @id @default(cuid())
-  symbol      String
-  quantity    Float    // Can be fractional
-  price       Float    // Execution price
-  side        String   // BUY or SELL - Renamed from direction for clarity
-  executedAt  DateTime @default(now())
-  botId       String
-  positionId  String?  // Link to the position this trade affected (optional)
-  orderId     String?  // Alpaca order ID, if available
-  fees        Float?   // Trading fees, if applicable
+model TradingAccount {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider   String
+  accountId  String
+  name       String?
+  status     String    @default("active")
+  balance    Float     @default(0)
+  currency   String    @default("USD")
+  lastSynced DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  // Define relationships
-  bot         TradingBot @relation(fields: [botId], references: [id]) // Don't cascade delete trades if bot is deleted
-  position    Position?  @relation(fields: [positionId], references: [id], onDelete: SetNull) // Set positionId to null if position is deleted
+  @@unique([userId, provider, accountId])
+  @@index([userId])
+}
 
-  @@index([botId])
-  @@index([positionId])
-  @@index([symbol])
-  @@index([executedAt])
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider    String
+  label       String?
+  keyId       String
+  secretKey   String
+  status      String    @default("active")
+  permissions String[]  @default([])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastUsed    DateTime?
+
+  @@index([userId])
+  @@index([provider])
 }

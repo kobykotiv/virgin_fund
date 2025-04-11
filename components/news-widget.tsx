@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Trending } from "lucide-react"
+import { Clock, TrendingUp } from "lucide-react" // Changed Trending to TrendingUp
 
 interface NewsItem {
   id: string
@@ -138,7 +138,7 @@ export function NewsWidget({ limit = 5 }: NewsWidgetProps) {
 
               {item.impactScore > 7 && (
                 <span className="flex items-center text-orange-500">
-                  <Trending className="h-3 w-3 mr-1" />
+                  <TrendingUp className="h-3 w-3 mr-1" /> {/* Changed Trending to TrendingUp */}
                   High Impact
                 </span>
               )}
@@ -159,4 +159,3 @@ export function NewsWidget({ limit = 5 }: NewsWidgetProps) {
     </div>
   )
 }
-

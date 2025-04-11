@@ -1,6 +1,6 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { AlpacaClient, AlpacaConfig } from '@/lib/alpaca-client';
-import { decrypt, decryptWithSalt } from '@/lib/utils/crypto';
+import { decrypt } from '@/lib/utils/crypto'; // Removed decryptWithSalt
 import { 
   ExecutionHistoryRecord, 
   ensureJsonSafe, 
@@ -120,7 +120,7 @@ export class DCABotService {
       // Place market order using notional value
       const order = await alpaca.createOrder({
         symbol: settings.symbol,
-        notional: settings.amount, // Dollar amount as number
+        notional: settings.amount.toString(), // Convert number to string for API
         side: 'buy',
         type: 'market',
         time_in_force: 'day'
@@ -129,13 +129,18 @@ export class DCABotService {
       console.log(`DCA order placed for bot ${botId}:`, order);
 
       // Record trade in database
+      // Convert string values from Alpaca response to numbers for DB
+      const filledQty = parseFloat(order.filled_qty || '0');
+      const filledAvgPrice = parseFloat(order.filled_avg_price || '0');
+
       await this.prisma.trade.create({
         data: {
           symbol: settings.symbol,
-          quantity: order.qty || 0,
-          price: order.filled_avg_price || 0,
-          direction: 'BUY',
+          quantity: filledQty, // Use parsed float
+          price: filledAvgPrice, // Use parsed float
+          side: 'BUY', // Changed from direction to side
           botId: bot.id,
+          orderId: order.id, // Store Alpaca order ID
           executedAt: new Date(order.filled_at || order.submitted_at || Date.now()) // Use fill time if available
         }
       });
@@ -144,11 +149,11 @@ export class DCABotService {
       await this.appendExecutionHistory(bot.id, {
         timestamp: new Date().toISOString(),
         action: 'BUY',
-        amount: settings.amount,
+        amount: settings.amount, // Amount attempted
         status: 'success',
         orderId: order.id,
-        filledQty: order.qty || 0,
-        filledPrice: order.filled_avg_price || 0
+        filledQty: filledQty, // Use parsed float
+        filledPrice: filledAvgPrice // Use parsed float
       });
     } catch (error) {
       console.error(`DCA execution failed for bot ${botId}:`, error);
@@ -179,21 +184,16 @@ export class DCABotService {
     
     const history = isExecutionHistoryArray(jsonData) ? jsonData : [];
     // Convert to input format and filter out undefined values
-    const records = [...history, record].map(r => {
-      const record: Record<string, string | number | boolean | null> = {
-        timestamp: r.timestamp,
-        action: r.action,
-        amount: r.amount,
-        status: r.status
-      };
-      
-      if (r.orderId !== undefined) record.orderId = r.orderId;
-      if (r.filledQty !== undefined) record.filledQty = r.filledQty;
-      if (r.filledPrice !== undefined) record.filledPrice = r.filledPrice;
-      if (r.error !== undefined) record.error = r.error;
-      
-      return record;
-    });
+    const records = [...history, record].map(r => ({
+      timestamp: r.timestamp,
+      action: r.action as Prisma.JsonValue,
+      amount: r.amount,
+      status: r.status as Prisma.JsonValue,
+      ...(r.orderId !== undefined && { orderId: r.orderId }),
+      ...(r.filledQty !== undefined && { filledQty: r.filledQty }),
+      ...(r.filledPrice !== undefined && { filledPrice: r.filledPrice }),
+      ...(r.error !== undefined && { error: r.error })
+    } satisfies Prisma.JsonObject));
 
     // Update with new record and ensure valid JSON data
     await this.prisma.tradingBot.update({

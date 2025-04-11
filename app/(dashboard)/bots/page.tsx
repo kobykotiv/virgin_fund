@@ -1,165 +1,166 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { BotList } from "@/components/bot-list"
-import { BotForm } from "@/components/bot-form"
-import type { Bot, BotStatus } from "@/types/bot"
-import { fetchBots, createBot, updateBot, deleteBot, toggleBotStatus } from "@/lib/bot-api"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { useState, useEffect } from 'react';
+import { DashboardShell } from "@/components/dashboard-shell";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from 'lucide-react';
+// We will create BotList and BotForm components next
+import BotList from '@/components/bot-list'; // Corrected import for default export
+import BotForm from '@/components/bot-form'; // Corrected import for default export
+import { Skeleton } from '@/components/ui/skeleton'; // For loading state
 
-export default function BotsPage() {
-  const [bots, setBots] = useState<Bot[]>([])
-  const [selectedBot, setSelectedBot] = useState<Bot | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-
-  useEffect(() => {
-    loadBots()
-  }, [])
-
-  const loadBots = async () => {
-    setIsLoading(true)
-    try {
-      const botData = await fetchBots()
-      setBots(botData)
-    } catch (error) {
-      console.error("Error loading bots:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load trading bots",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleCreateBot = async (botData: Partial<Bot>) => {
-    try {
-      const newBot = await createBot(botData)
-      setBots([...bots, newBot])
-      setIsFormOpen(false)
-      toast({
-        title: "Success",
-        description: "Trading bot created successfully",
-      })
-    } catch (error) {
-      console.error("Error creating bot:", error)
-      toast({
-        title: "Error",
-        description: "Failed to create trading bot",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleUpdateBot = async (bot: Bot) => {
-    try {
-      const updatedBot = await updateBot(bot)
-      setBots(bots.map((b) => (b.id === bot.id ? updatedBot : b)))
-      setSelectedBot(null)
-      setIsFormOpen(false)
-      toast({
-        title: "Success",
-        description: "Trading bot updated successfully",
-      })
-    } catch (error) {
-      console.error("Error updating bot:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update trading bot",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleDeleteBot = async (botId: string) => {
-    try {
-      await deleteBot(botId)
-      setBots(bots.filter((bot) => bot.id !== botId))
-      toast({
-        title: "Success",
-        description: "Trading bot deleted successfully",
-      })
-    } catch (error) {
-      console.error("Error deleting bot:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete trading bot",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleToggleBotStatus = async (botId: string) => {
-    try {
-      const bot = bots.find((b) => b.id === botId)
-      if (!bot) {
-        console.error(`Bot with ID ${botId} not found in current state`)
-        return
-      }
-
-      const newStatus: BotStatus = bot.status === "active" ? "paused" : "active"
-      const updatedBot = await toggleBotStatus(botId, newStatus)
-      setBots(bots.map((b) => (b.id === botId ? updatedBot : b)))
-
-      toast({
-        title: "Status Updated",
-        description: `Bot ${updatedBot.name} is now ${updatedBot.status}`,
-      })
-    } catch (error) {
-      console.error("Error toggling bot status:", error)
-      toast({
-        title: "Error",
-        description: `Failed to update bot status: ${error instanceof Error ? error.message : "Unknown error"}`,
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleEditBot = (bot: Bot) => {
-    setSelectedBot(bot)
-    setIsFormOpen(true)
-  }
-
-  return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Trading Bots</h1>
-        <Button
-          onClick={() => {
-            setSelectedBot(null)
-            setIsFormOpen(true)
-          }}
-          className="bg-green-600 hover:bg-green-700 text-white"
-        >
-          <Plus className="h-4 w-4 mr-2" /> New Bot
-        </Button>
-      </div>
-
-      <BotList
-        bots={bots}
-        onEdit={handleEditBot}
-        onDelete={handleDeleteBot}
-        onToggleStatus={handleToggleBotStatus}
-        isLoading={isLoading}
-      />
-
-      {isFormOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card p-6 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <BotForm
-              initialBot={selectedBot}
-              onSubmit={selectedBot ? handleUpdateBot : handleCreateBot}
-              onCancel={() => setIsFormOpen(false)}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
+// Define a basic Bot type for now, refine later based on actual data
+export interface Bot {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  active: boolean;
+  createdAt: string;
+  strategy?: string; // Added strategy field
+  settings?: any; // Added settings field (optional for now)
+  description?: string | null; // Added optional description field
+  // Add other relevant fields later
 }
 
+
+export default function BotsPage() {
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false); // State to toggle form visibility
+  const [editingBot, setEditingBot] = useState<Bot | null>(null); // State for editing
+
+  const fetchBots = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/bots');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch bots');
+      }
+      const data: Bot[] = await response.json();
+      setBots(data);
+    } catch (err) {
+      console.error("Error fetching bots:", err);
+      setError(err instanceof Error ? err.message : "Could not load bots.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBots();
+  }, []);
+
+  const handleFormSubmit = () => {
+    // After form submission (create or update), close form and refresh list
+    setShowForm(false);
+    setEditingBot(null);
+    fetchBots(); 
+  };
+
+  const handleEdit = (bot: Bot) => {
+    setEditingBot(bot);
+    setShowForm(true);
+  };
+  
+  const handleDelete = async (botId: string) => {
+     if (!confirm('Are you sure you want to delete this bot?')) {
+       return;
+     }
+     try {
+       const response = await fetch(`/api/bots/${botId}`, { method: 'DELETE' });
+       if (!response.ok) {
+         const errorData = await response.json();
+         throw new Error(errorData.error || 'Failed to delete bot');
+       }
+       fetchBots(); // Refresh list after delete
+       // Add toast notification for success
+     } catch (err) {
+       console.error("Error deleting bot:", err);
+       // Add toast notification for error
+     }
+  };
+  
+   const handleToggleStatus = async (bot: Bot) => {
+     try {
+       const response = await fetch(`/api/bots/${bot.id}/status`, {
+         method: 'PUT',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ active: !bot.active }), // Send the desired new state
+       });
+       if (!response.ok) {
+         const errorData = await response.json();
+         throw new Error(errorData.error || 'Failed to toggle bot status');
+       }
+       fetchBots(); // Refresh list
+       // Add toast notification
+     } catch (err) {
+       console.error("Error toggling bot status:", err);
+       // Add toast notification for error
+     }
+   };
+
+  return (
+    <DashboardShell>
+      <DashboardHeader
+        heading="Trading Bots"
+        text="Create, manage, and monitor your automated trading strategies."
+      >
+        <Button onClick={() => { setEditingBot(null); setShowForm(true); }}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Create Bot
+        </Button>
+      </DashboardHeader>
+      
+      {/* Conditional rendering for the form */}
+      {showForm && ( // Uncommented form rendering
+        <div className="mb-6">
+          <BotForm 
+            bot={editingBot} 
+            onSuccess={handleFormSubmit} 
+            onCancel={() => { setShowForm(false); setEditingBot(null); }} 
+          />
+        </div>
+      )} 
+
+      {/* Display area for the list of bots */}
+      <div className="grid gap-6">
+        {isLoading && (
+           // Simple skeleton loader for the list area
+           <div className="space-y-4">
+             <Skeleton className="h-20 w-full" />
+             <Skeleton className="h-20 w-full" />
+             <Skeleton className="h-20 w-full" />
+           </div>
+        )}
+        {error && <p className="text-red-500">Error loading bots: {error}</p>}
+        {!isLoading && !error && (
+          bots.length > 0 ? (
+            // Uncommented BotList usage
+             <BotList 
+               bots={bots} 
+               onEdit={handleEdit} 
+               onDelete={handleDelete}
+               onToggleStatus={handleToggleStatus} // Keep this prop
+             /> 
+          ) : (
+            <div className="text-center py-10 border border-dashed rounded-lg">
+              <p className="text-muted-foreground">You haven't created any bots yet.</p>
+              <Button 
+                 variant="link" 
+                 className="mt-2" 
+                 onClick={() => { setEditingBot(null); setShowForm(true); }}
+              >
+                 Create your first bot
+              </Button>
+            </div>
+          )
+        )}
+      </div>
+    </DashboardShell>
+  );
+}

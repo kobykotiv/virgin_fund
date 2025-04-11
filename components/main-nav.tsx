@@ -262,6 +262,15 @@ export function MainNav() {
                   </Link>
                 )
               })}
+              <Link
+                href="/dashboard"
+                className={cn(
+                  "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                  pathname === "/dashboard" ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                Dashboard
+              </Link>
             </>
           ) : (
             // Dashboard navigation

@@ -1,63 +1,85 @@
-import { Bot, BotType, BotStatus } from '@/types/bot';
+import { PrismaClient, Prisma } from '@prisma/client';
+import { AlpacaClient, AlpacaConfig } from '@/lib/alpaca-client';
+import { decrypt } from '@/lib/utils/crypto';
+import { BotSettings, BotType, BotStatus } from '@/types/bot-types';
 
 export class BotService {
-  // Store bot data in memory for MVP
-  private static bots: Map<string, Bot> = new Map();
+  private prisma: PrismaClient;
 
-  static async createBot(botData: Partial<Bot>): Promise<Bot> {
-    const bot: Bot = {
-      id: crypto.randomUUID(),
-      name: botData.name || 'Untitled Bot',
-      type: botData.type || 'basket',
-      status: 'paused',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      settings: botData.settings || {},
-      ...botData
-    };
-    
-    this.bots.set(bot.id, bot);
-    return bot;
+  constructor() {
+    this.prisma = new PrismaClient();
   }
 
-  static async getBot(id: string): Promise<Bot | null> {
-    return this.bots.get(id) || null;
+  async createBot(userId: string, config: {
+    name: string;
+    type: BotType;
+    settings: BotSettings;
+  }) {
+    return this.prisma.tradingBot.create({
+      data: {
+        name: config.name,
+        type: config.type,
+        status: 'PAUSED',
+        strategy: config.type.toLowerCase(),
+        active: false,
+        settings: config.settings as Prisma.JsonObject,
+        user: { connect: { id: userId } }
+      }
+    });
   }
 
-  static async listBots(): Promise<Bot[]> {
-    return Array.from(this.bots.values());
+  async getBot(botId: string, userId: string) {
+    return this.prisma.tradingBot.findFirst({
+      where: {
+        id: botId,
+        userId: userId
+      }
+    });
   }
 
-  static async updateBot(id: string, updates: Partial<Bot>): Promise<Bot | null> {
-    const bot = this.bots.get(id);
-    if (!bot) return null;
-
-    const updatedBot = {
-      ...bot,
-      ...updates,
-      updatedAt: new Date().toISOString()
-    };
-    
-    this.bots.set(id, updatedBot);
-    return updatedBot;
+  async updateBot(botId: string, userId: string, updates: {
+    name?: string;
+    status?: BotStatus;
+    active?: boolean;
+    settings?: Partial<BotSettings>;
+  }) {
+    return this.prisma.tradingBot.update({
+      where: {
+        id: botId,
+        userId: userId
+      },
+      data: {
+        ...(updates.name && { name: updates.name }),
+        ...(updates.status && { status: updates.status }),
+        ...(typeof updates.active === 'boolean' && { active: updates.active }),
+        ...(updates.settings && { 
+          settings: {
+            ...updates.settings
+          } as Prisma.JsonObject 
+        })
+      }
+    });
   }
 
-  static async deleteBot(id: string): Promise<boolean> {
-    return this.bots.delete(id);
+  async deleteBot(botId: string, userId: string) {
+    return this.prisma.tradingBot.delete({
+      where: {
+        id: botId,
+        userId: userId
+      }
+    });
   }
 
-  static async toggleBotStatus(id: string, newStatus: BotStatus): Promise<Bot | null> {
-    const bot = this.bots.get(id);
-    if (!bot) return null;
-
-    const updatedBot = {
-      ...bot,
-      status: newStatus,
-      updatedAt: new Date().toISOString()
-    };
-
-    this.bots.set(id, updatedBot);
-    return updatedBot;
+  async listBots(userId: string, type?: BotType) {
+    return this.prisma.tradingBot.findMany({
+      where: {
+        userId,
+        ...(type && { type })
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
   }
 }
 

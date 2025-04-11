@@ -1,7 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { AddBotForm, Grid } from "@/components"
+// Corrected imports: Assuming default exports from specific files
+import { AddBotForm } from "@/components/AddBotForm" // Changed to named import
+import Grid from "@/components/Grid" 
 import { EnhancedDashboard } from "@/components/enhanced-dashboard"
 import { LiveTicker } from "@/components/live-ticker"
 import { AlpacaConfig } from "@/lib/alpaca-client"; // Assuming AlpacaConfig type is exported
@@ -51,7 +53,7 @@ const Home: React.FC = () => {
     fetchBots();
   }, []);
     // Add more bots as needed
-  ])
+  // ])
 
   const handleSubmit = (formData: any) => {
     setBots([...bots, formData])
@@ -72,7 +74,13 @@ const Home: React.FC = () => {
         <div>Loading configuration...</div>
       ) : (
         <EnhancedDashboard
-          apiConfig={apiConfig} // Pass the state variable
+          // Adjust apiConfig structure or pass undefined if null
+          apiConfig={apiConfig ? { 
+              keyId: apiConfig.apiKey, // Map apiKey to keyId
+              secretKey: apiConfig.secretKey, 
+              baseUrl: apiConfig.isPaper ? "https://paper-api.alpaca.markets" : "https://api.alpaca.markets", // Derive baseUrl
+              isPaper: apiConfig.isPaper 
+            } : undefined} 
           onBotAction={async (botId, action) => {
             // Handle bot actions (start/stop/delete)
             // TODO: Replace state update with API calls to backend
@@ -97,7 +105,12 @@ const Home: React.FC = () => {
       }}
       // Pass isLoading state based on config loading and potentially portfolio loading
       isLoading={isLoadingConfig /* || isLoadingPortfolio */}
-      portfolio={{ // Placeholder portfolio data
+      // Provide a minimal valid Portfolio object or null
+      portfolio={{ 
+        id: 'placeholder-id', // Add required fields
+        name: 'Placeholder Portfolio',
+        createdAt: new Date().toISOString(), // Convert to string
+        updatedAt: new Date().toISOString(), // Convert to string
         positions: [],
         totalValue: 0,
         cashBalance: 0
@@ -141,22 +154,18 @@ const Home: React.FC = () => {
         console.log("Deleting bot:", botId);
         setBots(bots.filter(b => b.id !== botId));
       }}
+       onAddBot={() => { // Added placeholder onAddBot prop
+         console.log("Add bot clicked on Home page"); 
+         // This likely should trigger a modal or navigation in a real scenario
+         <AddBotForm onSubmit={handleSubmit} />
+       }}
       />
       )}
 
       {/* Bot Creation Dialog - Consider moving inside EnhancedDashboard or managing visibility */}
       <AddBotForm
         onSubmit={handleSubmit} // This likely needs adjustment - should call onBotCreate prop
-        availableAssets={[
-          'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
-        'BTC/USD', 'ETH/USD', 'SOL/USD'
-      ]}
-      botTypes={[
-        { value: "grid", label: "Grid Trading" },
-        { value: "dca", label: "DCA" },
-        { value: "indicator", label: "Indicator" },
-        { value: "basket", label: "Basket" },
-      ]}
+        // Removed availableAssets and botTypes props as they are defined internally
       />
 
       {/* Live Market Data Ticker */}

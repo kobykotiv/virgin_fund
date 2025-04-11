@@ -1,111 +1,76 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { BotType, TradingBot } from "@/types/bot"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Play, Pause, Edit, Trash2, ChevronDown } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MiniChart } from "@/components/mini-chart"
+import { Bot } from "@/app/(dashboard)/bots/page"; // Import the Bot type from the page
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Trash2, Edit, Play, Pause } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns'; // For relative time formatting
 
 interface BotListProps {
-  filter: BotType | "all"
+  bots: Bot[];
+  onEdit: (bot: Bot) => void;
+  onDelete: (botId: string) => void;
+  onToggleStatus: (bot: Bot) => void; // Pass the whole bot object
 }
 
-export function BotList({ filter }: BotListProps) {
-  // This would be replaced with actual API call/state management
-  const [bots, setBots] = useState<TradingBot[]>([])
+export default function BotList({ bots, onEdit, onDelete, onToggleStatus }: BotListProps) {
 
-  const filteredBots = filter === "all" 
-    ? bots 
-    : bots.filter(bot => bot.type === filter)
-
-  const toggleBotStatus = (botId: string) => {
-    setBots(bots.map(bot => 
-      bot.id === botId 
-        ? { ...bot, isActive: !bot.isActive }
-        : bot
-    ))
-  }
-
-  const deleteBotById = async (botId: string) => {
-    // API call would go here
-    setBots(bots.filter(bot => bot.id !== botId))
-  }
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'paused':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'error':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <div className="grid gap-4">
-      {filteredBots.length === 0 ? (
-        <div className="text-center py-6 text-muted-foreground">
-          No bots found. Create one to get started.
-        </div>
-      ) : (
-        filteredBots.map((bot) => (
-          <Card key={bot.id} className="p-4">
-            <div className="flex items-center justify-between">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {bots.map((bot) => (
+        <Card key={bot.id}>
+          <CardHeader>
+            <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-semibold">{bot.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {bot.type.toUpperCase()} • {bot.pair}
-                </p>
+                <CardTitle className="text-lg">{bot.name}</CardTitle>
+                <CardDescription>Type: {bot.type} | Created: {formatDistanceToNow(new Date(bot.createdAt), { addSuffix: true })}</CardDescription>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleBotStatus(bot.id)}
-                >
-                  {bot.isActive ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                </Button>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>
-                      <Edit className="mr-2 h-4 w-4" /> Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => deleteBotById(bot.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <Badge className={`capitalize ${getStatusColor(bot.status)}`}>
+                {bot.status}
+              </Badge>
             </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-2xl font-bold">
-                  {bot.performance.totalPnL}%
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Total P&L
-                </div>
-              </div>
-              <div className="h-20">
-                <MiniChart data={bot.performance.history} />
-              </div>
+          </CardHeader>
+          <CardContent>
+            {/* Display some key settings or info here later */}
+            <p className="text-sm text-muted-foreground">Strategy: {bot.strategy || 'N/A'}</p> 
+            {/* Add more details from bot.settings if available */}
+          </CardContent>
+          <CardFooter className="flex justify-between items-center">
+             <div className="flex items-center space-x-2">
+               <Switch
+                 id={`active-${bot.id}`}
+                 checked={bot.active}
+                 onCheckedChange={() => onToggleStatus(bot)}
+                 aria-label={bot.active ? "Deactivate Bot" : "Activate Bot"}
+               />
+               <span className="text-xs font-medium">{bot.active ? 'Active' : 'Inactive'}</span>
+             </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="icon" onClick={() => onEdit(bot)} aria-label="Edit Bot">
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button variant="destructive" size="icon" onClick={() => onDelete(bot.id)} aria-label="Delete Bot">
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-          </Card>
-        ))
-      )}
+          </CardFooter>
+        </Card>
+      ))}
     </div>
-  )
+  );
 }
-

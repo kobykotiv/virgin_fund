@@ -1,45 +1,32 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Choose one of the following data sources (PostgreSQL or MongoDB)
-
-// For PostgreSQL:
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// For MongoDB (uncomment if using MongoDB):
-// datasource db {
-//   provider = "mongodb"
-//   url      = env("DATABASE_URL")
-// }
-
-// User model to store user information and encrypted API credentials
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
+  email         String    @unique
   password      String?   // Hashed password for email/password auth
+  image         String?
+  emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  
+
   // Encrypted Alpaca API credentials
-  alpacaApiKey       String?
-  alpacaSecretKey    String?
-  alpacaIsPaper      Boolean  @default(true)
-  tradingEnabled     Boolean  @default(false)
-  
+  alpacaApiKey       String? // Encrypted
+  alpacaSecretKey    String? // Encrypted - Renamed from alpacaSecret
+  alpacaIsPaper      Boolean   @default(true)
+  tradingEnabled     Boolean   @default(false) // User must enable after adding keys
+
   // Auth relations
   accounts      Account[]
   sessions      Session[]
-  
+
   // App relations
   bots          TradingBot[]
 }
@@ -55,8 +42,8 @@ model Account {
   expires_at         Int?
   token_type         String?
   scope              String?
-  id_token          String?  @db.Text
-  session_state     String?
+  id_token           String?  @db.Text
+  session_state      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -84,91 +71,75 @@ model TradingBot {
   id          String   @id @default(cuid())
   name        String
   description String?
-  type        String
-  status      String   @default("paused")
-  strategy    String
-  active      Boolean  @default(false)
+  type        String   // e.g., 'DCA', 'Indicator', 'BasketRebalance'
+  status      String   @default("paused") // e.g., 'active', 'paused', 'error'
+  strategy    String   // Name or identifier of the specific strategy logic
+  active      Boolean  @default(false) // Whether the bot is currently running
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      String
-  
-  // Volatility tracking fields
-  executionHistory Json[]  // Store execution records with volatility data
-  volatilityMetrics Json?  // Store latest volatility calculations
-  lastVolatilityCheck DateTime? // Last time volatility was calculated
-  
+  lastRunAt   DateTime? // Track when the bot logic last executed
+
+  // Bot-specific settings stored as JSON
+  // Example for DCA: { symbol: "AAPL", amount: 100, interval: "weekly" }
+  // Example for Indicator: { symbol: "BTC/USD", indicator: "RSI", buyThreshold: 30, sellThreshold: 70 }
+  settings    Json?
+
+  // Store execution records with relevant data
+  executionHistory Json[] @default([]) // Array of execution records
+
   // Define relationships
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   trades      Trade[]
-  positions   Position[]
-  settings    Json?    // Store bot-specific settings as JSON
+  positions   Position[] // Track positions managed *by this specific bot*
 
   @@index([userId])
+  @@index([status])
+  @@index([active])
 }
 
-// Position model to track open trading positions
+// Position model to track open trading positions *managed by a specific bot*
 model Position {
   id          String   @id @default(cuid())
   symbol      String
-  quantity    Float
+  quantity    Float    // Can be fractional
   entryPrice  Float
-  currentPrice Float?
-  direction   String   // LONG or SHORT
+  currentPrice Float?   // Optional: Can be updated periodically
+  direction   String   // LONG or SHORT (though SHORT might be restricted by Alpaca rules)
   status      String   // OPEN, CLOSED
   openedAt    DateTime @default(now())
   closedAt    DateTime?
   botId       String
-  pnl         Float?   // Profit or loss
-  
-  // Volatility tracking
-  entryVolatility Float?  // Volatility at position entry
-  currentVolatility Float? // Current volatility
-  
+  pnl         Float?   // Realized or unrealized Profit or Loss
+
   // Define relationships
-  bot         TradingBot @relation(fields: [botId], references: [id])
-  trades      Trade[]
+  bot         TradingBot @relation(fields: [botId], references: [id], onDelete: Cascade) // Cascade delete if bot is deleted
+  trades      Trade[]    // Trades that contributed to this position
 
   @@index([botId])
   @@index([symbol])
+  @@index([status])
 }
 
-// Trade model to store individual trades
+// Trade model to store individual trades executed by bots
 model Trade {
   id          String   @id @default(cuid())
   symbol      String
-  quantity    Float
-  price       Float
-  direction   String   // BUY or SELL
+  quantity    Float    // Can be fractional
+  price       Float    // Execution price
+  side        String   // BUY or SELL - Renamed from direction for clarity
   executedAt  DateTime @default(now())
   botId       String
-  positionId  String?
-  
-  // Volatility data at time of trade
-  volatility  Float?
-  volatilityAdjustment Float? // How much the order was adjusted
-  
+  positionId  String?  // Link to the position this trade affected (optional)
+  orderId     String?  // Alpaca order ID, if available
+  fees        Float?   // Trading fees, if applicable
+
   // Define relationships
-  bot         TradingBot @relation(fields: [botId], references: [id])
-  position    Position? @relation(fields: [positionId], references: [id])
+  bot         TradingBot @relation(fields: [botId], references: [id]) // Don't cascade delete trades if bot is deleted
+  position    Position?  @relation(fields: [positionId], references: [id], onDelete: SetNull) // Set positionId to null if position is deleted
 
   @@index([botId])
   @@index([positionId])
-}
-
-// Market data model to cache market information
-model MarketData {
-  id          String   @id @default(cuid())
-  symbol      String   @unique
-  lastPrice   Float
-  dailyHigh   Float?
-  dailyLow    Float?
-  volume      Float?
-  updatedAt   DateTime @default(now())
-  source      String   // ALPACA, COINGECKO, etc.
-  metadata    Json?    // Additional market data
-  
-  // Volatility metrics
-  historicalVolatility Float?
-  impliedVolatility   Float?
-  volatilityUpdatedAt DateTime?
+  @@index([symbol])
+  @@index([executedAt])
 }

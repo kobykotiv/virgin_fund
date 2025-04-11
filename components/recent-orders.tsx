@@ -1,139 +1,153 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { AlpacaOrder } from '@/lib/alpaca-client'; // Assuming interface is exported
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from 'date-fns';
 
-interface Order {
-  id: string;
-  symbol: string;
-  qty: string;
-  side: 'buy' | 'sell';
-  type: string;
-  status: string;
-  submitted_at: string;
-  filled_at: string | null;
-  limit_price: string | null;
-  filled_qty: string;
+// Define a type for the transformed order data used in the table
+interface DisplayOrder extends Omit<AlpacaOrder, 
+  'qty' | 'notional' | 'limit_price' | 'stop_price' | 'filled_avg_price' | 'filled_qty' | 'trail_price' | 'trail_percent'> {
+  qty?: number;
+  notional?: number;
+  limit_price?: number;
+  stop_price?: number;
+  filled_avg_price?: number;
+  filled_qty?: number;
+  trail_price?: number;
+  trail_percent?: number;
 }
 
-export function RecentOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+export function RecentOrders({ limit = 5 }: { limit?: number }) {
+  const [orders, setOrders] = useState<DisplayOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchOrders() {
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        const response = await fetch('/api/market/orders?status=all');
-        
+        // Fetch only recent orders, e.g., limit to 10 or 20, sort by date descending
+        const response = await fetch(`/api/alpaca/orders?limit=${limit}&status=all&direction=desc`); 
         if (!response.ok) {
-          throw new Error(`HTTP error ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to fetch orders (${response.status})`);
         }
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch orders');
-        }
-        
-        setOrders(result.data);
+        // API route already transforms string numbers to floats
+        const data: DisplayOrder[] = await response.json(); 
+        setOrders(data);
       } catch (err) {
-        console.error('Error fetching orders:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+        console.error("Error fetching orders:", err);
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
-    }
-    
-    fetchOrders();
-  }, []);
+    };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'filled':
-        return 'bg-green-100 text-green-800';
-      case 'new':
-      case 'partially_filled':
-        return 'bg-blue-100 text-blue-800';
-      case 'canceled':
-      case 'expired':
-        return 'bg-amber-100 text-amber-800';
-      case 'rejected':
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+    fetchOrders();
+     // Optional: Add a refresh interval if needed
+     // const interval = setInterval(fetchOrders, 60000); // Refresh every minute
+     // return () => clearInterval(interval);
+  }, [limit]);
+
+   const formatCurrency = (value: number | undefined) => {
+     if (value === undefined || value === null || isNaN(value)) return '$--.--';
+     return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+   };
+
+   const formatQuantity = (value: number | undefined) => {
+      if (value === undefined || value === null || isNaN(value)) return '--';
+      return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+   };
+
+   const getStatusVariant = (status: DisplayOrder['status']): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' => {
+      switch (status) {
+         case 'filled':
+         case 'accepted':
+            return 'success';
+         case 'canceled':
+         case 'expired':
+         case 'rejected':
+            return 'destructive';
+         case 'new':
+         case 'pending_new':
+         case 'partially_filled':
+            return 'secondary'; // Or maybe 'warning' if you add that variant
+         default:
+            return 'outline';
+      }
+   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent Orders</CardTitle>
-        <CardDescription>Your recent Alpaca orders</CardDescription>
+        <CardDescription>Your latest order activity.</CardDescription>
       </CardHeader>
       <CardContent>
-        {loading ? (
+        {isLoading && (
           <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
           </div>
-        ) : error ? (
-          <div className="p-4 border border-red-300 bg-red-50 text-red-800 rounded-md">
-            Error: {error}
+        )}
+        {error && (
+          <div className="text-destructive flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            <p>Error loading orders: {error}</p>
           </div>
-        ) : orders.length > 0 ? (
+        )}
+        {!isLoading && !error && orders.length === 0 && (
+          <p className="text-center text-muted-foreground py-4">No recent orders found.</p>
+        )}
+        {!isLoading && !error && orders.length > 0 && (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Symbol</TableHead>
                 <TableHead>Side</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead className="text-right">Qty/Notional</TableHead>
+                <TableHead className="text-right">Filled Price</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Submitted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders.map((order) => (
-                <TableRow key={order.id}>
+                <TableRow key={order.id || order.client_order_id}>
                   <TableCell className="font-medium">{order.symbol}</TableCell>
-                  <TableCell className={order.side === 'buy' ? 'text-green-600' : 'text-red-600'}>
-                    {order.side.toUpperCase()}
-                  </TableCell>
-                  <TableCell>{order.type}</TableCell>
-                  <TableCell>{order.qty}</TableCell>
                   <TableCell>
-                    {order.limit_price ? formatCurrency(parseFloat(order.limit_price)) : 'Market'}
+                     <span className={`flex items-center gap-1 ${order.side === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
+                       {order.side === 'buy' ? <ArrowUpRight className="h-4 w-4"/> : <ArrowDownLeft className="h-4 w-4"/>}
+                       {order.side.toUpperCase()}
+                     </span>
+                  </TableCell>
+                  <TableCell className="capitalize">{order.type?.replace('_', ' ') || 'N/A'}</TableCell>
+                  <TableCell className="text-right">
+                     {order.qty ? formatQuantity(order.qty) : order.notional ? formatCurrency(order.notional) : '--'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                     {order.filled_avg_price ? formatCurrency(order.filled_avg_price) : '--'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getStatusColor(order.status)}>
-                      {order.status}
-                    </Badge>
+                     <Badge variant={getStatusVariant(order.status)} className="capitalize text-xs">
+                       {order.status?.replace(/_/g, ' ') || 'Unknown'}
+                     </Badge>
                   </TableCell>
-                  <TableCell>{formatDate(order.submitted_at)}</TableCell>
+                  <TableCell className="text-right text-xs text-muted-foreground">
+                     {order.submitted_at ? formatDistanceToNow(new Date(order.submitted_at), { addSuffix: true }) : '--'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        ) : (
-          <div className="text-center py-4 text-muted-foreground">
-            No orders found
-          </div>
         )}
       </CardContent>
     </Card>

@@ -43,17 +43,28 @@ export async function GET() {
       isPaper: user.alpacaIsPaper,
     });
 
-    // Fetch account data
-    const accountData = await alpaca.getAccount();
+    // Fetch positions data
+    const positionsData = await alpaca.getPositions();
 
-    return NextResponse.json(accountData);
+    // Optional: Transform data if needed before sending to client
+    // e.g., convert string numbers to actual numbers if the frontend expects them
+    const transformedPositions = positionsData.map(pos => ({
+      ...pos,
+      qty: parseFloat(pos.qty),
+      market_value: parseFloat(pos.market_value),
+      cost_basis: parseFloat(pos.cost_basis),
+      unrealized_pl: parseFloat(pos.unrealized_pl),
+      current_price: parseFloat(pos.current_price),
+      avg_entry_price: parseFloat(pos.avg_entry_price),
+    }));
+
+
+    return NextResponse.json(transformedPositions);
 
   } catch (error) {
-    console.error('Error fetching Alpaca account:', error);
-    // Handle specific Alpaca client errors if possible
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch Alpaca account data.';
-    // Determine appropriate status code based on error type if possible
-    const status = errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ? 403 : 500; 
+    console.error('Error fetching Alpaca positions:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch Alpaca positions data.';
+    const status = errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ? 403 : 500;
     return NextResponse.json({ error: errorMessage }, { status });
   }
 }

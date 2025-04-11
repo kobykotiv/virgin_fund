@@ -4,6 +4,7 @@ import { DashboardNav } from "@/components/dashboard-nav"
 import { UserAccountNav } from "@/components/user-account-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 import { DashboardFooter } from "@/components/dashboard-footer"
+import TickerTapeWidget from "@/components/tradingview/TickerTapeWidget" // Import the widget
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -64,6 +65,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
       </header>
+      {/* Add Ticker Tape below header */}
+      <div className="w-full">
+        <TickerTapeWidget colorTheme="dark" /> {/* Use default props or customize */}
+      </div>
       <div className="container grid flex-1 gap-12 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
         <aside className="hidden w-[200px] flex-col md:flex lg:w-[240px]">
           <DashboardNav items={dashboardNavItems} />
@@ -76,4 +81,3 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   )
 }
-

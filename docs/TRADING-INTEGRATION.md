@@ -44,6 +44,29 @@ async function placeFractionalOrder(
 }
 ```
 
+## Chart Integration
+
+We use TradingView widgets for chart visualization:
+
+```typescript
+// TradingView widget integration
+interface TradingViewConfig {
+  symbol: string;  // Asset symbol (e.g., 'AAPL', 'BTCUSD')
+  theme: 'light' | 'dark';
+  interval: string; // Timeframe: '1', '5', '15', '60', 'D', 'W'
+  container_id: string;
+}
+
+// Usage example
+new TradingView.widget({
+  symbol: 'AAPL',
+  theme: 'light',
+  interval: 'D',
+  container_id: 'tradingview_chart',
+  // Additional configuration...
+});
+```
+
 ## Testing Support
 
 ```typescript

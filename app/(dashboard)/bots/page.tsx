@@ -128,8 +128,8 @@ export default function BotsPage() {
               'BTC/USD', 'ETH/USD', 'SOL/USD'
             ]}
             botTypes={[
-              { value: "grid", label: "Grid Trading" },
               { value: "dca", label: "DCA" },
+              { value: "grid", label: "Grid Trading" },
               { value: "indicator", label: "Indicator" },
               { value: "basket", label: "Basket" },
             ]}

@@ -1,4 +1,4 @@
-export type BotType = 'grid' | 'dca' | 'momentum' | 'trend' | 'custom'
+export type BotType = 'grid' | 'dca' | 'momentum' | 'trend' | 'custom' | 'basket' | 'indicator'
 
 export type BotStatus = 'active' | 'paused' | 'error'
 
@@ -55,6 +55,9 @@ export interface Bot {
   createdAt: string
   updatedAt: string
   settings: Record<string, any>
+  strategy?: string
+  description?: string
+  allocation?: number  // Added for demo mode support
   indicatorConfig?: IndicatorConfig
   gridConfig?: GridConfig
   dcaConfig?: DCAConfig

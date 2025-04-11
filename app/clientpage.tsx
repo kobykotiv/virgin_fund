@@ -34,8 +34,10 @@ import { CookieConsent } from "@/components/cookie-consent"
 import { SignalsList } from "@/components/signals-list"
 import { useAuth } from "@/providers/auth-provider"
 import { PortfolioAllocation } from "@/components/portfolio-allocation"
+import { useContent } from '@/hooks/use-content'
 
 export default function LandingPage() {
+  const { content } = useContent()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const auth = useAuth()
 
@@ -50,7 +52,7 @@ export default function LandingPage() {
         <div id="header-container" className="container flex h-16 items-center justify-between">
           <div id="header-logo" className="flex items-center gap-2">
             <Bot className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">GenEric Trading bot Platform</span>
+            <span className="text-xl font-bold">{content.hero.title}</span>
           </div>
           <nav id="main-nav" className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
@@ -111,15 +113,13 @@ export default function LandingPage() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <Badge className="inline-flex rounded-md px-3.5 py-1.5" variant="secondary">
-                    <span className="text-xs font-medium">Self-Hosted & Secure</span>
+                    <span className="text-xs font-medium">{content.hero.subtitle}</span>
                   </Badge>
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    Virgin Fund : GenEric TraDer AI
+                    {content.hero.title}
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Our AI-powered platform bridges the gap between bot-based trading and copy trading with our
-                    isolated, self-hosted solution. Connect to Alpaca Markets and CoinGecko for real-time data and paper
-                    trading.
+                    {content.hero.description}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -218,60 +218,15 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Bot className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Automated Trading Bots</h3>
-                  <p className="text-muted-foreground">
-                    Create and deploy sophisticated trading bots with customizable strategies and risk parameters.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Copy className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Copy Trading</h3>
-                  <p className="text-muted-foreground">
-                    Follow and automatically copy the trades of successful traders in your network.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Lock className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Self-Hosted & Isolated</h3>
-                  <p className="text-muted-foreground">
-                    Run everything on your own infrastructure with complete privacy and control over your data.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <BarChart2 className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Advanced Backtesting</h3>
-                  <p className="text-muted-foreground">
-                    Test your strategies against historical data before risking real capital.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Globe className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Multi-Market Support</h3>
-                  <p className="text-muted-foreground">
-                    Trade stocks, ETFs, options, cryptocurrencies, and DeFi assets all from one platform.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Shield className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Risk Management</h3>
-                  <p className="text-muted-foreground">
-                    Built-in risk controls including stop-loss, take-profit, and maximum drawdown protection.
-                  </p>
-                </CardContent>
-              </Card>
+              {content.features.map((feature) => (
+                <Card key={feature.id} className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className={feature.icon} className="h-12 w-12 mb-4 text-primary" />
+                    <h3 className="text-xl font-bold">{feature.title}</h3>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
@@ -722,78 +677,29 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-primary" />
+              {content.testimonials.map((testimonial) => (
+                <Card key={testimonial.id} className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Users className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{testimonial.author}</p>
+                          <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">Alex T.</p>
-                        <p className="text-xs text-muted-foreground">Individual Investor</p>
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground">
-                      "I've been able to automate my entire investment strategy. The backtesting feature saved me from
-                      making some costly mistakes."
-                    </p>
-                    <div className="flex text-yellow-500">
-                      {[...Array(5)].map((_, i) => (
-                        <Sparkles key={i} className="h-4 w-4" />
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Sarah K.</p>
-                        <p className="text-xs text-muted-foreground">Crypto Trader</p>
+                      <p className="text-muted-foreground">{testimonial.quote}</p>
+                      <div className="flex text-yellow-500">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <Sparkles key={i} className="h-4 w-4" />
+                        ))}
                       </div>
                     </div>
-                    <p className="text-muted-foreground">
-                      "The grid trading bot has completely changed how I trade crypto. I'm making consistent profits
-                      even in sideways markets."
-                    </p>
-                    <div className="flex text-yellow-500">
-                      {[...Array(5)].map((_, i) => (
-                        <Sparkles key={i} className="h-4 w-4" />
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg md:col-span-2 lg:col-span-1">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Michael R.</p>
-                        <p className="text-xs text-muted-foreground">Family Office Manager</p>
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground">
-                      "The self-hosted nature of GenEric TraDer gives us the privacy and security we need for our
-                      clients. The performance has exceeded our expectations."
-                    </p>
-                    <div className="flex text-yellow-500">
-                      {[...Array(5)].map((_, i) => (
-                        <Sparkles key={i} className="h-4 w-4" />
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
@@ -814,410 +720,42 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-3 lg:grid-cols-5">
-              {/* Free Insta Tier */}
-              <Card className="relative overflow-hidden border-2 border-muted bg-background/60 backdrop-blur-md shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <h3 className="text-2xl font-bold">Free Insta</h3>
-                    <p className="text-4xl font-bold">$0</p>
-                    <p className="text-muted-foreground">Perfect for beginners exploring automated trading</p>
-                    <ul className="space-y-2">
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Up to 5 trading bots</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Grid (1%) strategy</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>DCA strategy</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Paper trading only</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Basic backtesting</span>
-                      </li>
-                    </ul>
-                    <Button className="w-full mt-4">Get Started</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Baby Tier */}
-              <Card className="relative overflow-hidden border-2 border-muted bg-background/60 backdrop-blur-md shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <h3 className="text-2xl font-bold">Baby</h3>
-                    <p className="text-4xl font-bold">
-                      $9<span className="text-lg font-normal">/month</span>
-                    </p>
-                    <p className="text-muted-foreground">For traders ready to go live with basic strategies</p>
-                    <ul className="space-y-2">
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Up to 10 trading bots</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Live trading enabled</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Grid & DCA strategies</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Email notifications</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Standard backtesting</span>
-                      </li>
-                    </ul>
-                    <Button className="w-full mt-4">Start 7-Day Trial</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Middle Tier */}
-              <Card className="relative overflow-hidden border-2 border-primary bg-background/60 backdrop-blur-md shadow-lg">
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
-                  Popular
-                </div>
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <h3 className="text-2xl font-bold">Middle</h3>
-                    <p className="text-4xl font-bold">
-                      $29<span className="text-lg font-normal">/month</span>
-                    </p>
-                    <p className="text-muted-foreground">For serious traders using technical indicators</p>
-                    <ul className="space-y-2">
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Up to 15 trading bots</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Indicator-based strategies</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Advanced backtesting</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>SMS & email alerts</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Priority support</span>
-                      </li>
-                    </ul>
-                    <Button className="w-full mt-4">Start 14-Day Trial</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Big Tier */}
-              <Card className="relative overflow-hidden border-2 border-muted bg-background/60 backdrop-blur-md shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <h3 className="text-2xl font-bold">Big</h3>
-                    <p className="text-4xl font-bold">
-                      $99<span className="text-lg font-normal">/month</span>
-                    </p>
-                    <p className="text-muted-foreground">For advanced traders with multiple strategies</p>
-                    <ul className="space-y-2">
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Up to 25 trading bots</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>All strategy types</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Basket trading</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>API access</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>VIP support</span>
-                      </li>
-                    </ul>
-                    <Button className="w-full mt-4">Start 14-Day Trial</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* XL Tier */}
-              <Card className="relative overflow-hidden border-2 border-muted bg-background/60 backdrop-blur-md shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    <h3 className="text-2xl font-bold">XL</h3>
-                    <p className="text-4xl font-bold">
-                      $199<span className="text-lg font-normal">/month</span>
-                    </p>
-                    <p className="text-muted-foreground">For professional traders and institutions</p>
-                    <ul className="space-y-2">
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Unlimited trading bots</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>All features included</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>White-label option</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Custom integrations</span>
-                      </li>
-                      <li className="flex items-center">
-                        <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Dedicated account manager</span>
-                      </li>
-                    </ul>
-                    <Button variant="outline" className="w-full mt-4">
-                      Contact Sales
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Comparison Table */}
-            <div className="mt-16 max-w-6xl mx-auto">
-              <h3 className="text-2xl font-bold text-center mb-8">Plan Comparison</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-4 px-6 text-left">Feature</th>
-                      <th className="py-4 px-6 text-center">Free Insta</th>
-                      <th className="py-4 px-6 text-center">Baby</th>
-                      <th className="py-4 px-6 text-center">Middle</th>
-                      <th className="py-4 px-6 text-center">Big</th>
-                      <th className="py-4 px-6 text-center">XL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b bg-muted/30">
-                      <td className="py-4 px-6 font-medium">Price</td>
-                      <td className="py-4 px-6 text-center">$0</td>
-                      <td className="py-4 px-6 text-center">$9/mo</td>
-                      <td className="py-4 px-6 text-center">$29/mo</td>
-                      <td className="py-4 px-6 text-center">$99/mo</td>
-                      <td className="py-4 px-6 text-center">$199/mo</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-medium">Max Trading Bots</td>
-                      <td className="py-4 px-6 text-center">5</td>
-                      <td className="py-4 px-6 text-center">10</td>
-                      <td className="py-4 px-6 text-center">15</td>
-                      <td className="py-4 px-6 text-center">25</td>
-                      <td className="py-4 px-6 text-center">Unlimited</td>
-                    </tr>
-                    <tr className="border-b bg-muted/30">
-                      <td className="py-4 px-6 font-medium">Live Trading</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-medium">Grid Strategy</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="border-b bg-muted/30">
-                      <td className="py-4 px-6 font-medium">DCA Strategy</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-medium">Indicator-Based Strategies</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="border-b bg-muted/30">
-                      <td className="py-4 px-6 font-medium">Basket Trading</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-medium">Backtesting</td>
-                      <td className="py-4 px-6 text-center">Basic</td>
-                      <td className="py-4 px-6 text-center">Standard</td>
-                      <td className="py-4 px-6 text-center">Advanced</td>
-                      <td className="py-4 px-6 text-center">Advanced</td>
-                      <td className="py-4 px-6 text-center">Advanced+</td>
-                    </tr>
-                    <tr className="border-b bg-muted/30">
-                      <td className="py-4 px-6 font-medium">API Access</td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-rose-500 w-6 h-6 text-rose-500">
-                          ✕
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center justify-center rounded-full border border-green-500 bg-green-500/10 w-6 h-6 text-green-500">
-                          ✓
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-medium">Support</td>
-                      <td className="py-4 px-6 text-center">Community</td>
-                      <td className="py-4 px-6 text-center">Email</td>
-                      <td className="py-4 px-6 text-center">Priority</td>
-                      <td className="py-4 px-6 text-center">VIP</td>
-                      <td className="py-4 px-6 text-center">Dedicated</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2">
+              {content.pricing.map((plan) => (
+                <Card 
+                  key={plan.id} 
+                  className={cn(
+                    "relative overflow-hidden border-2 bg-background/60 backdrop-blur-md shadow-lg",
+                    plan.isPopular ? "border-primary" : "border-muted"
+                  )}
+                >
+                  {plan.isPopular && (
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
+                      Popular
+                    </div>
+                  )}
+                  <CardContent className="p-6">
+                    <div className="flex flex-col space-y-4">
+                      <h3 className="text-2xl font-bold">{plan.name}</h3>
+                      <p className="text-4xl font-bold">
+                        ${plan.price}<span className="text-lg font-normal">/month</span>
+                      </p>
+                      <p className="text-muted-foreground">{plan.description}</p>
+                      <ul className="space-y-2">
+                        {plan.features.map((feature, i) => (
+                          <li key={i} className="flex items-center">
+                            <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button className="w-full mt-4">
+                        {plan.price === 0 ? 'Get Started' : 'Start Trial'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>

@@ -1,4 +1,4 @@
-"use client"
+just"use client"
 
 import { useEffect, useRef } from "react"
 
@@ -12,93 +12,90 @@ export function AnimatedBackground() {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas dimensions
+    // Set canvas size
     const resizeCanvas = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
     }
-
     resizeCanvas()
     window.addEventListener("resize", resizeCanvas)
 
-    // Create particles
-    const particlesArray: Particle[] = []
-    const numberOfParticles = 100
-    const colors = ["rgba(66, 133, 244, 0.3)", "rgba(219, 68, 55, 0.3)", "rgba(244, 180, 0, 0.3)", "rgba(15, 157, 88, 0.3)"]
+    // Particle system
+    const particles: Particle[] = []
+    const particleCount = 50
+    const maxLineDistance = 150
 
     class Particle {
       x: number
       y: number
+      vx: number
+      vy: number
       size: number
-      speedX: number
-      speedY: number
-      color: string
 
       constructor() {
         this.x = Math.random() * canvas.width
         this.y = Math.random() * canvas.height
-        this.size = Math.random() * 5 + 1
-        this.speedX = Math.random() * 1 - 0.5
-        this.speedY = Math.random() * 1 - 0.5
-        this.color = colors[Math.floor(Math.random() * colors.length)]
+        this.vx = (Math.random() - 0.5) * 0.5
+        this.vy = (Math.random() - 0.5) * 0.5
+        this.size = Math.random() * 2 + 1
       }
 
       update() {
-        this.x += this.speedX
-        this.y += this.speedY
+        this.x += this.vx
+        this.y += this.vy
 
-        if (this.x > canvas.width) this.x = 0
-        else if (this.x < 0) this.x = canvas.width
-        if (this.y > canvas.height) this.y = 0
-        else if (this.y < 0) this.y = canvas.height
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1
       }
 
       draw() {
-        ctx.fillStyle = this.color
+        if (!ctx) return
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+        ctx.fillStyle = "rgba(var(--primary), 0.1)"
         ctx.fill()
       }
     }
 
-    function init() {
-      for (let i = 0; i < numberOfParticles; i++) {
-        particlesArray.push(new Particle())
-      }
+    // Create initial particles
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle())
     }
 
+    // Animation loop
     function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (let i = 0; i < particlesArray.length; i++) {
-        particlesArray[i].update()
-        particlesArray[i].draw()
-      }
-      connectParticles()
-      requestAnimationFrame(animate)
-    }
+      if (!ctx || !canvas) return
 
-    function connectParticles() {
-      for (let a = 0; a < particlesArray.length; a++) {
-        for (let b = a; b < particlesArray.length; b++) {
-          const dx = particlesArray[a].x - particlesArray[b].x
-          const dy = particlesArray[a].y - particlesArray[b].y
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Update and draw particles
+      particles.forEach((particle) => {
+        particle.update()
+        particle.draw()
+      })
+
+      // Draw lines between nearby particles
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x
+          const dy = particles[i].y - particles[j].y
           const distance = Math.sqrt(dx * dx + dy * dy)
 
-          if (distance < 100) {
-            // Use a static color instead of CSS variables
-            const opacity = 0.1 - distance / 1000
-            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity})` // Use a default blue color
-            ctx.lineWidth = 1
+          if (distance < maxLineDistance) {
+            const opacity = (1 - distance / maxLineDistance) * 0.2
             ctx.beginPath()
-            ctx.moveTo(particlesArray[a].x, particlesArray[a].y)
-            ctx.lineTo(particlesArray[b].x, particlesArray[b].y)
+            ctx.moveTo(particles[i].x, particles[i].y)
+            ctx.lineTo(particles[j].x, particles[j].y)
+            ctx.strokeStyle = `rgba(var(--primary), ${opacity})`
+            ctx.lineWidth = 1
             ctx.stroke()
           }
         }
       }
+
+      requestAnimationFrame(animate)
     }
 
-    init()
     animate()
 
     return () => {
@@ -106,46 +103,11 @@ export function AnimatedBackground() {
     }
   }, [])
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none"
+      style={{ zIndex: 0 }}
+    />
+  )
 }
-
-
-    // Create grid-like pattern representing trading charts
-    class GridLine {
-      x1: number
-      y1: number
-      x2: number
-      y2: number
-      color: string
-      opacity: number
-      
-      canvas: HTMLCanvasElement;
-
-      constructor(horizontal: boolean, canvas: HTMLCanvasElement) {
-        this.canvas = canvas;
-        if (horizontal) {
-          this.x1 = 0
-          this.x2 = this.canvas.width
-          this.y1 = Math.random() * this.canvas.height
-          this.y2 = this.y1
-        } else {
-          this.y1 = 0
-          this.y2 = this.canvas.height
-          this.x1 = Math.random() * this.canvas.width
-          this.x2 = this.x1
-        }
-        this.color = "rgba(200, 200, 200, 0.2)" // Light gray color
-        this.opacity = Math.random() * 0.5 + 0.1 // Random opacity between 0.1 and 0.6
-      }
-
-          draw(ctx: CanvasRenderingContext2D) {
-          ctx.strokeStyle = this.color
-          ctx.globalAlpha = this.opacity
-          ctx.lineWidth = 1
-          ctx.beginPath()
-          ctx.moveTo(this.x1, this.y1)
-          ctx.lineTo(this.x2, this.y2)
-          ctx.stroke()
-          ctx.globalAlpha = 1 // Reset alpha
-          }
-        }

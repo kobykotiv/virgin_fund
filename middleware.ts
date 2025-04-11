@@ -1,39 +1,59 @@
-import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// Function to get the user's authentication status from the request
+function isAuthenticated(request: NextRequest) {
+  const authToken = request.cookies.get('auth_token')?.value
+  const isLoggedIn = request.cookies.get('isAuthenticated')?.value === 'true'
+  return !!authToken || isLoggedIn
+}
+
+// Function to get the user's admin status from the request
+function isAdmin(request: NextRequest) {
+  return request.cookies.get('isAdmin')?.value === 'true'
+}
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
+  const { pathname } = request.nextUrl
+  
+  // Public paths that don't require authentication
+  const publicPaths = ['/login', '/forgot-password', '/reset-password']
+  const isPublicPath = publicPaths.includes(pathname)
 
-  // Define protected and auth routes
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || 
-                         request.nextUrl.pathname.startsWith('/portfolio') ||
-                         request.nextUrl.pathname.startsWith('/bots');
-                         
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
-                     request.nextUrl.pathname.startsWith('/signup');
+  // Admin-only paths
+  const adminPaths = ['/admin', '/content-manager']
+  const isAdminPath = adminPaths.some(path => pathname.startsWith(path))
+
+  // Check authentication
+  const authenticated = isAuthenticated(request)
+  const admin = isAdmin(request)
 
   // Redirect unauthenticated users to login
-  if (isProtectedRoute && !token) {
-    const redirectUrl = new URL('/login', request.url);
-    redirectUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
+  if (!authenticated && !isPublicPath) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect authenticated users away from auth pages
-  if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  // Redirect authenticated users away from login page
+  if (authenticated && isPublicPath) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
-  return NextResponse.next();
+  // Handle admin routes
+  if (isAdminPath && !admin) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // For non-authenticated users trying to access the root, show the landing page
+  if (pathname === '/' && !authenticated) {
+    return NextResponse.rewrite(new URL('/landing', request.url))
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/portfolio/:path*',
-    '/bots/:path*',
-    '/login',
-    '/signup'
+    // Match all paths except static files and api routes
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-};
+}

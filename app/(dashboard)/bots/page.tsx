@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from 'lucide-react';
 // We will create BotList and BotForm components next
 import BotList from '@/components/bot-list'; // Corrected import for default export
-import BotForm from '@/components/bot-form'; // Corrected import for default export
-import { Skeleton } from '@/components/ui/skeleton'; // For loading state
+import BotForm from '@/components/bot-form'; // Import BotForm
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Define a basic Bot type for now, refine later based on actual data
 export interface Bot {
@@ -117,15 +117,25 @@ export default function BotsPage() {
       </DashboardHeader>
       
       {/* Conditional rendering for the form */}
-      {showForm && ( // Uncommented form rendering
+      {showForm && (
         <div className="mb-6">
-          <BotForm 
-            bot={editingBot} 
-            onSuccess={handleFormSubmit} 
-            onCancel={() => { setShowForm(false); setEditingBot(null); }} 
+          <BotForm
+            bot={editingBot}
+            onSuccess={handleFormSubmit}
+            onCancel={() => { setShowForm(false); setEditingBot(null); }}
+            availableAssets={[
+              'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
+              'BTC/USD', 'ETH/USD', 'SOL/USD'
+            ]}
+            botTypes={[
+              { value: "grid", label: "Grid Trading" },
+              { value: "dca", label: "DCA" },
+              { value: "indicator", label: "Indicator" },
+              { value: "basket", label: "Basket" },
+            ]}
           />
         </div>
-      )} 
+      )}
 
       {/* Display area for the list of bots */}
       <div className="grid gap-6">

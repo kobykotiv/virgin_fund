@@ -15,6 +15,8 @@ interface BotFormProps {
   bot?: Bot | null; // Bot data for editing, null for creating
   onSuccess: () => void; // Callback on successful save/update
   onCancel: () => void; // Callback to cancel/close the form
+  availableAssets: string[];
+  botTypes: { value: string; label: string }[];
 }
 
 // Define available bot types and strategies (expand later)

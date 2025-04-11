@@ -1,13 +1,15 @@
-import type { Bot, BotStatus } from "@/types/bot"
-import { generateDemoBots, generateDemoMarketData, generateDemoOrders, generateDemoPositions } from "@/lib/demo-data"
+import type { Bot, BotStatus } from "@/types/bot";
+import { generateDemoBots, generateDemoMarketData, generateDemoOrders, generateDemoPositions } from "@/lib/demo-data";
+
+export type BotType = 'dca' | 'grid' | 'indicator' | 'basket';
 
 // Check if demo mode is enabled
 const isDemoMode = () => {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("demoMode") === "true"
+    return localStorage.getItem("demoMode") === "true";
   }
-  return false
-}
+  return false;
+};
 
 // Mock data for demonstration with updated types
 const mockBots: Bot[] = [
@@ -19,17 +21,8 @@ const mockBots: Bot[] = [
     assets: ["AAPL", "MSFT", "GOOGL", "AMZN"],
     createdAt: "2023-09-15T10:30:00Z",
     updatedAt: "2023-10-20T14:45:00Z",
-    performance: {
-      totalPnL: 1250.75,
-      pnlPercentage: 8.2,
-      totalTrades: 24,
-      winRate: 0.75,
-      lastUpdated: "2023-10-20T14:45:00Z",
-    },
-    stopLoss: 5,
-    takeProfit: 15,
-    maxDrawdown: 10,
-    basketConfig: {
+    strategy: "BasketRebalance", // Added strategy
+    settings: {
       rebalancePeriod: "0 0 1 * *", // Monthly rebalance
       targetAllocation: {
         AAPL: 0.3,
@@ -38,6 +31,7 @@ const mockBots: Bot[] = [
         AMZN: 0.2,
       },
     },
+    description: "A basket of top tech stocks",
   },
   {
     id: "2",
@@ -47,21 +41,14 @@ const mockBots: Bot[] = [
     assets: ["BTC-USD"],
     createdAt: "2023-08-10T08:15:00Z",
     updatedAt: "2023-10-18T11:20:00Z",
-    performance: {
-      totalPnL: -320.5,
-      pnlPercentage: -2.1,
-      totalTrades: 42,
-      winRate: 0.62,
-      lastUpdated: "2023-10-18T11:20:00Z",
-    },
-    stopLoss: 8,
-    takeProfit: 12,
-    gridConfig: {
+    strategy: "GridTrading", // Added strategy
+    settings: {
       gridSize: 1, // 1% grid
       upperLimit: 35000,
       lowerLimit: 25000,
       quantity: 0.01,
     },
+    description: "Trades BTC within a grid range",
   },
   {
     id: "3",
@@ -71,22 +58,14 @@ const mockBots: Bot[] = [
     assets: ["TSLA"],
     createdAt: "2023-07-05T15:45:00Z",
     updatedAt: "2023-10-19T09:30:00Z",
-    performance: {
-      totalPnL: 1875.25,
-      pnlPercentage: 12.5,
-      totalTrades: 18,
-      winRate: 0.83,
-      lastUpdated: "2023-10-19T09:30:00Z",
-    },
-    stopLoss: 7,
-    takeProfit: 20,
-    maxDrawdown: 15,
-    indicatorConfig: {
+    strategy: "RSI", // Added strategy
+    settings: {
       type: "rsi",
       timeframe: "1day",
       entryThreshold: 30,
       exitThreshold: 70,
     },
+    description: "Trades TSLA based on RSI",
   },
   {
     id: "4",
@@ -96,18 +75,13 @@ const mockBots: Bot[] = [
     assets: ["SPY", "QQQ", "VTI"],
     createdAt: "2023-09-01T12:00:00Z",
     updatedAt: "2023-10-15T10:10:00Z",
-    performance: {
-      totalPnL: 450.8,
-      pnlPercentage: 3.2,
-      totalTrades: 12,
-      winRate: 0.67,
-      lastUpdated: "2023-10-15T10:10:00Z",
-    },
-    dcaConfig: {
+    strategy: "SimpleDCA", // Added strategy
+    settings: {
       interval: "0 0 * * 1", // Every Monday
       amount: 500,
-      duration: "90days",
+      symbol: "SPY",
     },
+    description: "DCA into ETFs",
   },
 ]
 
@@ -137,25 +111,14 @@ export async function createBot(botData: Partial<Bot>): Promise<Bot> {
     const newBot: Bot = {
       id: Math.random().toString(36).substring(2, 9),
       name: botData.name || "New Bot",
-      type: botData.type || "indicator",
+      type: botData.type || "indicator" as BotType, // Type assertion
       status: "paused",
       assets: botData.assets || ["AAPL"],
       createdAt: now,
       updatedAt: now,
-      performance: {
-        totalPnL: 0,
-        pnlPercentage: 0,
-        totalTrades: 0,
-        winRate: 0,
-        lastUpdated: now,
-      },
-      stopLoss: botData.stopLoss,
-      takeProfit: botData.takeProfit,
-      maxDrawdown: botData.maxDrawdown,
-      indicatorConfig: botData.indicatorConfig,
-      gridConfig: botData.gridConfig,
-      dcaConfig: botData.dcaConfig,
-      basketConfig: botData.basketConfig,
+      strategy: botData.strategy || "Simple",
+      settings: botData.settings || {},
+      description: botData.description || "A new bot",
     }
 
     // If in demo mode, add allocation
@@ -163,7 +126,7 @@ export async function createBot(botData: Partial<Bot>): Promise<Bot> {
       newBot.allocation = 500000 // Default $500K allocation for new bots in demo mode
     }
 
-    setTimeout(() => resolve(newBot), 500)
+    setTimeout(() => resolve(newBot as Bot), 500)
   })
 }
 
@@ -191,7 +154,7 @@ export async function toggleBotStatus(botId: string, newStatus: BotStatus): Prom
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       // Find the bot in our mock data
-      const botIndex = mockBots.findIndex((b) => b.id === botId)
+      const botIndex = mockBots.findIndex((b) => b.id === botId);
 
       if (botIndex === -1) {
         // If bot is not found in mockBots, create a new copy of mockBots for the search
@@ -391,4 +354,3 @@ export async function fetchAccountBalance(): Promise<any> {
     )
   })
 }
-

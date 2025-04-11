@@ -1,34 +1,39 @@
-"use client"
+"use client";
 
-import * as React from "react"
-// Corrected imports: Assuming default exports from specific files
-import { AddBotForm } from "@/components/AddBotForm" // Changed to named import
-import Grid from "@/components/Grid" 
-import { EnhancedDashboard } from "@/components/enhanced-dashboard"
-import { LiveTicker } from "@/components/live-ticker"
-import { AlpacaConfig } from "@/lib/alpaca-client"; // Assuming AlpacaConfig type is exported
+import * as React from "react";
+import { EnhancedDashboard } from "@/components/enhanced-dashboard";
+import { LiveTicker } from "@/components/live-ticker";
+import { AlpacaConfig } from "@/lib/alpaca-client";
+import BotForm from "@/components/bot-form"; // Corrected import
+import { useState, useEffect } from 'react';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+
+interface Portfolio {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  positions: any[];
+  totalValue: number;
+  cashBalance: number;
+}
 
 const Home: React.FC = () => {
-  const [bots, setBots] = React.useState<any[]>([]); // Initialize with empty array or fetch initial bots
-  const [apiConfig, setApiConfig] = React.useState<AlpacaConfig | null>(null); // State for API config
-  const [isLoadingConfig, setIsLoadingConfig] = React.useState(true);
+  const [bots, setBots] = useState<any[]>([]);
+  const [apiConfig, setApiConfig] = useState<AlpacaConfig | null>(null);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true);
+  const [showForm, setShowForm] = useState(false);
 
-  // TODO: Fetch or retrieve API config securely, e.g., from context or API route
-  React.useEffect(() => {
-    // Placeholder: Replace with actual logic to get API config
+  useEffect(() => {
     const fetchConfig = async () => {
+      setIsLoadingConfig(true);
       try {
-        // Example: Fetch from an API route '/api/user/config'
-        // const response = await fetch('/api/user/config');
-        // if (!response.ok) throw new Error('Failed to fetch config');
-        // const config = await response.json();
-        // setApiConfig(config);
-
-        // For now, using placeholder or null
-        setApiConfig(null); // Or set mock data if needed for development
+        setApiConfig(null); // Placeholder
       } catch (error) {
         console.error("Error fetching API config:", error);
-        setApiConfig(null); // Ensure it's null on error
+        setApiConfig(null);
       } finally {
         setIsLoadingConfig(false);
       }
@@ -37,149 +42,108 @@ const Home: React.FC = () => {
     fetchConfig();
   }, []);
 
-  // TODO: Fetch initial bots list
-  React.useEffect(() => {
-    // Placeholder: Fetch bots associated with the user
+  useEffect(() => {
     const fetchBots = async () => {
-      // Example: Fetch from '/api/bots'
-      // const response = await fetch('/api/bots');
-      // const userBots = await response.json();
-      // setBots(userBots);
-      setBots([ // Using placeholder data for now
+      setBots([
         { id: '1', name: "Bot 1", description: "This is bot 1", status: 'paused' },
         { id: '2', name: "Bot 2", description: "This is bot 2", status: 'active' },
       ]);
     };
     fetchBots();
   }, []);
-    // Add more bots as needed
-  // ])
 
-  const handleSubmit = (formData: any) => {
-    setBots([...bots, formData])
-  }
+  const handleFormSubmit = (formData: any) => {
+    setBots([...bots, formData]);
+    setShowForm(false); // Close the form after submission
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-8">
       {/* Header Section */}
       <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-3xl font-bold">Trading Bots Dashboard</h1>
-        <p className="text-muted-foreground">Create and manage your automated trading strategies</p>
-      </div>
+        <div>
+          <h1 className="text-3xl font-bold">Trading Bots Dashboard</h1>
+          <p className="text-muted-foreground">Create and manage your automated trading strategies</p>
+        </div>
       </div>
 
       {/* Main Dashboard */}
-      {isLoadingConfig ? (
+      {/* {isLoadingConfig ? (
         <div>Loading configuration...</div>
       ) : (
-        <EnhancedDashboard
-          // Adjust apiConfig structure or pass undefined if null
-          apiConfig={apiConfig ? { 
-              keyId: apiConfig.apiKey, // Map apiKey to keyId
-              secretKey: apiConfig.secretKey, 
-              baseUrl: apiConfig.isPaper ? "https://paper-api.alpaca.markets" : "https://api.alpaca.markets", // Derive baseUrl
-              isPaper: apiConfig.isPaper 
-            } : undefined} 
-          onBotAction={async (botId, action) => {
-            // Handle bot actions (start/stop/delete)
-            // TODO: Replace state update with API calls to backend
-            const bot = bots.find(b => b.id === botId);
-        if (bot) {
-        switch (action) {
-          case 'start':
-          setBots(bots.map(b => 
-            b.id === botId ? {...b, status: 'active'} : b
-          ))
-          break
-          case 'stop':
-          setBots(bots.map(b =>
-            b.id === botId ? {...b, status: 'paused'} : b
-          ))
-          break
-          case 'delete':
-          setBots(bots.filter(b => b.id !== botId))
-          break
-        }
-        }
-      }}
-      // Pass isLoading state based on config loading and potentially portfolio loading
-      isLoading={isLoadingConfig /* || isLoadingPortfolio */}
-      // Provide a minimal valid Portfolio object or null
-      portfolio={{ 
-        id: 'placeholder-id', // Add required fields
-        name: 'Placeholder Portfolio',
-        createdAt: new Date().toISOString(), // Convert to string
-        updatedAt: new Date().toISOString(), // Convert to string
-        positions: [],
-        totalValue: 0,
-        cashBalance: 0
-      }}
-      scenarios={[]}
-      selectedScenario={null}
-      onScenarioSelect={() => {}}
-      managedBots={bots}
-      selectedBot={null}
-      onBotSelect={(bot) => {
-        console.log("Selected bot:", bot);
-        // Handle bot selection logic
-      }}
-      onBotCreate={async (botData) => {
-        // TODO: Replace with API call to create bot
-        console.log("Creating bot:", botData);
-        const newBot = {
-          id: Date.now().toString(), // Use proper ID generation
-          ...botData,
-          status: 'paused',
-          performance: { // Placeholder performance data
-          totalValue: 0,
-          totalPnL: 0,
-          pnlPercentage: 0,
-          totalTrades: 0,
-          winRate: 0,
-          lastUpdated: new Date().toISOString()
-        }
-        }
-        setBots([...bots, newBot])
-      }}
-      onBotUpdate={async (botId, updates) => {
-        // TODO: Replace with API call to update bot
-        console.log("Updating bot:", botId, updates);
-        setBots(bots.map(b =>
-          b.id === botId ? { ...b, ...updates } : b
-        ));
-      }}
-      onBotDelete={async (botId) => {
-        // TODO: Replace with API call to delete bot
-        console.log("Deleting bot:", botId);
-        setBots(bots.filter(b => b.id !== botId));
-      }}
-       onAddBot={() => { // Added placeholder onAddBot prop
-         console.log("Add bot clicked on Home page"); 
-         // This likely should trigger a modal or navigation in a real scenario
-         <AddBotForm onSubmit={handleSubmit} />
-       }}
-      />
-      )}
-
-      {/* Bot Creation Dialog - Consider moving inside EnhancedDashboard or managing visibility */}
-      <AddBotForm
-        onSubmit={handleSubmit} // This likely needs adjustment - should call onBotCreate prop
-        // Removed availableAssets and botTypes props as they are defined internally
-      />
+        // Commenting out EnhancedDashboard and AddBotForm for now to focus on core bot management
+        <>
+          <div>Dashboard Content (Commented Out)</div>
+          {/* <EnhancedDashboard
+            apiConfig={apiConfig ? {
+                keyId: apiConfig.apiKey,
+                secretKey: apiConfig.secretKey,
+                baseUrl: apiConfig.isPaper ? "https://paper-api.alpaca.markets" : "https://api.alpaca.markets",
+                isPaper: apiConfig.isPaper
+              } : undefined}
+            onBotAction={async (botId, action) => {
+              setBots(bots.map(b =>
+                b.id === botId ? { ...b, status: action === 'start' ? 'active' : 'paused' } : b
+              ));
+            }}
+            isLoading={isLoadingConfig}
+            portfolio={{
+              id: 'placeholder-id',
+              name: 'Placeholder Portfolio',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              userId: 'placeholder-user',
+              positions: [],
+              totalValue: 0,
+              cashBalance: 0
+            }}
+            scenarios={[]}
+            selectedScenario={null}
+            onScenarioSelect={() => { }}
+            managedBots={bots}
+            selectedBot={null}
+            onBotSelect={() => { }}
+            onBotCreate={async (botData) => {
+              const newBot = {
+                id: Date.now().toString(),
+                ...botData,
+                status: 'paused',
+                performance: {
+                  totalValue: 0,
+                  totalPnL: 0,
+                  pnlPercentage: 0,
+                  totalTrades: 0,
+                  winRate: 0,
+                  lastUpdated: new Date().toISOString()
+                }
+              };
+              setBots([...bots, newBot]);
+            }}
+            onBotUpdate={async (botId, updates) => {
+              setBots(bots.map(b =>
+                b.id === botId ? { ...b, ...updates } : b
+              ));
+            }}
+            onBotDelete={async (botId) => {
+              setBots(bots.filter(b => b.id !== botId));
+            }}
+            onAddBot={() => setShowForm(true)} // Show the form when Add Bot is clicked
+          />
+          <AddBotForm
+            onCancel={() => setShowForm(false)}
+            onSuccess={handleFormSubmit}
+          />
+        </>}
+      )} */}
 
       {/* Live Market Data Ticker */}
-      <LiveTicker 
-      // Extract symbols from bots for the ticker
-      symbols={bots.reduce((acc, bot) => {
-        // Assuming bot settings contain symbol or assets array
-        const botSymbols = bot.settings?.symbol ? [bot.settings.symbol] : (bot.settings?.assets || []);
-        return [...acc, ...botSymbols];
-      }, [] as string[])}
-      refreshInterval={15000}
+      <LiveTicker
+        symbols={bots.reduce((acc, bot) => {
+          const botSymbols = bot.settings?.symbol ? [bot.settings.symbol] : (bot.settings?.assets || []);
+          return [...acc, ...botSymbols];
+        }, [] as string[])}
+        refreshInterval={15000}
       />
     </div>
-  )
+  );
 }
-
-export default Home

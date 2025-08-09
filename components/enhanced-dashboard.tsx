@@ -54,6 +54,7 @@ import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-vi
 import { BotAnalytics } from "./bot-configuration/bot-analytics"
 import { Position } from "@/lib/utils/positions"
 import { BacktestResult } from "@/lib/backtest-service"
+import { portfolios } from "@/lib/demo-portfolios"
 
 interface EnhancedDashboardProps {
   apiConfig?: {
@@ -96,7 +97,11 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
     try {
       // Fetch portfolio data
       const portfolioData = await fetchPortfolio()
-      portfolio = portfolioData
+      portfolios = {
+        ...portfolioData,
+        totalValue: portfolioData.positions.reduce((sum, pos) => sum + (pos.marketValue || 0), 0),
+        cashBalance: portfolioData.cashBalance || 0,
+      }
 
       // Fetch bots data
       const botsData = await fetchBots()
@@ -161,7 +166,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
           toast({
             title: "Using fallback data source",
             description: "Primary market data source unavailable. Using alternative sources.",
-            variant: "warning",
+            variant: "destructive",
           })
         }
       }

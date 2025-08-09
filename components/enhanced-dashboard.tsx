@@ -52,6 +52,8 @@ import { runBacktest } from "@/services/backtest-service"
 import { BotHero, BotGrid } from "@/components/bot-management"
 import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-views"
 import { BotAnalytics } from "./bot-configuration/bot-analytics"
+import { Position } from "@/lib/utils/positions"
+import { BacktestResult } from "@/lib/backtest-service"
 
 interface EnhancedDashboardProps {
   apiConfig?: {
@@ -62,6 +64,11 @@ interface EnhancedDashboardProps {
   } | null
   onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => Promise<void>
   isLoading: boolean
+  portfolio?: {
+    positions: Position[]
+    totalValue: number
+    cashBalance: number
+  }
 }
 
 export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio }: EnhancedDashboardProps) {
@@ -74,6 +81,9 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
   const { isDemoMode } = useAuth()
   const [backtestResults, setBacktestResults] = useState<BacktestResult | null>(null)
   const [viewMode, setViewMode] = useState<'simple' | 'advanced' | 'expert'>('simple')
+  // Add selectedBot and selectedPosition state
+  const [selectedBot, setSelectedBot] = useState<any | null>(null)
+  const [selectedPosition, setSelectedPosition] = useState<any | null>(null)
 
   // Get unique assets from portfolio and bots
   const getUniqueAssets = () => {
@@ -86,7 +96,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
     try {
       // Fetch portfolio data
       const portfolioData = await fetchPortfolio()
-      setPortfolio(portfolioData)
+      portfolio = portfolioData
 
       // Fetch bots data
       const botsData = await fetchBots()
@@ -896,7 +906,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
         
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bots.map(bot => (
-              <div key={bot.id}>
+              <div key={bot.id} className={`cursor-pointer ${selectedBot?.id === bot.id ? 'border-2 border-blue-500' : ''}`} onClick={() => setSelectedBot(bot)}>
                 {viewMode === 'expert' ? (
                   <ExpertView bot={bot} />
                 ) : viewMode === 'advanced' ? (
@@ -942,7 +952,12 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
               </div>
             </CardHeader>
             <CardContent>
-              {portfolio?.positions?.map(position => renderPosition(position))}
+              {/* Clickable positions for selection */}
+              {portfolio?.positions?.map(position => (
+                <div key={position.id} className={`cursor-pointer ${selectedPosition?.id === position.id ? 'border-2 border-blue-500 rounded' : ''}`} onClick={() => setSelectedPosition(position)}>
+                  {renderPosition(position)}
+                </div>
+              ))}
             </CardContent>
           </Card>
           

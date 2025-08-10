@@ -166,3 +166,62 @@ Demo bots allow users to explore trading strategies and portfolio management fea
 - Update this guide as new demo features are added.
 
 
+Create /config/sections.ts
+Scaffold a config file listing all dashboard sections, their labels, routes, icons, and categories.
+
+Set up DashboardLayout in /components/DashboardLayout.tsx
+Create a layout component with sidebar navigation and header, using the config file for links.
+
+Implement sidebar navigation in DashboardLayout
+Render grouped navigation links from /config/sections.ts, supporting active route highlighting.
+
+Create placeholder page for Trading & Signals (/pages/trading-signals.tsx)
+Export a component with a header and stub chart/table.
+
+Create placeholder page for Overview (/pages/overview.tsx)
+Export a component with a header and stub chart/table.
+
+Create placeholder page for Custom Signals (/pages/custom-signals.tsx)
+Export a component with a header and basic form controls.
+
+Create placeholder page for Signal Builder (/pages/signal-builder.tsx)
+Export a component with a header and stub chart/table.
+
+Create placeholder page for Backtest (/pages/backtest.tsx)
+Export a component with a header and mock data table.
+
+Create placeholder page for Monte Carlo (/pages/monte-carlo.tsx)
+Export a component with a header and stub chart.
+
+Create placeholder page for Virgin Fund (/pages/virgin-fund.tsx)
+Export a component with a header and overview stub.
+
+Create placeholder page for Alpaca Manager (/pages/alpaca-manager.tsx)
+Export a component with a header and stubbed bot list/table.
+
+Create Savings Calculator page (/pages/calculators/savings.tsx)
+Export a component with a header, input form, and result table.
+
+Create Compound Interest Calculator page (/pages/calculators/compound-interest.tsx)
+Export a component with a header, input form, and result chart.
+
+Create Inflation Calculator page (/pages/calculators/inflation.tsx)
+Export a component with a header, input form, and result chart.
+
+Create Retirement Calculator page (/pages/calculators/retirement.tsx)
+Export a component with a header, input form, and result table.
+
+Create Mortgage Calculator page (/pages/calculators/mortgage.tsx)
+Export a component with a header, input form, and result table.
+
+Create Debt Payoff Calculator page (/pages/calculators/debt-payoff.tsx)
+Export a component with a header, input form, and result table.
+
+Create Fee Impact Calculator page (/pages/calculators/fee-impact.tsx)
+Export a component with a header, input form, and result chart.
+
+Create Portfolio page (/pages/portfolio.tsx)
+Export a component with a header and stub portfolio chart/table.
+
+Create Financial Calculators hub page (/pages/calculators/index.tsx)
+Export a component with a header and links to all calculator pages.

@@ -1,7 +1,7 @@
 // server/index.ts
 // Express/Bun server skeleton for Supabase Auth, Captcha, Demo Accounts
 
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
@@ -88,13 +88,13 @@ interface Portfolio {
 }
 
 // GET /captcha - generate captcha
-app.get('/v1/captcha', async (req, res) => {
+app.get('/v1/captcha', async (req: Request, res: Response) => {
   // TODO: Generate 10-char token, SVG, store hash in DB, return { captcha_id, svg }
-  res.json<CaptchaResponse>({ captcha_id: 'demo-id', svg: '<svg>...</svg>' });
+  res.json({ captcha_id: 'demo-id', svg: '<svg>...</svg>' });
 });
 
 // POST /register - register user with captcha
-app.post('/v1/register', async (req, res) => {
+app.post('/v1/register', async (req: Request, res: Response) => {
   const { email, password, captcha_id, captcha_solution, display_name }: RegisterRequestBody = req.body;
   if (!email || !password || !captcha_id || !captcha_solution) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -141,44 +141,191 @@ app.post('/v1/register', async (req, res) => {
 });
 
 // POST /login - login user
-app.post('/v1/login', async (req, res) => {
+app.post('/v1/login', async (req: Request, res: Response) => {
   const { email, password }: LoginRequestBody = req.body;
   // TODO: Proxy to Supabase Auth or handle login
   res.json({ access_token: 'demo-token', refresh_token: 'demo-refresh', user: { email } });
 });
 
 // POST /demo - create demo account
-app.post('/v1/demo', async (req, res) => {
+app.post('/v1/demo', async (req: Request, res: Response) => {
   // TODO: Create demo user, insert profile, return credentials
-  res.json<DemoResponse>({ email: 'demo@example.com', password: 'demopass', expires_at: new Date(Date.now() + 24*60*60*1000).toISOString() });
+  res.json({ email: 'demo@example.com', password: 'demopass', expires_at: new Date(Date.now() + 24*60*60*1000).toISOString() });
 });
 
 // GET /profile - get user profile (JWT required)
-app.get('/v1/profile', async (req, res) => {
+app.get('/v1/profile', async (req: Request, res: Response) => {
   // TODO: Validate JWT, fetch profile
-  res.json<ProfileResponse>({ id: 'demo-user', email: 'demo@example.com', display_name: 'Demo', is_demo: true, demo_expires_at: null });
+  res.json({ id: 'demo-user', email: 'demo@example.com', display_name: 'Demo', is_demo: true, demo_expires_at: null });
 });
 
 // PUT /profile - update profile (JWT required)
-app.put('/v1/profile', async (req, res) => {
+app.put('/v1/profile', async (req: Request, res: Response) => {
   const { display_name }: UpdateProfileRequestBody = req.body;
   // TODO: Validate JWT, update profile
   res.json<UpdateProfileResponse>({ id: 'demo-user', display_name });
 });
 
 // POST /logout - logout user (JWT required)
-app.post('/v1/logout', async (req, res) => {
+app.post('/v1/logout', async (req: Request, res: Response) => {
   // TODO: Invalidate refresh token
   res.json<LogoutResponse>({ ok: true });
 });
 
-app.get('/v1/portfolios', async (req, res) => {
+app.get('/v1/portfolios', async (req: Request, res: Response) => {
   // Mock data
   const portfolios: Portfolio[] = [
     { id: '1', name: 'Growth Portfolio', value: 12000 },
     { id: '2', name: 'Income Portfolio', value: 8500 },
   ];
   res.json({ portfolios });
+});
+
+// --- Backtest API Endpoints ---
+
+// Helper: check demo mode (stub, replace with real logic)
+function isDemoMode(req) {
+  // Example: check header or user profile
+  return req.headers['x-demo-mode'] === 'true';
+}
+
+// GET /api/backtest/list
+app.get('/api/backtest/list', async (req: Request, res: Response) => {
+  if (isDemoMode(req)) {
+    // Return mock data
+    return res.json({
+      backtests: [
+        {
+          id: 'demo-1',
+          user_id: 'demo-user',
+          title: 'Demo SMA Crossover',
+          description: 'Backtest of SMA crossover strategy',
+          parameters: { fast: 10, slow: 50 },
+          results: { equity_curve: [10000, 10200, 10150], metrics: { return: 2, drawdown: 1 } },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ],
+    });
+  }
+  // TODO: Validate JWT, get user_id
+  const user_id = req.headers['x-user-id'];
+  const { data, error } = await supabaseAdmin
+    .from('backtests')
+    .select('*')
+    .eq('user_id', user_id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ backtests: data });
+});
+
+// POST /api/backtest/create
+app.post('/api/backtest/create', async (req: Request, res: Response) => {
+  if (isDemoMode(req)) {
+    // Return mock created item
+    return res.status(201).json({
+      backtest: {
+        id: 'demo-created',
+        ...req.body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    });
+  }
+  // TODO: Validate JWT, get user_id
+  const user_id = req.headers['x-user-id'];
+  const { title, description, parameters, results } = req.body;
+  const { data, error } = await supabaseAdmin
+    .from('backtests')
+    .insert([{ user_id, title, description, parameters, results }])
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json({ backtest: data });
+});
+
+// PUT /api/backtest/update/:id
+app.put('/api/backtest/update/:id', async (req: Request, res: Response) => {
+  if (isDemoMode(req)) {
+    // Return mock updated item
+    return res.json({
+      backtest: {
+        id: req.params.id,
+        ...req.body,
+        updated_at: new Date().toISOString(),
+      },
+    });
+  }
+  // TODO: Validate JWT, get user_id
+  const user_id = req.headers['x-user-id'];
+  const { title, description, parameters, results } = req.body;
+  // Ownership check
+  const { data: existing, error: fetchErr } = await supabaseAdmin
+    .from('backtests')
+    .select('user_id')
+    .eq('id', req.params.id)
+    .single();
+  if (fetchErr || !existing || existing.user_id !== user_id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { data, error } = await supabaseAdmin
+    .from('backtests')
+    .update({ title, description, parameters, results, updated_at: new Date().toISOString() })
+    .eq('id', req.params.id)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ backtest: data });
+});
+
+// DELETE /api/backtest/delete/:id
+app.delete('/api/backtest/delete/:id', async (req: Request, res: Response) => {
+  if (isDemoMode(req)) {
+    // Return mock delete confirmation
+    return res.json({ ok: true, id: req.params.id });
+  }
+  // TODO: Validate JWT, get user_id
+  const user_id = req.headers['x-user-id'];
+  // Ownership check
+  const { data: existing, error: fetchErr } = await supabaseAdmin
+    .from('backtests')
+    .select('user_id')
+    .eq('id', req.params.id)
+    .single();
+  if (fetchErr || !existing || existing.user_id !== user_id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { error } = await supabaseAdmin
+    .from('backtests')
+    .delete()
+    .eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, id: req.params.id });
+});
+
+app.get('/api/overview/metrics', async (req: Request, res: Response) => {
+  if (isDemoMode(req)) {
+    // Return mock overview metrics
+    return res.json({
+      portfolioValue: 25000,
+      cashBalance: 5000,
+      totalPnL: 1200,
+      activeBots: 3,
+      pausedBots: 1,
+      averageReturn: 7.5,
+    });
+  }
+  // TODO: Validate JWT, get user_id
+  const user_id = req.headers['x-user-id'];
+  // TODO: Query Supabase for real metrics
+  // Example stub response
+  res.json({
+    portfolioValue: 0,
+    cashBalance: 0,
+    totalPnL: 0,
+    activeBots: 0,
+    pausedBots: 0,
+    averageReturn: 0,
+  });
 });
 
 const PORT = process.env.PORT || 4000;

@@ -1,12 +1,14 @@
-// src/components/ui/card.tsx
+import React from 'react';
 
-import React from "react"
-import { cn } from "../../lib/utils"
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+}
 
-export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
+export default function Card({ children, className = '' }: CardProps) {
   return (
-    <div className={cn("bg-white dark:bg-card rounded shadow", className)}>
+    <div className={`rounded-lg shadow-md bg-white p-4 ${className}`}>
       {children}
     </div>
-  )
+  );
 }

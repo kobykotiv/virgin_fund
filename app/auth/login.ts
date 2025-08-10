@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  const { user, session, error } = await supabase.auth.signIn({ email, password });
+  const { data: { user, session }, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return res.status(400).json({ error: error.message });

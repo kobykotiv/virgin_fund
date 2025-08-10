@@ -123,88 +123,34 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href="/dashboard">
-                    <Button size="lg" className="gap-1.5">
-                      Get Started <ArrowRight className="h-4 w-4" />
+                  <Link href="/login?tab=demo">
+                    <Button className="gap-1.5">
+                      Try the Demo <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link href="#demos">
-                    <Button size="lg" variant="outline">
-                      View Demos
+                  <Link href="/login?tab=signup">
+                    <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500">
+                      Get Started
                     </Button>
                   </Link>
                 </div>
               </div>
-              <div className="flex items-center justify-center">
-                <div className="relative h-[350px] w-full md:h-[450px] lg:h-[450px] xl:h-[550px] overflow-hidden rounded-lg border bg-background/50 backdrop-blur-md p-2 shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-background/20 rounded-lg"></div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 h-full w-full">
-                    <div className="relative h-full">
-                      <PerformanceChart days={30} className="h-full w-full" />
-                      <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm rounded-md px-2 py-1">
-                        <span className="text-xs font-medium">Performance</span>
-                      </div>
-                    </div>
-                    <div className="relative h-full flex flex-col items-center justify-start p-4">
-                      <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-2 py-1">
-                        <span className="text-xs font-medium">Allocation by Risk</span>
-                      </div>
-                      <div className="h-[180px] w-[180px] md:h-[200px] md:w-[200px] mx-auto">
-                        <PortfolioAllocation />
-                      </div>
-                      <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm rounded-md px-2 py-1">
-                        <span className="text-xs text-muted-foreground">*Riskiest assets capped at 5%</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20 flex items-end p-6">
-                    <div className="space-y-2 text-center w-full">
-                      <div className="inline-block rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground">
-                        +21.5% This Month
-                      </div>
-                      <h3 className="text-xl font-bold">Demo Portfolio</h3>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Logos Section */}
-        <section className="w-full py-12 md:py-16 lg:py-20 border-y bg-muted/50">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-xl font-medium tracking-tight">Powered by industry-leading APIs</h2>
-                <p className="text-sm text-muted-foreground">
-                  GenEric TraDer integrates with the best financial data providers and trading platforms
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-8">
-                <div className="flex items-center justify-center p-4 bg-background/80 backdrop-blur-md rounded-lg shadow-sm">
-                  <span className="text-xl font-bold">Alpaca Markets</span>
-                </div>
-                <div className="flex items-center justify-center p-4 bg-background/80 backdrop-blur-md rounded-lg shadow-sm">
-                  <span className="text-xl font-bold">CoinGecko</span>
-                </div>
-                <div className="flex items-center justify-center p-4 bg-background/80 backdrop-blur-md rounded-lg shadow-sm">
-                  <span className="text-xl font-bold">Yahoo Finance</span>
-                </div>
-                <div className="flex items-center justify-center p-4 bg-background/80 backdrop-blur-md rounded-lg shadow-sm">
-                  <span className="text-xl font-bold">Binance</span>
-                </div>
+              <div className="hidden lg:block">
+                <Image
+                  src="/images/hero-image.png"
+                  alt="Hero Image"
+                  width={600}
+                  height={600}
+                  className="max-w-full rounded-lg"
+                />
               </div>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section id="features-section" className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <Image src="/images/abstract-background.png" alt="Abstract background" fill className="object-cover" />
-          </div>
-          <div className="container px-4 md:px-6 relative z-10">
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Key Features</div>
@@ -222,45 +168,7 @@ export default function LandingPage() {
                 <CardContent className="p-6">
                   <Bot className="h-12 w-12 mb-4 text-primary" />
                   <h3 className="text-xl font-bold">Automated Trading Bots</h3>
-                  <p className="text-muted-foreground">
-                    Create and deploy sophisticated trading bots with customizable strategies and risk parameters.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Copy className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Copy Trading</h3>
-                  <p className="text-muted-foreground">
-                    Follow and automatically copy the trades of successful traders in your network.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Lock className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Self-Hosted & Isolated</h3>
-                  <p className="text-muted-foreground">
-                    Run everything on your own infrastructure with complete privacy and control over your data.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <BarChart2 className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Advanced Backtesting</h3>
-                  <p className="text-muted-foreground">
-                    Test your strategies against historical data before risking real capital.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
-                <CardContent className="p-6">
-                  <Globe className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-bold">Multi-Market Support</h3>
-                  <p className="text-muted-foreground">
-                    Trade stocks, ETFs, options, cryptocurrencies, and DeFi assets all from one platform.
-                  </p>
+                  <p className="text-muted-foreground">Create and deploy sophisticated trading bots with customizable strategies and risk parameters.</p>
                 </CardContent>
               </Card>
               <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
@@ -272,219 +180,42 @@ export default function LandingPage() {
                   </p>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Copy Trading Section */}
-        <section id="copy-trading" className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary">
-                    Copy Trading
-                  </div>
-                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Follow successful traders and replicate their strategies
-                  </h2>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Connect with top-performing traders, analyze their performance, and automatically copy their trades
-                    with your own risk parameters.
+              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
+                <CardContent className="p-6">
+                  <Users className="h-12 w-12 mb-4 text-primary" />
+                  <h3 className="text-xl font-bold">Social Trading</h3>
+                  <p className="text-muted-foreground">
+                    Connect and follow top traders, share strategies, and access exclusive trading signals.
                   </p>
-                </div>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Browse and filter traders by performance metrics</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Set custom allocation and risk limits</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Automatically mirror trades in real-time</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Become a signal provider and earn from followers</span>
-                  </li>
-                </ul>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row pt-4">
-                  <Link href="/copy-trading">
-                    <Button className="gap-1.5">
-                      Explore Copy Trading <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              <div className="flex items-center justify-center">
-                <div className="relative h-[400px] w-full overflow-hidden rounded-lg border bg-background/50 backdrop-blur-md p-4 shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-background/20 rounded-lg"></div>
-                  <div className="h-full w-full flex flex-col gap-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold">Top Traders</h3>
-                      <Badge variant="outline">Live</Badge>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between p-3 border-b hover:bg-muted/50 transition-colors rounded-md mb-2"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                              <Users className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">Trader {i}</p>
-                              <p className="text-xs text-muted-foreground">30d profit: +{12 + i * 3}%</p>
-                            </div>
-                          </div>
-                          <Button size="sm" variant="outline">
-                            Follow
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Remote Bots Section */}
-        <section id="remote-bots" className="relative w-full py-12 md:py-24 lg:py-32 overflow-hidden">
-          <div className="absolute inset-0 opacity-5">
-            <Image src="/images/abstract-background.png" alt="Abstract background" fill className="object-cover" />
-          </div>
-          <div className="container px-4 md:px-6 relative z-10">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
-              <div className="flex items-center justify-center order-2 lg:order-1">
-                <div className="relative h-[400px] w-full overflow-hidden rounded-lg border bg-background/50 backdrop-blur-md p-4 shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-background/20 rounded-lg"></div>
-                  <div className="h-full w-full flex flex-col gap-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold">Remote Bot Network</h3>
-                      <Badge variant="outline">Connected</Badge>
-                    </div>
-                    <div className="flex-1 grid grid-cols-2 gap-3">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="bg-background/70 backdrop-blur-sm p-3 rounded-lg border border-primary/10 flex flex-col"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium">Bot #{i}</span>
-                            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                          </div>
-                          <div className="text-xs text-muted-foreground mb-2">
-                            Strategy: {["Grid", "DCA", "Momentum", "Trend"][i - 1]}
-                          </div>
-                          <div className="mt-auto text-sm font-medium text-green-500">+{7 + i * 2}% MTD</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <Button size="sm" variant="outline">
-                        Deploy New Bot
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        Manage Network
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center space-y-4 order-1 lg:order-2">
-                <div className="space-y-2">
-                  <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary">
-                    Remote Bots
-                  </div>
-                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Deploy and manage trading bots across your infrastructure
-                  </h2>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Create a network of trading bots that can be deployed and managed remotely, with centralized
-                    monitoring and control.
+                </CardContent>
+              </Card>
+              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
+                <CardContent className="p-6">
+                  <Code className="h-12 w-12 mb-4 text-primary" />
+                  <h3 className="text-xl font-bold">Strategy Builder</h3>
+                  <p className="text-muted-foreground">
+                    Create custom trading strategies using our visual editor or code them from scratch.
                   </p>
-                </div>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Deploy bots across multiple servers and locations</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Centralized dashboard for monitoring all bots</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Secure API access with encryption and authentication</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    <span>Automated failover and redundancy options</span>
-                  </li>
-                </ul>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row pt-4">
-                  <Link href="/remote-bots">
-                    <Button className="gap-1.5">
-                      Explore Remote Bots <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <div className="inline-block rounded-lg bg-background/80 backdrop-blur-sm px-3 py-1 text-sm">
-                  How It Works
-                </div>
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-                  Simple setup, powerful results
-                </h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Get started in minutes with our intuitive setup process and start automating your trading strategy.
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 md:grid-cols-3">
-              <div className="flex flex-col items-center space-y-2 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <span className="text-2xl font-bold">1</span>
-                </div>
-                <h3 className="text-xl font-bold">Connect Your APIs</h3>
-                <p className="text-muted-foreground">
-                  Link your Alpaca Markets account or other supported brokers to enable paper or live trading.
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <span className="text-2xl font-bold">2</span>
-                </div>
-                <h3 className="text-xl font-bold">Create Your Strategy</h3>
-                <p className="text-muted-foreground">
-                  Choose from pre-built strategies or create your own custom trading logic with our visual builder.
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <span className="text-2xl font-bold">3</span>
-                </div>
-                <h3 className="text-xl font-bold">Deploy & Monitor</h3>
-                <p className="text-muted-foreground">
-                  Launch your trading bots and monitor performance in real-time through our comprehensive dashboard.
-                </p>
-              </div>
+                </CardContent>
+              </Card>
+              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
+                <CardContent className="p-6">
+                  <CreditCard className="h-12 w-12 mb-4 text-primary" />
+                  <h3 className="text-xl font-bold">API Integrations</h3>
+                  <p className="text-muted-foreground">
+                    Connect to Alpaca Markets, CoinGecko, and other financial APIs for seamless trading.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-primary/20 shadow-lg">
+                <CardContent className="p-6">
+                  <Lock className="h-12 w-12 mb-4 text-primary" />
+                  <h3 className="text-xl font-bold">Self-Hosted</h3>
+                  <p className="text-muted-foreground">
+                    Run the platform on your own servers for complete control and privacy.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
@@ -857,7 +588,7 @@ export default function LandingPage() {
                     <p className="text-4xl font-bold">
                       $9<span className="text-lg font-normal">/month</span>
                     </p>
-                    <p className="text-muted-foreground">For traders ready to go live with basic strategies</p>
+                    <p className="text-muted-foreground">For new traders starting with automated strategies</p>
                     <ul className="space-y-2">
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
@@ -865,38 +596,35 @@ export default function LandingPage() {
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Live trading enabled</span>
+                        <span>Grid (1%) strategy</span>
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Grid & DCA strategies</span>
+                        <span>DCA strategy</span>
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Email notifications</span>
+                        <span>Live trading</span>
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
                         <span>Standard backtesting</span>
                       </li>
                     </ul>
-                    <Button className="w-full mt-4">Start 7-Day Trial</Button>
+                    <Button className="w-full mt-4">Start Free Trial</Button>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Middle Tier */}
-              <Card className="relative overflow-hidden border-2 border-primary bg-background/60 backdrop-blur-md shadow-lg">
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
-                  Popular
-                </div>
+              <Card className="relative overflow-hidden border-2 border-muted bg-background/60 backdrop-blur-md shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex flex-col space-y-4">
                     <h3 className="text-2xl font-bold">Middle</h3>
                     <p className="text-4xl font-bold">
                       $29<span className="text-lg font-normal">/month</span>
                     </p>
-                    <p className="text-muted-foreground">For serious traders using technical indicators</p>
+                    <p className="text-muted-foreground">For active traders with multiple strategies</p>
                     <ul className="space-y-2">
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
@@ -904,15 +632,15 @@ export default function LandingPage() {
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Indicator-based strategies</span>
+                        <span>All strategy types</span>
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>Advanced backtesting</span>
+                        <span>Basket trading</span>
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
-                        <span>SMS & email alerts</span>
+                        <span>API access</span>
                       </li>
                       <li className="flex items-center">
                         <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
@@ -1470,4 +1198,4 @@ export default function LandingPage() {
     </div>
   )
 }
-
+          

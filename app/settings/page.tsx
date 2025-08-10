@@ -2,7 +2,6 @@
  * SettingsPage - User settings for Virgin Fund dashboard
  * Includes Alpaca API key form and theme toggle.
  */
-import AlpacaKeyForm from "@/components/alpaca-key-form"
 import { useState } from "react"
 
 export default function SettingsPage() {
@@ -29,7 +28,8 @@ export default function SettingsPage() {
         </div>
       </section>
       <section>
-        <AlpacaKeyForm />
+        {/* Add API key form, notification settings, etc. here */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">API Key Form Placeholder</div>
       </section>
     </div>
   )

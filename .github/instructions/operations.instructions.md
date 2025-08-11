@@ -224,3 +224,404 @@ YAML/JSON configs for pipelines
 Environment-specific notes
 
 Security considerations
+
+## Authentication & Authorization
+- Implement OAuth2 for user authentication
+- Use JWTs for session management
+- Enforce role-based access control (RBAC) for sensitive actions
+
+Got it — I’ll go through **all 30+ sectional prompts** we discussed earlier and map them out for your app so each one is a **ready-to-use generation prompt** for code, UI, and backend.
+
+I’ll structure them so you can **copy-paste into Gemini / Copilot / Cline** for instant output.
+We’ll cover **all core features** of your POD + dashboard app, plus extra analytics and backtesting parts you added.
+
+---
+
+## **📦 1. Designs Section Prompt**
+
+```
+You are generating a React + Tailwind + TypeScript frontend section called "Designs" for a Print-on-Demand dashboard.  
+Features:
+- Table listing designs with columns: Thumbnail, Title, Status, Created Date, Actions
+- Actions: View, Edit, Duplicate, Delete
+- Modal form for uploading a new design with drag-and-drop file input
+- React Query hooks for fetching designs from `/api/designs`
+- Search + filter by status
+- Pagination + loading state
+Backend Requirements:
+- GET `/api/designs` (paginated, searchable)
+- POST `/api/designs` (multipart form data)
+- PATCH `/api/designs/:id`
+- DELETE `/api/designs/:id`
+Include:
+- Responsive layout
+- Dark mode support
+```
+
+---
+
+## **📦 2. Templates Section Prompt**
+
+```
+Generate a "Templates" dashboard section with:
+- Card grid of templates showing name, description, # of blueprints, last updated
+- Button to create a new template
+- Modal with form: Template Name, Description, Tags
+- Inline editing for template name
+- React Query hooks to `/api/templates`
+- Filters: By tag, By product type
+Backend:
+- CRUD `/api/templates`
+- Relationship: Template → Blueprints
+```
+
+---
+
+## **📦 3. Blueprints Section Prompt**
+
+```
+Create a "Blueprints" management view:
+- Table with columns: ID, Name, Provider, Variants, Placements, Actions
+- Button: Import blueprint from provider API
+- Modal: Provider selection (Printify, Printful, etc.)
+- React Query to fetch `/api/blueprints`
+Backend:
+- GET `/api/blueprints`
+- POST `/api/blueprints/import` (calls provider API)
+```
+
+---
+
+## **📦 4. Variants Section Prompt**
+
+```
+Generate "Variants" table with:
+- Columns: SKU, Size, Color, Price, Stock, Actions
+- Inline edit price
+- Bulk price update modal
+- React Query from `/api/variants`
+Backend:
+- GET `/api/variants`
+- PATCH `/api/variants/:id`
+- Bulk PATCH `/api/variants`
+```
+
+---
+
+## **📦 5. Placements Section Prompt**
+
+```
+Create "Placements" editor:
+- List of product mockups with placement zones
+- Upload design to placement zone
+- Live preview (using Canvas or Fabric.js)
+Backend:
+- GET `/api/placements`
+- POST `/api/placements/:id/upload`
+```
+
+---
+
+## **📦 6. Collections Section Prompt**
+
+```
+Generate "Collections" management view:
+- Table: Name, # of Templates, Status, Actions
+- Modal: Create/Edit collection
+- Assign templates to collections
+Backend:
+- CRUD `/api/collections`
+- POST `/api/collections/:id/assign`
+```
+
+---
+
+## **📦 7. Shops Section Prompt**
+
+```
+"Shops" dashboard:
+- Card list: Shop Name, Platform, Status, Sync Date
+- Button: Connect New Shop
+- Modal: OAuth or API Key input
+Backend:
+- GET `/api/shops`
+- POST `/api/shops/connect`
+- PATCH `/api/shops/:id`
+```
+
+---
+
+## **📦 8. Suppliers Section Prompt**
+
+```
+Suppliers management:
+- Table: Name, Location, Products Available, Rating
+- Modal: Add Supplier
+- Search/filter
+Backend:
+- CRUD `/api/suppliers`
+```
+
+---
+
+## **📦 9. API Keys Section Prompt**
+
+```
+API Keys UI:
+- List: Key Name, Provider, Status, Created Date
+- Button: Add API Key
+- Modal: Provider dropdown, Key input, Test Key button
+Backend:
+- CRUD `/api/api-keys`
+- POST `/api/api-keys/test`
+```
+
+---
+
+## **📦 10. Image Sync Section Prompt**
+
+```
+Image Sync page:
+- List of recent syncs: Status, # Images, Date
+- Button: Trigger Manual Sync
+Backend:
+- GET `/api/image-sync`
+- POST `/api/image-sync/trigger`
+```
+
+---
+
+## **📦 11. Logs Section Prompt**
+
+```
+Logs view:
+- Table: Timestamp, Level, Message, Context
+- Filter by level (info, warning, error)
+Backend:
+- GET `/api/logs`
+```
+
+---
+
+## **📦 12. Sync Activity Section Prompt**
+
+```
+Sync Activity UI:
+- Timeline of sync events
+- Filters by provider
+Backend:
+- GET `/api/sync-activity`
+```
+
+---
+
+## **📦 13. Account Settings Prompt**
+
+```
+Account Settings:
+- Tabs: Profile, Password, Billing
+- Profile form
+- Password change form
+- Billing info from Stripe API
+Backend:
+- GET/POST `/api/account`
+```
+
+---
+
+## **📦 14. Dashboard Overview Prompt**
+
+```
+Overview:
+- Stats cards: Total Products, Total Sales, Active Shops
+- Chart: Sales over time
+Backend:
+- GET `/api/overview`
+```
+
+---
+
+## **📦 15. Strategy Backtesting Section Prompt**
+
+```
+Strategy Backtesting:
+- Form: Asset, Date Range, Parameters
+- Run backtest button
+- Results: Summary, Equity Curve chart, Trade Table
+Backend:
+- POST `/api/backtest/run`
+- GET `/api/backtest/:id`
+```
+
+---
+
+## **📦 16. Backtest History Prompt**
+
+```
+Backtest History:
+- Table of previous runs
+Backend:
+- GET `/api/backtest`
+```
+
+---
+
+## **📦 17. Backtest Results Export Prompt**
+
+```
+Export Results:
+- Buttons: Export CSV, Export PDF
+Backend:
+- GET `/api/backtest/:id/export?format=csv`
+```
+
+---
+
+## **📦 18. Custom Signals Prompt**
+
+```
+Custom Signals:
+- Table: Name, Trigger Conditions
+- Modal: Create Signal (conditions builder)
+Backend:
+- CRUD `/api/signals`
+```
+
+---
+
+## **📦 19. Signal Builder Prompt**
+
+```
+Signal Builder:
+- Drag/drop condition blocks
+- Save as custom signal
+Backend:
+- POST `/api/signals`
+```
+
+---
+
+## **📦 20. Savings Calculator Prompt**
+
+```
+Savings Calculator:
+- Form: Initial, Monthly, Rate, Years
+- Chart output
+Backend:
+- POST `/api/calculators/savings`
+```
+
+---
+
+## **📦 21. Compound Interest Calculator Prompt**
+
+```
+Compound Interest Calculator:
+- Form: P, r, n, t
+Backend:
+- POST `/api/calculators/compound`
+```
+
+---
+
+## **📦 22. Inflation Calculator Prompt**
+
+```
+Inflation Calculator:
+- Form: Amount, Rate, Years
+Backend:
+- POST `/api/calculators/inflation`
+```
+
+---
+
+## **📦 23. Retirement Calculator Prompt**
+
+```
+Retirement Calculator:
+- Form: Target, Current Savings, Years, Return Rate
+Backend:
+- POST `/api/calculators/retirement`
+```
+
+---
+
+## **📦 24. Portfolio Section Prompt**
+
+```
+Portfolio:
+- Table of holdings
+- Charts: Asset allocation
+Backend:
+- GET `/api/portfolio`
+```
+
+---
+
+## **📦 25. Financial Calculators Prompt**
+
+```
+List of all calculators in tabs
+```
+
+---
+
+## **📦 26. Risk/Reward Calculator Prompt**
+
+```
+Risk/Reward:
+- Form: Entry, Stop, Target
+Backend:
+- POST `/api/calculators/risk-reward`
+```
+
+---
+
+## **📦 27. Position Size Calculator Prompt**
+
+```
+Position Size:
+- Form: Account Size, Risk %, Stop Size
+Backend:
+- POST `/api/calculators/position-size`
+```
+
+---
+
+## **📦 28. Leverage Calculator Prompt**
+
+```
+Leverage:
+- Form: Capital, Exposure
+Backend:
+- POST `/api/calculators/leverage`
+```
+
+---
+
+## **📦 29. Pivot Points Calculator Prompt**
+
+```
+Pivot Points:
+- Form: High, Low, Close
+Backend:
+- POST `/api/calculators/pivot-points`
+```
+
+---
+
+## **📦 30. Options Greeks Calculator Prompt**
+
+```
+Options Greeks:
+- Form: S, K, r, t, sigma, type
+Backend:
+- POST `/api/calculators/options-greeks`
+```
+
+---
+
+If you want, I can now make a **master combined "section generator" prompt** so you can generate **any one of these** instantly by replacing a single variable like `{section_name}`.
+That would let you avoid 30 copy-pastes.
+
+Do you want me to do that next?

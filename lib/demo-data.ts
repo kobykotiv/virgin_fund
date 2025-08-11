@@ -513,3 +513,44 @@ export function generateSectorAllocation() {
   ]
 }
 
+// Generate demo portfolios
+export function generateDemoPortfolios() {
+  return [
+    {
+      id: uuidv4(),
+      name: "Tech Growth Portfolio",
+      positions: generateDemoPositions().filter(p => ["AAPL", "MSFT", "GOOGL", "NVDA"].includes(p.symbol)),
+      allocation: generateSectorAllocation(),
+      history: generatePortfolioHistory(),
+    },
+    {
+      id: uuidv4(),
+      name: "Value Income Portfolio",
+      positions: generateDemoPositions().filter(p => ["JNJ", "SPY", "AMZN", "META"].includes(p.symbol)),
+      allocation: generateSectorAllocation(),
+      history: generatePortfolioHistory(),
+    },
+    {
+      id: uuidv4(),
+      name: "Crypto Pioneer Portfolio",
+      positions: generateDemoPositions().filter(p => ["BTC-USD", "TSLA", "NVDA"].includes(p.symbol)),
+      allocation: generateSectorAllocation(),
+      history: generatePortfolioHistory(),
+    },
+    {
+      id: uuidv4(),
+      name: "Blue Chip Portfolio",
+      positions: generateDemoPositions().filter(p => ["JNJ", "PG", "KO", "PEP", "WMT"].includes(p.symbol)),
+      allocation: generateSectorAllocation(),
+      history: generatePortfolioHistory(),
+    },
+    {
+      id: uuidv4(),
+      name: "Balanced Portfolio",
+      positions: generateDemoPositions().slice(0, 5),
+      allocation: generateSectorAllocation(),
+      history: generatePortfolioHistory(),
+    },
+  ];
+}
+

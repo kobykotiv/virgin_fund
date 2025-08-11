@@ -23,17 +23,22 @@ export function getPortfolioPositions(portfolioId: string): Position[] {
     "crypto-pioneer": allPositions.filter(p => 
       ["BTC-USD", "TSLA", "NVDA"].includes(p.symbol)),
     // Add more portfolio types as needed
+    "demo": allPositions.slice(0, 4) // Default demo positions
+
+    
   }
 
   // Return positions for this portfolio or a subset of demo positions
   return positionMap[portfolioId] || allPositions.slice(0, 4)
 }
 
-export function calculateAllocation(positions: Position[]): Array<{ name: string; value: number }> {
+export function calculateAllocation(positions: Position[]): Array<{ name: string; value: number; pnl: number; pnlPercentage: number }> {
   const totalValue = positions.reduce((sum, pos) => sum + pos.value, 0)
   
   return positions.map(pos => ({
-    name: pos.symbol,
-    value: Math.round((pos.value / totalValue) * 100)
+    name: pos.symbol, // Ensure this property is mapped
+    value: Math.round((pos.value / totalValue) * 100), // Ensure this property is mapped
+    pnl: pos.pnl, // Ensure this property is mapped
+    pnlPercentage: pos.pnlPercentage // Ensure this property is mapped
   }))
 }

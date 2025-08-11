@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase-client';
-import { generateDemoPortfolio } from '@/lib/demo-portfolio';
+import { generateDemoPortfolios } from '@/lib/demo-data';
 
 /**
  * Seed script for generating demo portfolios for QA/testing.
@@ -21,6 +21,18 @@ async function seedDemoPortfolios(count = 5) {
       console.log(`Seeded demo portfolio for user ${user.user.id}`);
     } catch (err) {
       console.error('Demo portfolio generation failed:', err);
+    }
+  }
+}
+
+async function generateDemoPortfolio(userId: string) {
+  const demoPortfolios = generateDemoPortfolios();
+  for (const portfolio of demoPortfolios) {
+    const { error } = await supabase
+      .from('portfolios')
+      .insert({ user_id: userId, ...portfolio });
+    if (error) {
+      console.error(`Failed to insert portfolio ${portfolio.name}:`, error.message);
     }
   }
 }

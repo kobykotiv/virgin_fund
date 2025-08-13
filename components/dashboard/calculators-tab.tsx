@@ -10,6 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Chart } from "@/components/ui/chart"
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"
 import { Calculator, TrendingUp, DollarSign } from "lucide-react"
+import { DebtCalculator } from "../calculators/debt-calculator"
+import { FeeImpactCalculator } from "../calculators/fee-impact-calculator"
+import { MortgageCalculator } from "../calculators/mortgage-calculator"
+import { RetirementCalculator } from "../calculators/retirement-calculator"
+import { OptionPremiumCalculator } from "../calculators/option-premium-calculator"
 
 export default function CalculatorsTab() {
   return (
@@ -55,7 +60,7 @@ export default function CalculatorsTab() {
         </TabsContent>
 
         <TabsContent value="dca" className="space-y-4">
-          <DCACalculator />
+          <Calculator />
         </TabsContent>
 
         <TabsContent value="options" className="space-y-4">

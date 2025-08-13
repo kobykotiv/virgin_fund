@@ -68,7 +68,54 @@ This document provides guidelines and best practices for maintaining the Virgin 
 
 - `tsconfig.json`: TypeScript configuration.
 
----
+## Ideal File Structure
+
+```
+root/
+├── app/                # Next.js App Router pages, layouts, and API routes
+│   ├── api/            # API routes (REST endpoints)
+│   ├── dashboard/      # Dashboard pages and layouts
+│   ├── login/          # Login and authentication pages
+│   ├── portfolio/      # Portfolio management pages
+│   └── ...             # Other feature pages
+├── components/         # Reusable React components
+│   ├── home/           # Home page sections/components
+│   ├── dashboard/      # Dashboard widgets/components
+│   ├── calculators/    # Financial calculator components
+│   ├── ui/             # Shared UI primitives (Card, Button, etc.)
+│   └── ...             # Other feature components
+├── blog/               # Markdown blog posts
+├── config/             # Configuration files and constants
+├── docs/               # Documentation and guides
+├── prisma/             # Prisma schema and migrations
+├── public/             # Static assets (images, icons, etc.)
+├── server/             # Backend logic (Supabase, Alpaca, bots)
+├── styles/             # Global and feature-specific styles
+├── types/              # TypeScript type definitions
+├── utils/              # Utility functions and helpers
+├── .env.local          # Local environment variables
+├── package.json        # Project dependencies and scripts
+├── tailwind.config.ts  # TailwindCSS configuration
+├── next.config.mjs     # Next.js configuration
+└── ...                 # Other root files
+```
+
+## Best Practices
+- Keep feature logic modular and separated by domain.
+- Use server components for backend logic and data fetching.
+- Use client components for interactive UI.
+- Store all blog posts in `blog/` as markdown files.
+- Document new features and changes in `docs/`.
+- Use environment variables for sensitive keys and configuration.
+- Follow TypeScript conventions for type safety.
+- Use TailwindCSS for consistent styling.
+
+## Maintainer Responsibilities
+- Review and merge pull requests.
+- Ensure code quality and consistency.
+- Update documentation for new features and changes.
+- Monitor dependencies and update as needed.
+- Respond to issues and feature requests.
 
 ## Managing Dependencies
 

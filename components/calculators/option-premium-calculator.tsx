@@ -176,7 +176,7 @@ export function OptionPremiumCalculator() {
             </div>
           </div>
           <div className="h-[300px]">
-            <Chart>
+            <Chart children={undefined}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />

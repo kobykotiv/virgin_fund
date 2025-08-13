@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import PerformanceChart from "@/components/performance-chart";
+import {PerformanceChart} from "@/components/performance-chart";
 
 // Example tier config
 const TIER_LIMITS = {
@@ -19,21 +19,32 @@ const PORTFOLIO_TEMPLATES = [
   { name: "DeFi Yield Optimizer", description: "Rotates capital between DeFi protocols." },
 ];
 
-export default function DemoPortfolioManager({ userTier = "free" }) {
-  const [portfolios, setPortfolios] = useState([]);
+type UserTier = keyof typeof TIER_LIMITS;
+
+type PortfolioTemplate = {
+  name: string;
+  description: string;
+};
+
+type Portfolio = PortfolioTemplate & {
+  id: number;
+};
+
+export default function DemoPortfolioManager({ userTier = "free" }: { userTier?: UserTier }) {
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const maxPortfolios = TIER_LIMITS[userTier];
 
   // Add portfolio from template
-  const addPortfolio = (template) => {
+  const addPortfolio = (template: PortfolioTemplate) => {
     if (portfolios.length >= maxPortfolios) return alert("Upgrade your account to add more portfolios.");
     setPortfolios([...portfolios, { ...template, id: Date.now() }]);
   };
 
   // Remove portfolio
-  const removePortfolio = (id) => setPortfolios(portfolios.filter((p) => p.id !== id));
+  const removePortfolio = (id: number) => setPortfolios(portfolios.filter((p) => p.id !== id));
 
   // Edit portfolio
-  const editPortfolio = (id, newData) => {
+  const editPortfolio = (id: number, newData: Partial<PortfolioTemplate>) => {
     setPortfolios(portfolios.map((p) => p.id === id ? { ...p, ...newData } : p));
   };
 
@@ -73,19 +84,6 @@ export default function DemoPortfolioManager({ userTier = "free" }) {
           </Card>
         ))}
       </div>
-      <h3 className="font-semibold mb-2">Add a Demo Portfolio</h3>
-      <div className="grid gap-2">
-        {PORTFOLIO_TEMPLATES.map((template) => (
-          <Button key={template.name} onClick={() => addPortfolio(template)} disabled={portfolios.length >= maxPortfolios}>
-            Add {template.name}
-          </Button>
-        ))}
-      </div>
-      {portfolios.length >= maxPortfolios && (
-        <div className="mt-4 text-orange-600 font-medium">
-          Portfolio limit reached. <a href="#pricing" className="underline">Upgrade your account</a> to add more.
-        </div>
-      )}
     </section>
   );
 }

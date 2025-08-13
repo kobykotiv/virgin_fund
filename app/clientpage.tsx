@@ -383,7 +383,7 @@ export default function LandingPage() {
             </Tabs>
           </div>
         </section>
-        <DemoPortfolioManager userTier={auth.tier || "free"} />
+        {/* <DemoPortfolioManager userTier={auth.tier || "free"} /> */}
 
         {/* Fear & Greed + Signals Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">

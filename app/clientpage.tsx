@@ -34,6 +34,7 @@ import { CookieConsent } from "@/components/cookie-consent"
 import { SignalsList } from "@/components/signals-list"
 import { useAuth } from "@/providers/auth-provider"
 import { PortfolioAllocation } from "@/components/portfolio-allocation"
+import DemoPortfolioManager from "@/components/demo/DemoPortfolioManager"
 
 export default function LandingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -382,6 +383,7 @@ export default function LandingPage() {
             </Tabs>
           </div>
         </section>
+        <DemoPortfolioManager userTier={auth.tier || "free"} />
 
         {/* Fear & Greed + Signals Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
@@ -1198,4 +1200,3 @@ export default function LandingPage() {
     </div>
   )
 }
-          

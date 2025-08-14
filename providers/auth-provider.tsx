@@ -18,24 +18,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Simple function to verify Alpaca API credentials
-async function verifyCredentials(apiKey: string, secretKey: string, isPaper: boolean): Promise<boolean> {
+export async function verifyCredentials(apiKey: string, secretKey: string, isPaper: boolean): Promise<{ valid: boolean; error?: string }> {
   try {
     const baseUrl = isPaper ? 
       'https://paper-api.alpaca.markets' : 
-      'https://api.alpaca.markets'
-    
-    const response = await fetch(`${baseUrl}/v2/account`, {
-      headers: {
-        'APCA-API-KEY-ID': apiKey,
-        'APCA-API-SECRET-KEY': secretKey,
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    return response.ok
+      'https://api.alpaca.markets';
+
+    const url = `${baseUrl}/v2/account`;
+    const headers = {
+      'APCA-API-KEY-ID': apiKey,
+      'APCA-API-SECRET-KEY': secretKey,
+    };
+
+    const response = await fetch(url, { headers });
+    const body = await response.text();
+
+    if (!response.ok) {
+      let errorMsg = 'Failed to verify credentials';
+      try {
+        const json = JSON.parse(body);
+        errorMsg = json.message || errorMsg;
+      } catch {}
+      console.error(errorMsg, body);
+      return { valid: false, error: errorMsg };
+    }
+
+    return { valid: true };
   } catch (error) {
-    console.error('Error verifying credentials:', error)
-    return false
+    console.error('Error verifying credentials:', error);
+    return { valid: false, error: (error instanceof Error ? error.message : 'Unknown error') };
   }
 }
 
@@ -69,13 +80,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (credentials: {apiKey: string, secretKey: string, isPaper: boolean}) => {
     try {
       // Verify credentials with Alpaca
-      const isValid = await verifyCredentials(
+      const result = await verifyCredentials(
         credentials.apiKey, 
         credentials.secretKey, 
         credentials.isPaper
-      )
+      );
 
-      if (!isValid) throw new Error('Invalid credentials')
+      if (!result.valid) throw new Error(result.error || 'Invalid credentials')
 
   // Store credentials in localStorage
   localStorage.setItem('alpaca_api_key', credentials.apiKey)

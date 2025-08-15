@@ -69,6 +69,8 @@ interface SubscriptionContextType {
   canCreateMoreBots: (currentBotCount: number) => boolean
   isFeatureAvailable: (feature: keyof TierLimits) => boolean
   checkStrategyAccess: (strategy: string) => boolean
+  // Added for BotForm compatibility: check if a given bot type is allowed for the current tier
+  canCreateBot: (type: string) => boolean
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType>({
@@ -77,7 +79,8 @@ const SubscriptionContext = createContext<SubscriptionContextType>({
   upgradeTier: () => {},
   canCreateMoreBots: () => false,
   isFeatureAvailable: () => false,
-  checkStrategyAccess: () => false
+  checkStrategyAccess: () => false,
+  canCreateBot: () => false,
 })
 
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
@@ -120,6 +123,20 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     return tierLimits.strategies.includes(strategy.toLowerCase())
   }
 
+  // New helper used by the BotForm component to check if a given bot type is allowed
+  const canCreateBot = (type: string) => {
+    const t = type.toLowerCase()
+    if (t === "basket") return Boolean(tierLimits.basketTrading)
+    if (t === "grid") return tierLimits.strategies.includes("grid")
+    if (t === "dca") return tierLimits.strategies.includes("dca")
+    if (t === "indicator" || t === "indicators") return (
+      tierLimits.strategies.includes("indicators") || tierLimits.strategies.includes("indicator")
+    )
+    // For any custom/unknown types, fallback to true if apiAccess is allowed or strategies include 'custom'
+    if (t === "custom") return tierLimits.strategies.includes("custom") || Boolean(tierLimits.apiAccess)
+    return true
+  }
+
   return (
     <SubscriptionContext.Provider
       value={{
@@ -128,7 +145,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         upgradeTier,
         canCreateMoreBots,
         isFeatureAvailable,
-        checkStrategyAccess
+        checkStrategyAccess,
+        canCreateBot,
       }}
     >
       {children}

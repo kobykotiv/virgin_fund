@@ -49,9 +49,12 @@ export default function Navigation() {
             </Link>
             <Link 
               href="/dashboard/register" 
+              className="text-gray-300 hover:text-white transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Register
             </Link>
           </div>
-          
+
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -71,7 +74,7 @@ export default function Navigation() {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-sm">

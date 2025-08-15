@@ -53,36 +53,36 @@ export function OptionPremiumCalculator() {
       const t = 1 / (1 + p * x)
       return (
         sign *
-        (1 -
-          (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x)))
-      )
+        (1 - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x)))
+      ); // Corrected stray parenthesis
     }
 
-    let optionPremium = 0
+    let optionPremium = 0;
     if (optionType === "call") {
-      optionPremium = S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2)
+      optionPremium = S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2);
     } else {
-      optionPremium = K * Math.exp(-r * T) * normCDF(-d2) - S * normCDF(-d1)
+      optionPremium = K * Math.exp(-r * T) * normCDF(-d2) - S * normCDF(-d1);
     }
-    setPremium(optionPremium)
+
+    setPremium(optionPremium);
 
     // Chart: show premium for a range of underlying prices
-    const prices = Array.from({ length: 21 }, (_, i) => S - 10 + i)
+    const prices = Array.from({ length: 21 }, (_, i) => S - 10 + i);
     const chart = prices.map((price) => {
-      const d1p = (Math.log(price / K) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T))
-      const d2p = d1p - sigma * Math.sqrt(T)
-      let prem = 0
+      const d1p = (Math.log(price / K) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
+      const d2p = d1p - sigma * Math.sqrt(T);
+      let prem = 0;
       if (optionType === "call") {
-        prem = price * normCDF(d1p) - K * Math.exp(-r * T) * normCDF(d2p)
+        prem = price * normCDF(d1p) - K * Math.exp(-r * T) * normCDF(d2p);
       } else {
-        prem = K * Math.exp(-r * T) * normCDF(-d2p) - price * normCDF(-d1p)
+        prem = K * Math.exp(-r * T) * normCDF(-d2p) - price * normCDF(-d1p);
       }
       return {
         price: Number(price.toFixed(2)),
         premium: Number(prem.toFixed(2)),
-      }
-    })
-    setChartData(chart)
+      };
+    });
+    setChartData(chart);
   }
 
   return (
@@ -176,7 +176,7 @@ export function OptionPremiumCalculator() {
             </div>
           </div>
           <div className="h-[300px]">
-            <Chart children={undefined}>
+            <Chart>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -192,5 +192,5 @@ export function OptionPremiumCalculator() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

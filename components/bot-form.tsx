@@ -16,6 +16,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 // Add subscription tier check to the BotForm component
 // Import the useSubscription hook at the top of the file
 import { useSubscription } from "@/providers/subscription-provider"
+import { apiPost } from '@/lib/apiClient';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/use-toast';
 
 interface BotFormProps {
   initialBot: Bot | null
@@ -194,20 +197,16 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
+  const router = useRouter();
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await apiPost('/api/bots', formData);
+      toast({ title: 'Bot created', description: `Bot ${res.bot?.name || 'created'}` });
+      router.push('/dashboard');
+    } catch (err: any) {
+      toast({ title: 'Error creating bot', description: err.message || 'Failed' , variant: 'destructive' });
     }
   }
 

@@ -2,7 +2,7 @@
 
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -44,13 +44,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
-import { useAuth } from "@/providers/auth-provider"
+import { AuthContext } from "@/providers/auth-provider"
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
 
 export function MainNav() {
   const pathname = usePathname()
-  const { user, logout, isDemoMode, disableDemoMode } = useAuth()
+  const { user, logout, isDemoMode, disableDemoMode } = useContext(AuthContext) || {}
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 

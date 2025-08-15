@@ -6,14 +6,22 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+async function getUserFromToken(token: string | null) {
+  if (!token) return null;
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error) return null;
+  return data.user;
+}
+
 export async function GET(req: NextRequest) {
-  const user_id = req.headers.get('x-user-id');
-  if (!user_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const token = req.headers.get('authorization')?.replace('Bearer ', '') || null;
+  const user = await getUserFromToken(token);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data, error } = await supabase
     .from('bots')
     .select('type, risk')
-    .eq('user_id', user_id);
+    .eq('user_id', user.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

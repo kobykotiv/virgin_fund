@@ -241,7 +241,7 @@ export default function LoginPage() {
 
         // Simulate login process
         setTimeout(() => {
-          handleDemoLogin(activeDemo)
+          handleLogin(activeDemo)
         }, 1000)
       }, 1500)
 
@@ -267,7 +267,7 @@ export default function LoginPage() {
       // Check if this is a demo account login
       if (email === "admin@example.com" && password === "admin123") {
         // Use the general demo scenario by default
-        await handleDemoLogin("retail")
+        await handleLogin("retail")
         return
       }
 
@@ -369,65 +369,6 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
-
-  // Improved demo login function with better error handling and feedback
-  const handleDemoLogin = async (demoId: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-  
-      const selectedPortfolio = portfolios.find(p => p.id === demoId);
-      if (!selectedPortfolio) {
-        throw new Error('Invalid demo portfolio selected');
-      }
-  
-      // Store the selected portfolio as the demo scenario
-      localStorage.setItem(DEMO_PORTFOLIO_KEY, demoId);
-  
-      // Create a user object with portfolio-specific info
-      const user = {
-        email: "guest@example.com",
-        name: `Guest - ${selectedPortfolio.name}`,
-        image: "/placeholder.svg?height=128&width=128",
-        isGuestAccount: true,
-        isDemoAccount: true,
-        demoPortfolio: demoId,
-        portfolioData: {
-          ...selectedPortfolio,
-          positions: portfoliosWithLiveData.find(p => p.id === demoId)?.positions || selectedPortfolio.positions,
-          value: portfoliosWithLiveData.find(p => p.id === demoId)?.value || selectedPortfolio.value
-        }
-      };
-  
-      // Save authentication and portfolio state
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("isGuest", "true");
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("demoMode", "true");
-      localStorage.setItem(LOCAL_STORAGE_KEY, "true");
-  
-      // Enable demo mode as a guest session
-      await enableDemoMode(true);
-      
-      // Auto-redirect to dashboard
-      router.push("/dashboard");
-  
-      // Show success toast with portfolio-specific message
-      toast({
-        title: "Demo Portfolio Loaded",
-        description: `You're now exploring the ${selectedPortfolio.name} portfolio as a guest user.`,
-        action: (
-          <Button variant="default" onClick={() => router.push("/dashboard")}>
-            View Portfolio
-          </Button>
-        )
-      });
-    } catch (error) {
-      console.error("Demo portfolio load error:", error);
-      setError(error instanceof Error ? error.message : "Failed to load portfolio. Please try again.");
-      setIsLoading(false);
-    }
-  };
 
   const startDemoAnimation = (demoId: string) => {
     setActiveDemo(demoId)

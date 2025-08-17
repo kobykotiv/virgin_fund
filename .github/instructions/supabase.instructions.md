@@ -31,3 +31,13 @@ Supabase is used as the backend database and authentication provider for this pr
 ## References
 - [Supabase Docs](https://supabase.com/docs)
 - [Environment Variables in Next.js](https://nextjs.org/docs/pages/building-your-application/configuring/environment-variables)
+
+# Supabase Local Development
+
+Use `npx supabase start` for local development with Supabase CLI.
+
+When running commands in the project, prefix with `npx` if you haven't globally installed the Supabase CLI:
+
+- Start local services: `npx supabase start`
+- Reset DB and run migrations: `npx supabase db reset`
+- Apply migrations: `npx supabase db push`

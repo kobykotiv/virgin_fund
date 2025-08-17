@@ -1,1 +1,2 @@
-alter table bots add column if not exists performance numeric default 0;
+-- Placeholder: moved migration logic to 20250815_add_performance_to_bots.sql
+-- This file intentionally left blank to preserve history.

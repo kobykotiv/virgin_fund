@@ -26,53 +26,73 @@ components:
       properties:
         id:
           type: integer
+          example: 42
         name:
           type: string
+          example: "DCA BTC Monthly"
         symbol:
           type: string
+          example: "BTCUSD"
         dca_amount:
           type: number
+          example: 50
         enabled:
           type: boolean
+          example: true
         stop_loss_pct:
           type: number
+          example: 10
         liquidated:
           type: boolean
+          example: false
         created_at:
           type: string
           format: date-time
+          example: "2025-08-01T12:00:00Z"
     Backtest:
       type: object
       properties:
         id:
           type: integer
+          example: 11
         bot_id:
           type: integer
+          example: 42
         results:
           type: object
+          example: { "total_return": 0.12, "max_drawdown": 0.05 }
         created_at:
           type: string
           format: date-time
+          example: "2025-08-17T09:00:00Z"
     OrderRecord:
       type: object
       properties:
         id:
           type: integer
+          example: 1001
         bot_id:
           type: integer
+          example: 42
         alpaca_order_id:
           type: string
+          example: "a1b2c3"
         side:
           type: string
+          example: "buy"
         qty:
           type: number
+          example: 0.5
         price:
           type: number
+          example: 27345.12
         status:
           type: string
+          example: "filled"
         created_at:
           type: string
           format: date-time
+          example: "2025-08-17T09:05:00Z"
 
 paths:
   /api/bots:
@@ -87,6 +107,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Bot'
+              examples:
+                sample:
+                  value:
+                    - id: 42
+                      name: "DCA BTC Monthly"
+                      symbol: "BTCUSD"
+                      dca_amount: 50
+                      enabled: true
     post:
       summary: Create a bot
       requestBody:
@@ -95,6 +123,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Bot'
+            examples:
+              create:
+                value:
+                  name: "DCA EUR Weekly"
+                  symbol: "EURUSD"
+                  dca_amount: 100
+                  enabled: true
       responses:
         '201':
           description: created bot
@@ -147,6 +182,8 @@ paths:
               properties:
                 idempotency_key:
                   type: string
+              example:
+                idempotency_key: "manual-2025-08-17-42"
       responses:
         '200':
           description: execution result
@@ -154,6 +191,11 @@ paths:
             application/json:
               schema:
                 type: object
+              examples:
+                success:
+                  value:
+                    ok: true
+                    processed: 1
   /api/bots/{id}/backtest:
     post:
       summary: Run backtest for bot
@@ -175,6 +217,9 @@ paths:
                 to:
                   type: string
                   format: date
+              example:
+                from: "2022-01-01"
+                to: "2023-01-01"
       responses:
         '200':
           description: backtest results
@@ -208,6 +253,13 @@ paths:
       responses:
         '200':
           description: liquidation summary
+          content:
+            application/json:
+              examples:
+                sample:
+                  value:
+                    ok: true
+                    liquidated: 5
 
   /api/webhooks/alpaca:
     post:
@@ -218,6 +270,12 @@ paths:
           application/json:
             schema:
               type: object
+            examples:
+              sample:
+                value:
+                  stream: "trade_updates"
+                  data:
+                    event: "fill"
       responses:
         '200':
           description: accepted
@@ -232,6 +290,10 @@ paths:
             application/json:
               schema:
                 type: object
+              examples:
+                sample:
+                  value:
+                    global_dca_amount: 50
     patch:
       summary: Update global settings
       requestBody:
@@ -239,8 +301,10 @@ paths:
           application/json:
             schema:
               type: object
+            examples:
+              update:
+                value:
+                  global_dca_amount: 75
       responses:
         '200':
           description: updated
-
-components: {}

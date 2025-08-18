@@ -1,5 +1,9 @@
 # Dashboard Instructions — Virgin Fund Trading App
 
+This is a powershell environemnet, always use POWERSHELL commands when building commands
+
+
+
 ## 1. Global UI & Utilities
 ### Header
 - **Virgin Fund Logo + App Title**

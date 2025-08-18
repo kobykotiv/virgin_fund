@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: Virgin Fund API
+  version: 1.0.0
+  description: OpenAPI description for core server endpoints (bots, backtests, settings, webhooks, liquidations). Use Supabase service role Bearer token for server-to-server calls.
+servers:
+  - url: https://{host}
+    variables:
+      host:
+        default: localhost:3000
+security:
+  - ServiceBearer: []
+components:
+  securitySchemes:
+    ServiceBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    AlpacaApiKey:
+      type: apiKey
+      in: header
+      name: APCA-API-KEY-ID
+  schemas:
+    Bot:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        symbol:
+          type: string
+        dca_amount:
+          type: number
+        enabled:
+          type: boolean
+        stop_loss_pct:
+          type: number
+        liquidated:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    Backtest:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        results:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+    OrderRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        alpaca_order_id:
+          type: string
+        side:
+          type: string
+        qty:
+          type: number
+        price:
+          type: number
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+paths:
+  /api/bots:
+    get:
+      summary: List bots
+      responses:
+        '200':
+          description: array of bots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bot'
+    post:
+      summary: Create a bot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bot'
+      responses:
+        '201':
+          description: created bot
+  /api/bots/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get bot by id
+      responses:
+        '200':
+          description: bot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bot'
+    patch:
+      summary: Update bot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bot'
+      responses:
+        '200':
+          description: updated
+    delete:
+      summary: Delete bot
+      responses:
+        '204':
+          description: deleted
+
+  /api/bots/{id}/execute:
+    post:
+      summary: Execute a bot (idempotent)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotency_key:
+                  type: string
+      responses:
+        '200':
+          description: execution result
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/bots/{id}/backtest:
+    post:
+      summary: Run backtest for bot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date
+                to:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: backtest results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Backtest'
+
+  /api/backtests/{id}:
+    get:
+      summary: Get backtest by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: backtest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Backtest'
+
+  /api/liquidate-all:
+    post:
+      summary: Liquidate all positions (admin)
+      security:
+        - ServiceBearer: []
+      responses:
+        '200':
+          description: liquidation summary
+
+  /api/webhooks/alpaca:
+    post:
+      summary: Alpaca order/position webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: accepted
+
+  /api/settings:
+    get:
+      summary: Get global settings
+      responses:
+        '200':
+          description: settings object
+          content:
+            application/json:
+              schema:
+                type: object
+    patch:
+      summary: Update global settings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: updated
+
+components: {}

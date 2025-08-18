@@ -1,10 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { runBacktest } from '@/lib/backtest/engine';
 import { supabase } from '@/lib/supabase';
+import { getUserFromAuthHeader } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const user = req.headers['x-user-id'] as string | undefined;
-  if (!user) return res.status(401).json({ error: 'Missing user id header' });
+  const user = await getUserFromAuthHeader(req);
+  if (!user || !user.id) return res.status(401).json({ error: 'Unauthorized' });
+  const userId = user.id as string;
   const { id } = req.query;
   if (!id) return res.status(400).json({ error: 'Missing id' });
 
@@ -13,7 +15,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const body = req.body;
     const { symbol, start, end, initialCapital, dcaAmount, frequency } = body;
     const params = { symbol, start, end, initialCapital: Number(initialCapital) || 10000, dcaAmount: Number(dcaAmount) || 100, frequency: frequency || 'daily', slippagePct: Number(body.slippagePct) || 0, commission: Number(body.commission) || 0 };
-    const resBt = await runBacktest(params);
+
+    // ensure bot belongs to user
+    const { data: bot, error: bErr } = await supabase.from('bots').select('*').eq('id', Number(id)).eq('user_id', userId).single();
+    if (bErr) throw bErr;
+    if (!bot) return res.status(404).json({ error: 'Bot not found' });
+
+    const resBt = await runBacktest(params as any);
     const { data, error } = await supabase.from('backtests').insert({ bot_id: Number(id), params: body, results: resBt, summary: resBt.summary }).select().single();
     if (error) throw error;
     return res.status(200).json({ backtest: data });

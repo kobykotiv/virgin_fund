@@ -83,3 +83,11 @@ create table if not exists webhook_logs (
   headers jsonb,
   created_at timestamptz default now()
 );
+
+-- Idempotency keys table to prevent duplicate execute requests
+create table if not exists idempotency_keys (
+  key text primary key,
+  user_id uuid references auth.users,
+  response jsonb,
+  created_at timestamptz default now()
+);

@@ -1,8 +1,9 @@
 // app/dashboard/backtest/page.tsx
+"use client"
 import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { DashboardHeader } from "@/components/dashboard-header";
-import { useListBacktest } from "@/hooks/useBacktest";
+import { useBacktests } from "@/lib/hooks/useBacktests";
 import { Card } from "@/components/ui/card";
 import { Table } from "@/components/ui/table";
 
@@ -10,7 +11,7 @@ export default function BacktestDashboardPage() {
   // Demo mode and userId would come from context/auth
   const [demoMode] = useState(false);
   const [userId] = useState(""); // TODO: Replace with actual user ID from auth
-  const { data: backtests = [], isLoading } = useListBacktest(demoMode, userId);
+  const { backtests = [], isLoading } = useBacktests(null as any);
 
   return (
     <DashboardShell>

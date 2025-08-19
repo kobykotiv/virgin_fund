@@ -97,9 +97,13 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
     try {
       // Fetch portfolio data
       const portfolioData = await fetchPortfolio()
-      portfolios = {
+      // Avoid reassigning the imported `portfolios` binding — use a local variable instead.
+      const fetchedPortfolio = {
         ...portfolioData,
-        totalValue: portfolioData.positions.reduce((sum, pos) => sum + (pos.marketValue || 0), 0),
+        totalValue: portfolioData.positions.reduce(
+          (sum, pos) => sum + ((pos.currentPrice || 0) * (pos.quantity || 0)),
+          0
+        ),
         cashBalance: portfolioData.cashBalance || 0,
       }
 

@@ -5,9 +5,8 @@ import { UserAccountNav } from "@/components/user-account-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 import { DashboardFooter } from "@/components/dashboard-footer"
 import { redirect } from "next/navigation"
-import dynamic from 'next/dynamic'
-
 // Extract navigation items to server component
+import ClientNavWrapper from '@/components/client-nav-wrapper'
 const navigationItems = [
   {
     href: "/home",
@@ -35,10 +34,8 @@ const navigationItems = [
   },
 ]
 
-// Wrap client components with use client directive
-const ClientNav = dynamic(() => import('@/components/client-nav'), {
-  ssr: false
-})
+// Use a small client wrapper to host client-only navigation
+// `ClientNavWrapper` is a client component that imports `ClientNav` internally.
 
 interface ProtectedLayoutProps {
   children: ReactNode
@@ -70,7 +67,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       <div className="flex-1 container flex-grow py-6">
         <div className="grid gap-12 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
           <aside className="hidden w-[200px] flex-col md:flex lg:w-[240px]">
-            <ClientNav items={navigationItems} />
+            <ClientNavWrapper items={navigationItems} />
           </aside>
           <main className="flex w-full flex-col">
             <div className="magazine-grid">

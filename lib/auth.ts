@@ -22,3 +22,12 @@ export async function getUserFromAuthHeader(req: any) {
     return null;
   }
 }
+
+// Minimal authOptions export to satisfy imports by API routes that call getServerSession(authOptions).
+// This is intentionally lightweight; if your app uses full next-auth configuration, replace this with
+// the real configuration exported from your auth module.
+export const authOptions = {
+  providers: [],
+  secret: process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  session: { strategy: 'jwt' },
+}

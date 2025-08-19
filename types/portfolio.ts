@@ -37,6 +37,7 @@ export interface AllocationItem {
 }
 
 export interface Portfolio {
+  [x: string]: number
   id: string
   name: string
   focus: string

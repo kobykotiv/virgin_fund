@@ -669,11 +669,52 @@ async function simulateDCAStrategy(
     intervalDays = 7 // Weekly
   else if (bot.dcaConfig.interval.includes("1 * *")) intervalDays = 30 // Monthly
 
+  let lastBuyPrice = null;
+
   for (let i = 0; i < prices.length; i += intervalDays) {
     if (i >= prices.length) break
 
     const price = prices[i].close
     const quantity = amount / price
+
+    // Check stop loss / take profit before buying (if holding)
+    if (positions[symbol] > 0 && lastBuyPrice !== null) {
+      let shouldSell = false;
+      let reason = "";
+      if (bot.stopLoss) {
+        const stopPrice = lastBuyPrice * (1 - bot.stopLoss / 100);
+        if (price <= stopPrice) {
+          shouldSell = true;
+          reason = "stopLoss";
+        }
+      }
+      if (!shouldSell && bot.takeProfit) {
+        const takeProfitPrice = lastBuyPrice * (1 + bot.takeProfit / 100);
+        if (price >= takeProfitPrice) {
+          shouldSell = true;
+          reason = "takeProfit";
+        }
+      }
+      if (shouldSell) {
+        const sellQty = positions[symbol];
+        const value = sellQty * price;
+        const fees = (value * (params.commission || 0)) / 100;
+        const slippage = (value * (params.slippage || 0)) / 100;
+        cash += value - fees - slippage;
+        positions[symbol] = 0;
+        trades.push({
+          timestamp: prices[i].date,
+          type: "sell",
+          price,
+          quantity: sellQty,
+          value,
+          symbol,
+          fees,
+          slippage,
+        });
+        lastBuyPrice = null;
+      }
+    }
 
     if (cash >= amount) {
       const fees = (amount * (params.commission || 0)) / 100
@@ -681,6 +722,7 @@ async function simulateDCAStrategy(
 
       cash -= amount + fees + slippage
       positions[symbol] += quantity
+      lastBuyPrice = price
 
       trades.push({
         timestamp: prices[i].date,
@@ -1155,48 +1197,48 @@ export async function optimizeStrategy(
   rangeEnd: number,
   steps: number,
 ): Promise<{ parameter: string; value: number; performance: number }[]> {
-  const results: { parameter: string; value: number; performance: number }[] = []
-  const step = (rangeEnd - rangeStart) / steps
+  const step = (rangeEnd - rangeStart) / steps;
+  const tasks: Promise<{ parameter: string; value: number; performance: number }>[] = [];
 
   for (let i = 0; i <= steps; i++) {
-    const paramValue = rangeStart + step * i
-    const botCopy = JSON.parse(JSON.stringify(bot)) as Bot
+    const paramValue = rangeStart + step * i;
+    const botCopy = JSON.parse(JSON.stringify(bot)) as Bot;
 
     // Update the parameter to optimize
     if (paramToOptimize.startsWith("indicator.")) {
-      const indicatorParam = paramToOptimize.split(".")[1]
-      if (botCopy.indicatorConfig) {
-        botCopy.indicatorConfig[indicatorParam as keyof IndicatorConfig] = paramValue as any
+      const indicatorParam = paramToOptimize.split(".")[1];
+      if (botCopy.indicatorConfig && (indicatorParam in botCopy.indicatorConfig)) {
+        (botCopy.indicatorConfig as any)[indicatorParam] = paramValue;
       }
     } else if (paramToOptimize.startsWith("grid.")) {
-      const gridParam = paramToOptimize.split(".")[1]
-      if (botCopy.gridConfig) {
-        botCopy.gridConfig[gridParam as keyof GridConfig] = paramValue as any
+      const gridParam = paramToOptimize.split(".")[1];
+      if (botCopy.gridConfig && (gridParam in botCopy.gridConfig)) {
+        (botCopy.gridConfig as any)[gridParam] = paramValue;
       }
     } else if (paramToOptimize.startsWith("dca.")) {
-      const dcaParam = paramToOptimize.split(".")[1]
-      if (botCopy.dcaConfig) {
-        botCopy.dcaConfig[dcaParam as keyof DCAConfig] = paramValue as any
+      const dcaParam = paramToOptimize.split(".")[1];
+      if (botCopy.dcaConfig && (dcaParam in botCopy.dcaConfig)) {
+        (botCopy.dcaConfig as any)[dcaParam] = paramValue;
       }
     } else if (paramToOptimize === "stopLoss") {
-      botCopy.stopLoss = paramValue
+      botCopy.stopLoss = paramValue;
     } else if (paramToOptimize === "takeProfit") {
-      botCopy.takeProfit = paramValue
+      botCopy.takeProfit = paramValue;
     }
 
-    // Run backtest with updated parameter
-    const result = await runBacktest(botCopy, params)
-
-    // Use Sharpe ratio as the performance metric
-    results.push({
+    // Prepare parallel backtest task
+    const task = runBacktest(botCopy, params).then((result) => ({
       parameter: paramToOptimize,
       value: paramValue,
       performance: result.sharpeRatio,
-    })
+    }));
+    tasks.push(task);
   }
 
+  const results = await Promise.all(tasks);
+
   // Sort results by performance
-  return results.sort((a, b) => b.performance - a.performance)
+  return results.sort((a, b) => b.performance - a.performance);
 }
 
 // Get saved backtest results
@@ -1220,4 +1262,3 @@ export async function compareBacktests(resultIds: string[]): Promise<BacktestRes
   const savedResults = await getSavedBacktests()
   return savedResults.filter((result) => resultIds.includes(result.id))
 }
-

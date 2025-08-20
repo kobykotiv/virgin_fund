@@ -9,14 +9,14 @@ export async function POST(req: NextRequest) {
   const user = userData?.user ?? null;
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { symbol, side, quantity, price, type } = await req.json();
-  if (!symbol || !side || !quantity || !type) {
+  const { symbol, side, quantity, price, type, notional } = await req.json();
+  if (!symbol || !side || (!quantity && !notional) || !type) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
   // Insert order into Supabase orders table (status pending)
   const { data, error } = await serverSupabase.from('orders').insert([
-    { user_id: user.id, symbol, side, quantity, price, type, status: 'pending' }
+    { user_id: user.id, symbol, side, quantity, price, type, notional, status: 'pending' }
   ]).select();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -24,13 +24,37 @@ export async function POST(req: NextRequest) {
 
   // Proxy to Alpaca using user's stored keys
   const tokenForProxy = token;
+  const alpacaOrderBody: any = {
+    symbol,
+    side,
+    type,
+    time_in_force: 'day',
+  };
+  if (type === 'limit') alpacaOrderBody.limit_price = price;
+  if (notional) alpacaOrderBody.notional = notional;
+  else alpacaOrderBody.qty = quantity;
+
   const proxyRes = await fetch('/api/alpaca-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForProxy}` },
-    body: JSON.stringify({ endpoint: '/v2/orders', method: 'POST', body: { symbol, qty: quantity, side, type, time_in_force: 'day', limit_price: type === 'limit' ? price : undefined } })
+    body: JSON.stringify({ endpoint: '/v2/orders', method: 'POST', body: alpacaOrderBody })
   });
 
-  const result = await proxyRes.json();
+  let result;
+  try {
+    result = await proxyRes.json();
+  } catch {
+    result = { error: 'Failed to parse Alpaca response' };
+  }
+
+  // Enhanced error handling for Alpaca errors
+  if (proxyRes.status >= 400 || result.error || result.code) {
+    let errorMsg = result.message || result.error || 'Order failed';
+    if (result.code === 40310000) errorMsg = 'Insufficient funds';
+    if (result.code === 40310001) errorMsg = 'Market closed';
+    await serverSupabase.from('orders').update({ status: 'error', error_message: errorMsg }).eq('id', orderRecord.id);
+    return NextResponse.json({ error: errorMsg, details: result }, { status: proxyRes.status });
+  }
 
   // Update order record with status from Alpaca
   if (result && result.id) {

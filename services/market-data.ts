@@ -74,17 +74,68 @@ export class MarketDataService {
   
   async placeOrder(orderParams: {
     symbol: string;
-    qty: number;
+    qty?: number;
+    notional?: number;
     side: 'buy' | 'sell';
     type: 'market' | 'limit' | 'stop' | 'stop_limit';
     time_in_force: 'day' | 'gtc' | 'ioc' | 'fok';
     limit_price?: number;
     stop_price?: number;
   }) {
-    return this.fetch('/v2/orders', {
-      method: 'POST',
-      body: JSON.stringify(orderParams)
-    })
+    // Support fractional trading: qty or notional
+    const body: any = {
+      symbol: orderParams.symbol,
+      side: orderParams.side,
+      type: orderParams.type,
+      time_in_force: orderParams.time_in_force,
+    };
+    if (orderParams.qty !== undefined) body.qty = orderParams.qty;
+    if (orderParams.notional !== undefined) body.notional = orderParams.notional;
+    if (orderParams.limit_price !== undefined) body.limit_price = orderParams.limit_price;
+    if (orderParams.stop_price !== undefined) body.stop_price = orderParams.stop_price;
+
+    let retries = 0;
+    while (retries < 3) {
+      try {
+        const response = await fetch(`${this.baseUrl}/v2/orders`, {
+          method: 'POST',
+          headers: {
+            'APCA-API-KEY-ID': this.apiKey,
+            'APCA-API-SECRET-KEY': this.secretKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (response.status === 429) {
+          // Rate limit hit, exponential backoff
+          await new Promise(res => setTimeout(res, 500 * Math.pow(2, retries)));
+          retries++;
+          continue;
+        }
+
+        const json = await response.json();
+
+        if (!response.ok) {
+          // Map common Alpaca error codes/messages
+          if (json.code === 40310000 || json.message?.includes('insufficient')) {
+            throw new Error('Insufficient funds');
+          }
+          if (json.code === 40310001 || json.message?.includes('market closed')) {
+            throw new Error('Market is closed');
+          }
+          throw new Error(json.message || 'Order placement failed');
+        }
+
+        return json;
+      } catch (error: any) {
+        if (retries >= 2) {
+          throw error;
+        }
+        retries++;
+      }
+    }
+    throw new Error('Order placement failed after retries');
   }
   
   async cancelOrder(orderId: string) {

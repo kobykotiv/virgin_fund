@@ -31,8 +31,8 @@ export function MockDataWarning() {
   // Second useEffect to check for credentials after mounting
   useEffect(() => {
     if (mounted) {
-      const hasCredentials = localStorage.getItem('alpaca_api_key') && 
-                             localStorage.getItem('alpaca_secret_key')
+      const hasCredentials = localStorage.getItem('alpaca_api_key_enc') && 
+                             localStorage.getItem('alpaca_secret_key_enc')
       setIsMockingData(!hasCredentials)
     }
   }, [mounted])

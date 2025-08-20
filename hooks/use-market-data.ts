@@ -30,9 +30,21 @@ export function useMarketData(symbols: string[]): MarketData {
           return;
         }
 
-        // Check for Alpaca credentials
-        const apiKey = localStorage.getItem('alpaca_api_key');
-        const secretKey = localStorage.getItem('alpaca_secret_key');
+        // Check for encrypted Alpaca credentials
+        let apiKey: string | null = null;
+        let secretKey: string | null = null;
+        try {
+          const encApiKey = localStorage.getItem('alpaca_api_key_enc');
+          const encSecretKey = localStorage.getItem('alpaca_secret_key_enc');
+          if (encApiKey && encSecretKey) {
+            const { decryptData } = await import('@/utils/encryption');
+            apiKey = await decryptData(encApiKey);
+            secretKey = await decryptData(encSecretKey);
+          }
+        } catch (e) {
+          apiKey = null;
+          secretKey = null;
+        }
 
         if (apiKey && secretKey) {
           // Use Alpaca API

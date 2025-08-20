@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/providers/auth-provider';
+import { encrypt, decrypt } from '@/lib/crypto';
 
 const ApiKeyManagement = () => {
-    const { user, getAccessToken } = useAuth();
     const [apiKey, setApiKey] = useState('');
     const [secretKey, setSecretKey] = useState('');
     const [isPaper, setIsPaper] = useState(true);
@@ -10,32 +9,40 @@ const ApiKeyManagement = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        // On mount, try to load encrypted keys from localStorage
         const fetchKeys = async () => {
-            if (!user) return;
             setLoading(true);
-            const token = await getAccessToken();
-            const res = await fetch('/api/api-keys', { headers: { Authorization: `Bearer ${token}` } });
-            const json = await res.json();
-            if (json?.key) {
-                setApiKey(json.key.api_key || '');
-                setIsPaper(json.key.is_paper ?? true);
+            try {
+                // Fetch data from the API
+                const response = await fetch('/api/keys'); // Replace with your actual API endpoint
+                const data = await response.json();
+                
+                // Assuming the API returns an object with apiKey, secretKey, and isPaper
+                if (data.apiKey && data.secretKey) {
+                    setApiKey(data.apiKey);
+                    setSecretKey(data.secretKey);
+                    setIsPaper(data.isPaper);
+                }
+            } catch (e) {
+                setMessage('Failed to load API keys');
             }
             setLoading(false);
         };
         fetchKeys();
-    }, [user, getAccessToken]);
+    }, []);
 
     const handleSave = async () => {
         setLoading(true);
-        const token = await getAccessToken();
-        const res = await fetch('/api/api-keys', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ api_key: apiKey, secret_key: secretKey, is_paper: isPaper }),
-        });
-        const json = await res.json();
-        if (json.error) setMessage('Error saving API keys: ' + json.error);
-        else setMessage('API keys saved successfully');
+        try {
+            const encApiKey = await encrypt(apiKey);
+            const encSecretKey = await encrypt(secretKey);
+            localStorage.setItem('alpaca_api_key_enc', encApiKey);
+            localStorage.setItem('alpaca_secret_key_enc', encSecretKey);
+            localStorage.setItem('alpaca_is_paper', isPaper ? 'true' : 'false');
+            setMessage('API keys saved securely in your browser');
+        } catch (e) {
+            setMessage('Error encrypting or saving API keys');
+        }
         setLoading(false);
     };
 

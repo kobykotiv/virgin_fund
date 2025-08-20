@@ -25,8 +25,8 @@ export async function runBacktest(params: BacktestParams) {
     // simple DCA frequency: buy every Nth bar depending on frequency
     let shouldBuy = false;
     if (params.frequency === 'daily') shouldBuy = true;
-    if (params.frequency === 'weekly' && new Date(bar.t).getDay() === 1) shouldBuy = true;
-    if (params.frequency === 'monthly' && new Date(bar.t).getDate() === 1) shouldBuy = true;
+    if (params.frequency === 'weekly' && new Date(bar.t).getUTCDay() === 1) shouldBuy = true;
+    if (params.frequency === 'monthly' && new Date(bar.t).getUTCDate() === 1) shouldBuy = true;
 
     if (shouldBuy && cash >= params.dcaAmount) {
       const price = bar.o * (1 + (params.slippagePct ?? 0) / 100);

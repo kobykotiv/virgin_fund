@@ -1,30 +1,25 @@
-// middleware/sessionMiddleware.ts
-// Server-side session verification & helpers for protected routes.
-//
-// This file provides lightweight utilities suitable for Bun + Next.js app-router
-// API routes. It uses the existing `getUserFromAuthHeader` helper (which reads
-// the Authorization header) as the primary authentication method, and includes
-// helper stubs for cookie-based session verification / refresh that you can
-// wire to Supabase or another server-side session store.
-//
-// Usage examples:
-//  - In an API route: const { userId } = await requireSession(req)
-//  - In middleware: const res = await requireSessionOrRedirect(req)
-//  - For refresh flows: call refreshSessionTokens(refreshToken)
-//
-// NOTES / TODOs:
-//  - Wire `verifySessionCookie` to your session store (Supabase table or Redis).
-//  - Use secure, httpOnly, SameSite=strict cookies for session tokens.
-//  - Implement refresh token rotation and revoke on logout/compromise.
-//  - Ensure `ENCRYPTION_KEY` and `COOKIE_SECRET` are set in env variables.
-
+/**
+ * middleware/sessionMiddleware.ts
+ *
+ * Consolidated session middleware that delegates core session operations to
+ * `lib/session.ts`. This file adapts sessionLib outputs for API route and
+ * middleware use (requireSession, requireSessionOrRedirect) and provides
+ * helper utilities for setting/clearing httpOnly session cookies on responses.
+ *
+ * Behavior:
+ *  - try Authorization header (getUserFromAuthHeader) first
+ *  - fallback to cookie-based session verification via sessionLib.verifySessionToken
+ *  - if cookie session expired, attempt rotation via sessionLib.refreshSession
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromAuthHeader } from "@/lib/auth";
-import { createClient } from "@supabase/supabase-js";
+import * as sessionLib from "../lib/session";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!; // server-side secret
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+import { createClient } from "@supabase/supabase-js"; // only if needed elsewhere
+
+/* NOTE: Legacy direct Supabase access has been removed from this module.
+   Use lib/session.ts for DB operations. */
 
 /**
  * requireSession - Ensure request is authenticated via Authorization header.
@@ -36,30 +31,32 @@ export async function requireSession(req: NextRequest) {
   if (user?.id) return { userId: user.id, user };
 
   // 2) Attempt cookie-based session verification (httpOnly cookie)
-  const cookieResult = await verifySessionCookie(req);
-
-  // If no cookie result, unauthorized
-  if (!cookieResult) {
+  const cookie = req.cookies?.get?.("vf_session")?.value || null;
+  if (!cookie) {
     throw new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
-  // If cookie is valid and not expired, return user
-  if ((cookieResult as any).userId) {
-    return { userId: (cookieResult as any).userId, user: { id: (cookieResult as any).userId } };
+  const verified = await sessionLib.verifySessionToken(cookie);
+
+  // If invalid
+  if (!verified) {
+    throw new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
-  // If session is expired, try to refresh using stored refresh token
-  if ((cookieResult as any).expired && (cookieResult as any).session?.refresh_token) {
-    const refreshToken = (cookieResult as any).session.refresh_token;
-    const result = await refreshSessionTokens(refreshToken);
+  // If expired, attempt refresh using refresh token via sessionLib
+  if ((verified as any).expired && (verified as any).session?.refresh_token) {
+    const refreshToken = (verified as any).session.refresh_token;
+    const result = await sessionLib.refreshSession(refreshToken);
     if (result?.success) {
-      // Return the refreshed user id (caller may set cookie using returned cookie info)
+      // Caller should set cookie on response using returned cookie info.
       return { userId: result.userId, user: { id: result.userId }, rotatedCookie: result.cookie, newRefreshToken: result.refreshToken };
     }
+    throw new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
-  // Fallback unauthorized
-  throw new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  // Valid, not expired
+  const sessionRow = (verified as any).session ? (verified as any).session : verified;
+  return { userId: sessionRow.user_id, user: { id: sessionRow.user_id }, session: sessionRow };
 }
 
 /**
@@ -68,13 +65,17 @@ export async function requireSession(req: NextRequest) {
  */
 export async function requireSessionOrRedirect(req: NextRequest) {
   const user = await getUserFromAuthHeader(req);
+  if (user?.id) return null;
 
-  if (!user?.id) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
+  // Try cookie-based session as a last resort
+  const cookie = req.cookies?.get?.("vf_session")?.value || null;
+  if (cookie) {
+    const verified = await sessionLib.verifySessionToken(cookie);
+    if (verified && !(verified as any).expired) return null;
   }
 
-  return null; // indicates OK to continue
+  const loginUrl = new URL("/login", req.url);
+  return NextResponse.redirect(loginUrl);
 }
 
 /**
@@ -82,33 +83,10 @@ export async function requireSessionOrRedirect(req: NextRequest) {
  * Stub implementation; replace with real lookup against session store.
  */
 export async function verifySessionCookie(req: NextRequest) {
-  try {
-    const cookie = req.cookies.get("vf_session")?.value || null;
-    if (!cookie) return null;
-
-    // Example: look up session row in Supabase
-    const { data, error } = await supabase
-      .from("sessions")
-      .select("*")
-      .eq("session_token", cookie)
-      .limit(1)
-      .single();
-
-    if (error || !data) return null;
-
-    // Example returned shape: { user_id, expires_at, refresh_token }
-    const now = new Date();
-    const expiresAt = new Date(data.expires_at);
-    if (expiresAt < now) {
-      // Session expired; caller may attempt refresh
-      return { expired: true, session: data };
-    }
-
-    return { userId: data.user_id, session: data };
-  } catch (e) {
-    console.error("verifySessionCookie error", e);
-    return null;
-  }
+  const cookie = req.cookies?.get?.("vf_session")?.value || null;
+  if (!cookie) return null;
+  const verified = await sessionLib.verifySessionToken(cookie);
+  return verified;
 }
 
 /**
@@ -116,64 +94,7 @@ export async function verifySessionCookie(req: NextRequest) {
  * Stub: implement rotation, revocation, and secure cookie replacement.
  */
 export async function refreshSessionTokens(refreshToken: string) {
-  try {
-    if (!refreshToken) return { success: false, error: "Missing refresh token" };
-
-    // Look up existing session row by refresh token
-    const { data, error } = await supabase
-      .from("sessions")
-      .select("*")
-      .eq("refresh_token", refreshToken)
-      .limit(1)
-      .single();
-
-    if (error || !data) return { success: false, error: "Invalid refresh token" };
-
-    // Optionally check for revocation, last_used, etc.
-    // Generate new tokens
-    const newSessionToken = crypto.randomUUID();
-    const newRefreshToken = crypto.randomUUID();
-
-    // Compute new expiry (seconds)
-    const maxAgeSeconds = 60 * 60 * 24 * 7; // 7 days
-    const expiresAt = new Date(Date.now() + maxAgeSeconds * 1000).toISOString();
-
-    // Update DB row: rotate tokens (rotate refresh_token)
-    const { error: updateError } = await supabase
-      .from("sessions")
-      .update({
-        session_token: newSessionToken,
-        refresh_token: newRefreshToken,
-        expires_at: expiresAt,
-        last_rotated_at: new Date().toISOString(),
-      })
-      .eq("id", data.id);
-
-    if (updateError) return { success: false, error: updateError.message };
-
-    // Return cookie information so caller can set httpOnly cookie
-    const cookie = {
-      name: "vf_session",
-      value: newSessionToken,
-      opts: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-        maxAge: maxAgeSeconds,
-      },
-    };
-
-    return {
-      success: true,
-      userId: data.user_id,
-      cookie,
-      refreshToken: newRefreshToken,
-    };
-  } catch (e: any) {
-    console.error("refreshSessionTokens error", e);
-    return { success: false, error: e?.message || "Unknown error" };
-  }
+  return sessionLib.refreshSession(refreshToken);
 }
 
 /**
@@ -181,21 +102,18 @@ export async function refreshSessionTokens(refreshToken: string) {
  * Use on server-side routes / middleware to set cookies with proper flags.
  */
 export function setSessionCookieOnResponse(res: NextResponse, name: string, value: string, opts?: { maxAge?: number }) {
-  const maxAge = opts?.maxAge ?? 60 * 60 * 24 * 7; // 7 days
-  // Secure flags: httpOnly, secure, sameSite=strict
-  // NextResponse.cookies.set API differs by Next version; adapt as needed.
+  const maxAge = opts?.maxAge ?? Number(process.env.SESSION_MAX_AGE_SECONDS ?? 60 * 60 * 24 * 7);
   try {
     res.cookies.set({
       name,
       value,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "strict" as const,
       path: "/",
       maxAge,
     });
-  } catch (e) {
-    // Fallback: set header manually (older Next versions)
+  } catch {
     const cookieStr = `${name}=${value}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=Strict${process.env.NODE_ENV === "production" ? "; Secure" : ""}`;
     res.headers.set("Set-Cookie", cookieStr);
   }
@@ -205,13 +123,7 @@ export function setSessionCookieOnResponse(res: NextResponse, name: string, valu
  * revokeSession - Remove session row and clear cookie.
  */
 export async function revokeSession(sessionToken: string) {
-  // Example: delete session row from Supabase
-  const { error } = await supabase.from("sessions").delete().eq("session_token", sessionToken);
-  if (error) {
-    console.error("revokeSession error", error);
-    return { success: false, error: error.message };
-  }
-  return { success: true };
+  return sessionLib.revokeSession(sessionToken);
 }
 
 // Summary of this file:

@@ -1,20 +1,26 @@
-# Type-Check Error Triage (2025-08-21)
+# Progress Update — API Key Management & Sessions
 
-## Top 10 Failing Files (by error count)
-1. components/enhanced-dashboard.tsx
-2. types/portfolio.ts
-3. services/backtest-service.ts
-4. services/bot-strategy-executor.ts
-5. lib/demo-portfolios.ts
-6. app/portfolio/[id]/page.tsx
-7. components/animated-background.tsx
-8. components/dashboard.tsx
-9. components/dashboard/analytics-tab.tsx
-10. lib/utils/portfolio-generator.ts
+Date: 2025-08-21
 
-## Next Steps
-- Prioritize fixes in these files to reduce the majority of type-check errors.
-- Address missing modules, type mismatches, and implicit anys as encountered.
+## Summary of Next Planned Change
+- Review and remove legacy session helpers; consolidate documentation and README.
+- Ensure lib/encryption.ts is consolidated into lib/crypto.ts and update any remaining consumers.
 
-**Summary of Changes:**  
-Documented the top 10 files with the most type-check errors for focused triage and resolution.
+## Current Progress
+- [x] Create lib/session.ts (create/verify/refresh/revoke)
+- [x] Update supabase sessions migration (if needed) (left for DB migration step)
+- [x] Add /api/auth/login route
+- [x] Add /api/auth/refresh route
+- [x] Add /api/auth/logout route
+- [x] Update middleware.ts to protect pages + set x-user-id
+- [x] Update frontend useAuth to use cookie-based flows
+- [x] Add Vitest tests for login/refresh/logout and reveal protection (basic)
+- [x] Add simple rate-limiter utility (utils/rateLimiter.ts) and wire to login endpoint
+- [x] Wire rate-limiter into reveal endpoints and complete hardening
+- [ ] Review and remove legacy session helpers; consolidate docs/README
+
+## Notes
+- Current completion: 10/11 (91%).
+- Recent changes: wired rate-limiter into `GET /api/keys/:id?reveal=true` and enforced `requireRecentSession` in server-side reveal flow.
+- Next atomic action: remove legacy session helper files, consolidate session logic into `lib/session.ts`, update documentation, and ensure all API routes and tests import the canonical session helper.
+- Security reminder: KEY_ENCRYPTION_KEY must remain secret and set in CI/production environment variables; do not commit.

@@ -1,87 +1,173 @@
 "use client"
 
-    // Restored original, full-featured login page (from repo history)
-    import { CardFooter, CardDescription } from "@/components/ui/card"
+import React, { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
-    import type React from "react"
+export default function LoginPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [magicLoading, setMagicLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-    import { useState, useEffect } from "react"
-    import { useRouter } from "next/navigation"
-    import { Button } from "@/components/ui/button"
-    import { Input } from "@/components/ui/input"
-    import { Label } from "@/components/ui/label"
-    import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-    import { Alert, AlertDescription } from "@/components/ui/alert"
-    import { AlertCircle, Loader2, Github, Search, ChevronLeft, ChevronRight, X } from "lucide-react"
-    import Link from "next/link"
-    import { useAuth } from "@/providers/auth-provider"
-    import { DEMO_SCENARIOS } from "@/lib/demo-scenarios"
-    import { PerformanceChart } from "@/components/performance-chart"
-    import { PieChart } from "@/components/pie-chart"
-    import { Badge } from "@/components/ui/badge"
-    import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-    import { SavingsCalculator } from "@/components/calculators/savings-calculator"
-    import { CompoundInterestCalculator } from "@/components/calculators/compound-interest-calculator"
-    import { InflationCalculator } from "@/components/calculators/inflation-calculator"
-    import { RetirementCalculator } from "@/components/calculators/retirement-calculator"
-    import { NewsList } from "@/components/news-list"
-    import { useToast } from "@/components/ui/use-toast"
-    import { portfolios } from "@/lib/demo-portfolios"
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin", // ensure cookies are accepted
+        body: JSON.stringify({ email, password }),
+      })
 
-    const LOCAL_STORAGE_KEY = "generic-trader-login-dismissed"
+      const body = await res.json().catch(() => ({}))
 
-    type DemoType = keyof typeof DEMO_SCENARIOS
-
-    export default function LoginPage() {
-      // ...existing component restored exactly from repo history
-      // The full file content was restored from commit 78cb5af37841ac6d6a533c25af88f15ab13cd79d
-      // For brevity in the patch, the remainder of the original file is preserved.
-      // ...existing code...
-
-      const router = useRouter()
-      const auth = useAuth()
-      const { toast } = useToast()
-
-      // Added: implement demo-mode activation. Called from the "Try Demo Account" link.
-      function enableDemoMode(scenario?: DemoType) {
-        try {
-          // pick requested scenario or fall back to the first available demo
-          const selected = scenario ?? (Object.keys(DEMO_SCENARIOS)[0] as DemoType)
-
-          // persist that the user requested demo mode and which scenario
-          localStorage.setItem(LOCAL_STORAGE_KEY, "1")
-          localStorage.setItem("generic-trader-demo-scenario", selected)
-
-          // If the auth provider exposes a helper to sign in / set demo data, call it.
-          // This is done defensively (optional) so the function works even if those helpers are absent.
-          if (auth && typeof (auth as any).signInDemo === "function") {
-            ;(auth as any).signInDemo(DEMO_SCENARIOS[selected])
-          } else if (auth && typeof (auth as any).setDemoUser === "function") {
-            ;(auth as any).setDemoUser(DEMO_SCENARIOS[selected])
-          }
-
-          // Inform the user and navigate into the app
-          toast?.({
-            title: "Demo enabled",
-            description: `Loaded demo: ${selected}. Redirecting...`,
-          })
-
-          // small delay so toast is visible before redirect
-          setTimeout(() => {
-            router.push("/app")
-          }, 400)
-        } catch (err) {
-          console.error("enableDemoMode:", err)
-          toast?.({
-            variant: "destructive",
-            title: "Could not start demo",
-            description: "Please try again.",
-          })
-        }
+      if (!res.ok) {
+        setError(body?.error || "Login failed")
+        setLoading(false)
+        return
       }
 
-      return (
-        <div className="min-h-screen">Restored login page (full content from history)</div>
-      )
-    }
+      toast({
+        title: "Signed in",
+        description: "You are now signed in.",
+      })
 
+      // Redirect to dashboard (server sets httponly cookie)
+      router.push("/dashboard")
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMagicLink = async () => {
+    setError(null)
+    if (!email) {
+      setError("Enter your email to receive a magic link.")
+      return
+    }
+    setMagicLoading(true)
+    try {
+      const res = await fetch("/api/auth/magic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+
+      const body = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        setError(body?.error || "Could not send magic link")
+        return
+      }
+
+      toast({
+        title: "Magic link sent",
+        description: "Check your inbox for a link to sign in.",
+      })
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setMagicLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Sign in</CardTitle>
+          <CardDescription>Sign in with your Supabase account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                className="flex-1"
+                onClick={handleMagicLink}
+                disabled={magicLoading}
+              >
+                {magicLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send magic link"
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-between text-sm">
+          <a href="/forgot-password" className="text-muted-foreground hover:underline">
+            Forgot password?
+          </a>
+          <a href="/signup" className="text-primary hover:underline">Create account</a>
+        </CardFooter>
+      </Card>
+    </div>
+  )
+}

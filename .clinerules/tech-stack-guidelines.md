@@ -3,6 +3,9 @@
   - All guidelines are derived from explicit user instructions and must be strictly followed.
 
 ## Tech stack requirements
+
+    - Bun init -> 
+
   - Frontend: React (Next.js, TypeScript, Tailwind CSS, shadcn/ui or Radix UI for components).
   - Backend: Next.js API routes (or Bun runtime if specified), RESTful APIs, Node.js (with Bun if specified).
   - State management: React hooks, Context API. Do not use Redux unless explicitly requested.

@@ -1,4 +1,33 @@
 -- Supabase schema for Virgin Fund trading bots
+-- High Stakes Trading App: Initial Tables
+
+CREATE TABLE IF NOT EXISTS high_stakes_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) NOT NULL,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  ended_at timestamptz,
+  status text NOT NULL DEFAULT 'active', -- active, closed, liquidated, etc.
+  leverage numeric(5,2) NOT NULL DEFAULT 1.00,
+  max_drawdown numeric(10,4),
+  risk_limit numeric(12,4),
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS risk_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid REFERENCES high_stakes_sessions(id) NOT NULL,
+  user_id uuid REFERENCES auth.users(id) NOT NULL,
+  event_type text NOT NULL, -- e.g., 'margin_call', 'limit_breach', 'manual_review'
+  event_details jsonb,
+  triggered_at timestamptz NOT NULL DEFAULT now(),
+  resolved boolean NOT NULL DEFAULT false,
+  resolved_at timestamptz
+);
+
+-- Summary of Changes:
+-- - Added high_stakes_sessions table for tracking user high-stakes trading sessions, leverage, and risk.
+-- - Added risk_events table for logging risk-related events and auditability.
 
 -- Bots table
 create table if not exists bots (
@@ -90,4 +119,3 @@ create table if not exists idempotency_keys (
   user_id uuid references auth.users,
   response jsonb,
   created_at timestamptz default now()
-);

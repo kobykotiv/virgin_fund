@@ -1,3 +1,61 @@
+# Progress Report
+
+## Summary of Changes (2025-08-20)
+- Implemented a responsive Trading Dashboard page with mock metrics and navigation.
+- Added/expanded integration tests for authentication, protected routes, and session persistence.
+- Ensured all dashboard UI is accessible and uses shadcn/ui components.
+- Updated dashboard navigation to match DashboardNav requirements.
+
+## Summary of Next Planned Change
+- Expand integration tests for authentication and protected routes.
+- Begin dashboard buildout with real or mock data.
+
+---
+
+## Summary of Changes (2025-08-20, High Stakes Trading App)
+- Added high_stakes_sessions and risk_events tables to Supabase schema for tracking user high-stakes trading sessions, leverage, risk, and audit events.
+- Implemented backend API endpoints for creating and retrieving high stakes sessions and risk events, using Supabase client and secure authentication.
+- Updated API handler to use getUserFromAuthHeader and Supabase client for all operations.
+- All changes follow project security, extensibility, and documentation guidelines.
+
+## Rationale
+- Enables robust support for advanced trading flows, risk controls, and auditability in the High Stakes Trading App module.
+- Lays the foundation for secure, extensible backend and future frontend integration.
+
+## Summary of Changes (2025-08-20, Dashboard Buildout)
+- Refactored dashboard page to remove static mock metrics and integrate PortfolioChart for portfolio allocation visualization.
+- Integrated real-time market data using useMarketData and LiveTicker, with fallback to mock/demo data.
+- Ensured all dashboard UI is accessible, responsive, and uses Tailwind CSS and shadcn/ui/Radix UI components.
+- Added unit tests for dashboard page to verify rendering of portfolio chart, live ticker, and fallback UI.
+- Installed and configured @testing-library/react, @testing-library/jest-dom, and types for robust test coverage.
+- Updated documentation and code comments to explain new features and rationale.
+
+## Rationale
+- Aligns with project requirements for real or mock data (never static placeholders).
+- Improves user experience with real-time updates and clear portfolio visualization.
+- Ensures maintainability, accessibility, and extensibility for future dashboard features.
+
+- Integrated persistent user sessions using JWT cookies.
+- Enforced protected routes in app/(protected) via server-side cookie check.
+- Fixed all related TypeScript errors and removed unsupported props.
+- Ensured protected routes are inaccessible to unauthenticated users.
+
+## Current Status
+- Authentication and protected route logic is implemented and running on Bun.
+- App is accessible at http://localhost:3001 for manual testing.
+
+## Outstanding Tasks
+- Expand integration and unit tests for authentication and protected routes.
+- Build out the Trading Dashboard with real or mock data.
+- Implement order management and strategy automation modules.
+- Add notifications, activity logs, and finalize UI polish.
+- Conduct thorough security review.
+
+## Blockers or Questions
+- None at this stage.
+
+---
+
 # Progress Report: Virgin Fund Trading App
 
 ## Design Decisions and Rationale
@@ -35,3 +93,8 @@
 ## Next Steps
 - Continue iterative improvement and expand test coverage as new features/components are added.
 - Ensure all changes align with the design principles in premise.instructions.md.
+
+---
+
+**Summary of Changes:**  
+Added a new progress report summarizing the implementation of persistent sessions and protected routes, current status, and next steps.

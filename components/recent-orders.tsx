@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/providers/auth-provider';
 import {
   Table,
   TableBody,
@@ -32,23 +33,26 @@ export function RecentOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { user } = useAuth ? useAuth() : { user: null };
+
   useEffect(() => {
     async function fetchOrders() {
       try {
         setLoading(true);
-        const response = await fetch('/api/market/orders?status=all');
-        
+        if (!user?.id) {
+          setOrders([]);
+          setLoading(false);
+          return;
+        }
+        const response = await fetch(`/api/orders?user=${user.id}`);
         if (!response.ok) {
           throw new Error(`HTTP error ${response.status}`);
         }
-        
         const result = await response.json();
-        
-        if (!result.success) {
+        if (!result.orders) {
           throw new Error(result.error || 'Failed to fetch orders');
         }
-        
-        setOrders(result.data);
+        setOrders(result.orders);
       } catch (err) {
         console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Unknown error occurred');
@@ -56,9 +60,8 @@ export function RecentOrders() {
         setLoading(false);
       }
     }
-    
     fetchOrders();
-  }, []);
+  }, [user?.id]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

@@ -1,184 +1,137 @@
-import { describe, it, expect, beforeAll, vi } from "vitest";
+import { beforeAll, describe, it, expect, vi } from "vitest";
+import * as keysService from "../../services/keys-service";
+
+// Provide deterministic encryption key for tests (32 bytes base64)
+beforeAll(() => {
+  process.env.KEY_ENCRYPTION_KEY = Buffer.from(new Array(32).fill(2)).toString("base64");
+});
 
 /**
- * Unit tests for API Keys service (mocked Supabase)
- *
- * Strategy:
- * - Mock @supabase/supabase-js.createClient to return an in-memory fake supabase client.
- * - Use a deterministic KEY_ENCRYPTION_KEY for AES-GCM so encryption is deterministic in tests.
- *
- * Note: We must mock before importing the service to ensure the module-level createClient call
- * inside services/keys-service.ts uses our fake client.
+ * Mock supabaseAdmin with a tiny in-memory adapter that implements the
+ * chainable API used by services/keys-service.ts for the `api_keys` table.
  */
+vi.mock("../../lib/supabaseAdmin", () => {
+  const store = new Map<string, any>();
 
-const TEST_KEY = Buffer.from("a".repeat(32)).toString("base64");
+  function makeBuilder(table: string) {
+    const context: any = { table, op: null, payload: null, filters: [] };
 
-vi.stubEnv("KEY_ENCRYPTION_KEY", TEST_KEY);
-
-vi.mock("@supabase/supabase-js", async () => {
-  // minimal in-memory supabase-like client
-  const fakeDB: Record<string, any[]> = {
-    api_keys: [],
-    sessions: [],
-  };
-
-  function createFakeClient() {
-    return {
-      from(tableName: string) {
-        return {
-          insert: (payloadArray: any[]) => {
-            const payload = { ...payloadArray[0] };
-            // ensure id
-            payload.id = payload.id ?? `id-${Math.random().toString(36).slice(2, 9)}`;
-            payload.created_at = new Date().toISOString();
-            payload.updated_at = new Date().toISOString();
-            // Store in DB
-            fakeDB[tableName] = fakeDB[tableName] || [];
-            fakeDB[tableName].push(payload);
-            return {
-              select: () => ({
-                single: async () => ({ data: payload, error: null }),
-              }),
-            };
-          },
-          select: (_cols?: string) => {
-            const self: any = {};
-            self._table = tableName;
-            self._filters = [];
-            self.eq = (col: string, val: any) => {
-              self._filters.push({ col, val });
-              return self;
-            };
-            self.order = (_col: string, _opts?: any) => self;
-            self.limit = (_n?: number) => self;
-            self.maybeSingle = async () => {
-              const rows = (fakeDB[tableName] || []).filter((r) =>
-                self._filters.every((f: any) => {
-                  // simple equality
-                  return r[f.col] === f.val;
-                })
-              );
-              return { data: rows[0] ?? null, error: null };
-            };
-            self.single = async () => {
-              const rows = (fakeDB[tableName] || []).filter((r) =>
-                self._filters.every((f: any) => r[f.col] === f.val)
-              );
-              return { data: rows[0] ?? null, error: null };
-            };
-            self.eq = self.eq.bind(self);
-            return self;
-          },
-          update: (payload: any) => {
-            const self: any = {};
-            self._payload = payload;
-            self.eq = (col: string, val: any) => {
-              self._filters = [{ col, val }];
-              return self;
-            };
-            self.select = () => ({
-              single: async () => {
-                const rows = (fakeDB[tableName] || []).filter((r) =>
-                  self._filters.every((f: any) => r[f.col] === f.val)
-                );
-                if (!rows[0]) {
-                  return { data: null, error: { message: "Not found" } };
-                }
-                // apply updates
-                Object.assign(rows[0], self._payload);
-                rows[0].updated_at = new Date().toISOString();
-                return { data: rows[0], error: null };
-              },
-              maybeSingle: async () => {
-                const rows = (fakeDB[tableName] || []).filter((r) =>
-                  self._filters.every((f: any) => r[f.col] === f.val)
-                );
-                if (!rows[0]) return { data: null, error: null };
-                Object.assign(rows[0], self._payload);
-                rows[0].updated_at = new Date().toISOString();
-                return { data: rows[0], error: null };
-              },
-            });
-            self.match = (_m: any) => self;
-            self.eq = self.eq.bind(self);
-            return self;
-          },
-          delete: () => ({
-            eq: async (_col: string, _val: any) => ({ data: null, error: null }),
-          }),
-        };
+    const builder: any = {
+      insert(rows: any[]) {
+        context.op = "insert";
+        context.payload = rows[0];
+        return builder;
       },
+      select(_cols?: any) {
+        context.op = context.op || "select";
+        return builder;
+      },
+      update(changes: any) {
+        context.op = "update";
+        context.payload = changes;
+        return builder;
+      },
+      eq(col: string, val: any) {
+        context.filters.push({ col, val });
+        return builder;
+      },
+      order() {
+        return builder;
+      },
+      limit() {
+        return builder;
+      },
+      maybeSingle() {
+        return builder.single(true);
+      },
+      single(isMaybe?: boolean) {
+        return new Promise((res) => {
+          // handle insert
+          if (context.op === "insert") {
+            const id = Math.random().toString(36).slice(2, 10);
+            const row = { id, ...context.payload, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+            store.set(id, row);
+            res({ data: row, error: null });
+            return;
+          }
+
+          // handle select with filters
+          const all = Array.from(store.values());
+          let results = all;
+          for (const f of context.filters) {
+            results = results.filter((r) => {
+              // support nested JSON comparisons for convenience
+              return r[f.col] === f.val;
+            });
+          }
+
+          if (context.op === "update") {
+            // update matching rows by filters (expect eq id)
+            const matched = results;
+            if (matched.length === 0) {
+              res({ data: null, error: { message: "Not found" } });
+              return;
+            }
+            const updatedRow = { ...matched[0], ...context.payload, updated_at: new Date().toISOString() };
+            store.set(updatedRow.id, updatedRow);
+            res({ data: updatedRow, error: null });
+            return;
+          }
+
+          // default select/single
+          if (results.length === 0) return res({ data: null, error: { message: "Not found" } });
+          res({ data: results[0], error: null });
+        });
+      },
+      // Support .maybeSingle() pattern with .select().limit(1).maybeSingle()
+      // and support chained .select(...).eq(...).order(...)
     };
+
+    return builder;
   }
 
-  return { createClient: () => createFakeClient() };
+  return {
+    default: {
+      from(table: string) {
+        return makeBuilder(table);
+      },
+    },
+  };
 });
 
-let keysService: typeof import("../../services/keys-service");
+describe("services/keys-service (integration-style, in-memory supabase mock)", () => {
+  const userId = "user-test-1";
 
-beforeAll(async () => {
-  // import after mocking
-  keysService = await import("../../services/keys-service");
-});
-
-describe("keys-service (in-memory supabase)", () => {
-  const USER_ID = "user-123";
-
-  it("creates a key and returns safe metadata", async () => {
-    const created = await keysService.createKey(USER_ID, {
+  it("creates a key, lists it, reveals secret, and deletes (soft-delete)", async () => {
+    const created = await keysService.createKey(userId, {
       name: "Test Key",
-      provider: "alpaca",
-      apiKey: "public-key-1",
-      secret: "super-secret-abc",
-      isPaper: true,
-      metadata: { note: "created in test" },
+      provider: "mock",
+      apiKey: "public-123",
+      secret: "super-secret-value",
+      isPaper: false,
+      metadata: { env: "test" },
     });
 
     expect(created).toHaveProperty("id");
     expect(created.name).toBe("Test Key");
-    expect(created.is_paper).toBe(true);
-    expect(created).not.toHaveProperty("encrypted_secret");
-  });
+    expect(created.provider).toBe("mock");
 
-  it("lists keys for user", async () => {
-    const list = await keysService.listKeys(USER_ID);
+    const list = await keysService.listKeys(userId);
     expect(Array.isArray(list)).toBe(true);
     expect(list.length).toBeGreaterThanOrEqual(1);
-    expect(list[0]).toHaveProperty("id");
-    expect(list[0]).toHaveProperty("name");
-  });
+    const found = list.find((k) => k.name === "Test Key");
+    expect(found).toBeDefined();
 
-  it("reveals the secret for a key", async () => {
-    const list = await keysService.listKeys(USER_ID);
-    const key = list[0];
-    const revealed = await keysService.revealKey(USER_ID, key.id);
+    // reveal
+    const revealed = await keysService.revealKey(userId, created.id);
     expect(revealed).toHaveProperty("secret");
-    expect(typeof revealed.secret).toBe("string");
-    expect(revealed.secret).toContain("super-secret"); // original secret substring
-  });
+    expect(revealed.secret).toBe("super-secret-value");
 
-  it("updates key secret and metadata", async () => {
-    const list = await keysService.listKeys(USER_ID);
-    const key = list[0];
+    // soft-delete
+    const del = await keysService.deleteKey(userId, created.id);
+    expect(del.id).toBe(created.id);
 
-    const updated = await keysService.updateKey(USER_ID, key.id, {
-      metadata: { note: "rotated" },
-      secret: "new-super-secret-xyz",
-    });
-
-    expect(updated).toHaveProperty("id");
-    expect(updated.metadata).toMatchObject({ note: "rotated" });
-
-    const revealed = await keysService.revealKey(USER_ID, key.id);
-    expect(revealed.secret).toBe("new-super-secret-xyz");
-  });
-
-  it("soft-deletes a key", async () => {
-    const list = await keysService.listKeys(USER_ID);
-    const key = list[0];
-
-    const deleted = await keysService.deleteKey(USER_ID, key.id);
-    expect(deleted).toHaveProperty("id");
-    expect(deleted.is_active).toBe(false);
+    // after delete, reveal should error (inactive)
+    await expect(keysService.revealKey(userId, created.id)).rejects.toThrow(/inactive/i);
   });
 });

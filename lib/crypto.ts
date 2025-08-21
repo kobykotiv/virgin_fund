@@ -1,50 +1,85 @@
-// lib/crypto.ts
-
 /**
- * AES-GCM encryption/decryption utility for browser.
- * Uses key from NEXT_PUBLIC_CREDENTIAL_ENCRYPTION_KEY (32 chars, base64 or utf-8).
+ * lib/crypto.ts
+ *
+ * AES-256-GCM helpers using a server-side key provided in process.env.KEY_ENCRYPTION_KEY (base64, 32 bytes).
+ *
+ * API:
+ *  - encrypt(plain: string): Promise<string>  // returns base64 of (iv || ciphertext || tag)
+ *  - decrypt(cipherBase64: string): Promise<string>
+ *
+ * Notes:
+ *  - Uses Web Crypto (globalThis.crypto.subtle) — available in Bun.
+ *  - The output is a single base64 string containing IV (12 bytes) + ciphertext + tag (16 bytes).
+ *  - Do NOT expose KEY_ENCRYPTION_KEY to clients. Store in CI / server secrets.
  */
 
-const KEY_ENV = 'NEXT_PUBLIC_CREDENTIAL_ENCRYPTION_KEY';
+const KEY_ENV = "KEY_ENCRYPTION_KEY";
+const IV_LENGTH = 12;
+const TAG_LENGTH = 16;
 
-function getKey(): Promise<CryptoKey> {
-  const keyString = process.env[KEY_ENV] || (typeof window !== 'undefined' && (window as any).env?.[KEY_ENV]);
-  if (!keyString || keyString.length !== 32) throw new Error('Invalid encryption key');
-  const keyBytes = new TextEncoder().encode(keyString);
-  return window.crypto.subtle.importKey(
-    'raw',
-    keyBytes,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt', 'decrypt']
-  );
+function toBase64(u8: Uint8Array) {
+  return Buffer.from(u8).toString("base64");
+}
+function fromBase64(s: string) {
+  return Uint8Array.from(Buffer.from(s, "base64"));
 }
 
-export async function encrypt(text: string): Promise<string> {
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const key = await getKey();
-  const encoded = new TextEncoder().encode(text);
-  const ciphertext = await window.crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    encoded
-  );
-  // Store iv + ciphertext as base64
-  const buffer = new Uint8Array(iv.length + ciphertext.byteLength);
-  buffer.set(iv, 0);
-  buffer.set(new Uint8Array(ciphertext), iv.length);
-  return btoa(String.fromCharCode(...buffer));
+async function importKey(): Promise<CryptoKey> {
+  const rawBase64 = process.env[KEY_ENV];
+  if (!rawBase64) throw new Error(`${KEY_ENV} is not defined`);
+  const raw = fromBase64(rawBase64);
+  if (raw.length !== 32) throw new Error(`${KEY_ENV} must be 32 bytes (base64-encoded)`);
+  // Import as raw ArrayBuffer
+  return crypto.subtle.importKey("raw", raw.buffer as ArrayBuffer, { name: "AES-GCM", length: 256 }, false, [
+    "encrypt",
+    "decrypt",
+  ]);
 }
 
-export async function decrypt(data: string): Promise<string> {
-  const buffer = Uint8Array.from(atob(data), c => c.charCodeAt(0));
-  const iv = buffer.slice(0, 12);
-  const ciphertext = buffer.slice(12);
-  const key = await getKey();
-  const decrypted = await window.crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    ciphertext
-  );
-  return new TextDecoder().decode(decrypted);
+function randomIv() {
+  return crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 }
+
+/**
+ * Encrypt plaintext -> base64(iv||ciphertext||tag)
+ */
+export async function encrypt(plain: string): Promise<string> {
+  const key = await importKey();
+  const iv = randomIv();
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plain);
+
+  const buf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data.buffer as ArrayBuffer);
+  const cipher = new Uint8Array(buf); // ciphertext || tag
+
+  // Build combined: iv || cipher
+  const combined = new Uint8Array(iv.length + cipher.length);
+  combined.set(iv, 0);
+  combined.set(cipher, iv.length);
+
+  return toBase64(combined);
+}
+
+/**
+ * Decrypt base64(iv||ciphertext||tag) -> plaintext
+ */
+export async function decrypt(cipherBase64: string): Promise<string> {
+  const raw = fromBase64(cipherBase64);
+  if (raw.length < IV_LENGTH + TAG_LENGTH) throw new Error("Ciphertext too short");
+
+  const iv = raw.slice(0, IV_LENGTH);
+  const cipher = raw.slice(IV_LENGTH);
+
+  const key = await importKey();
+  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, cipher.buffer as ArrayBuffer);
+  const decoder = new TextDecoder();
+  return decoder.decode(plainBuf);
+}
+
+export default { encrypt, decrypt };
+
+/*
+Summary of Changes:
+- Added lib/crypto.ts implementing AES-256-GCM encrypt/decrypt using KEY_ENCRYPTION_KEY env (base64, 32 bytes).
+- Returns/accepts a single base64 string encoding iv||ciphertext||tag so DB storage is simple (text).
+*/

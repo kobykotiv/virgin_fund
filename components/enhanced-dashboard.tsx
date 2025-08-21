@@ -52,7 +52,6 @@ import { runBacktest } from "@/services/backtest-service"
 import { BotHero, BotGrid } from "@/components/bot-management"
 import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-views"
 import { BotAnalytics } from "./bot-configuration/bot-analytics"
-import { Position } from "@/lib/utils/positions"
 import { BacktestResult } from "@/lib/backtest-service"
 import { portfolios } from "@/lib/demo-portfolios"
 
@@ -66,9 +65,9 @@ interface EnhancedDashboardProps {
   onBotAction: (botId: string, action: 'start' | 'stop' | 'delete') => Promise<void>
   isLoading: boolean
   portfolio?: {
-    positions: Position[]
-    totalValue: number
-    cashBalance: number
+    positions: any[]
+    totalValue?: number
+    cashBalance?: number
   }
 }
 

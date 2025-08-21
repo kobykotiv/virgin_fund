@@ -6,11 +6,15 @@ export function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+  const canvas = canvasRef.current
+  if (!canvas) return
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return
+
+  // Narrow to non-null local aliases so class methods don't see these as possibly null
+  const canvasEl = canvas as HTMLCanvasElement
+  const ctxEl = ctx as CanvasRenderingContext2D
 
     // Set canvas dimensions
     const resizeCanvas = () => {
@@ -35,8 +39,8 @@ export function AnimatedBackground() {
       color: string
 
       constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
+  this.x = Math.random() * canvasEl.width
+  this.y = Math.random() * canvasEl.height
         this.size = Math.random() * 5 + 1
         this.speedX = Math.random() * 1 - 0.5
         this.speedY = Math.random() * 1 - 0.5
@@ -47,17 +51,17 @@ export function AnimatedBackground() {
         this.x += this.speedX
         this.y += this.speedY
 
-        if (this.x > canvas.width) this.x = 0
-        else if (this.x < 0) this.x = canvas.width
-        if (this.y > canvas.height) this.y = 0
-        else if (this.y < 0) this.y = canvas.height
+  if (this.x > canvasEl.width) this.x = 0
+  else if (this.x < 0) this.x = canvasEl.width
+  if (this.y > canvasEl.height) this.y = 0
+  else if (this.y < 0) this.y = canvasEl.height
       }
 
       draw() {
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx.fill()
+  ctxEl.fillStyle = this.color
+  ctxEl.beginPath()
+  ctxEl.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+  ctxEl.fill()
       }
     }
 
@@ -68,7 +72,7 @@ export function AnimatedBackground() {
     }
 
     function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctxEl.clearRect(0, 0, canvasEl.width, canvasEl.height)
       for (let i = 0; i < particlesArray.length; i++) {
         particlesArray[i].update()
         particlesArray[i].draw()
@@ -87,12 +91,12 @@ export function AnimatedBackground() {
           if (distance < 100) {
             // Use a static color instead of CSS variables
             const opacity = 0.1 - distance / 1000
-            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity})` // Use a default blue color
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            ctx.moveTo(particlesArray[a].x, particlesArray[a].y)
-            ctx.lineTo(particlesArray[b].x, particlesArray[b].y)
-            ctx.stroke()
+            ctxEl.strokeStyle = `rgba(59, 130, 246, ${opacity})` // Use a default blue color
+            ctxEl.lineWidth = 1
+            ctxEl.beginPath()
+            ctxEl.moveTo(particlesArray[a].x, particlesArray[a].y)
+            ctxEl.lineTo(particlesArray[b].x, particlesArray[b].y)
+            ctxEl.stroke()
           }
         }
       }

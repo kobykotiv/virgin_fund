@@ -16,10 +16,10 @@ export type ChartConfig = {
 }
 
 type ChartContextProps = {
-  config: ChartConfig
+  config?: ChartConfig
 }
 
-const ChartContext = React.createContext<ChartContextProps | undefined>(undefined)
+const ChartContext = React.createContext<ChartContextProps>({ config: {} })
 
 function useChart() {
   const context = React.useContext(ChartContext)
@@ -34,15 +34,15 @@ function useChart() {
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    config: ChartConfig
+    config?: ChartConfig
     children: React.ComponentProps<typeof RechartsPrimitive.ResponsiveContainer>["children"]
   }
->(({ id, className, children, config, ...props }, ref) => {
+>(({ id, className, children, config = {}, ...props }, ref) => {
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
 
   return (
-    <ChartContext.Provider value={{ config }}>
+  <ChartContext.Provider value={{ config }}>
       <div
         data-chart={chartId}
         ref={ref}
@@ -60,8 +60,9 @@ const ChartContainer = React.forwardRef<
 })
 ChartContainer.displayName = "Chart"
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color)
+const ChartStyle = ({ id, config }: { id: string; config?: ChartConfig }) => {
+  const safeConfig = config || {}
+  const colorConfig = Object.entries(safeConfig).filter(([_, config]) => config.theme || config.color)
 
   if (!colorConfig.length) {
     return null
@@ -277,29 +278,30 @@ const ChartLegendContent = React.forwardRef<
 ChartLegendContent.displayName = "ChartLegend"
 
 // Helper to extract item config from a payload.
-function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
+function getPayloadConfigFromPayload(config: ChartConfig | undefined, payload: unknown, key: string) {
+  const safeConfig = config || ({} as ChartConfig)
   if (typeof payload !== "object" || payload === null) {
     return undefined
   }
 
   const payloadPayload =
-    "payload" in payload && typeof payload.payload === "object" && payload.payload !== null
-      ? payload.payload
+    typeof payload === "object" && payload !== null && "payload" in payload && typeof (payload as any).payload === "object"
+      ? (payload as any).payload
       : undefined
 
   let configLabelKey: string = key
 
-  if (key in payload && typeof payload[key as keyof typeof payload] === "string") {
-    configLabelKey = payload[key as keyof typeof payload] as string
+  if (typeof payload === "object" && payload !== null && key in payload && typeof (payload as any)[key] === "string") {
+    configLabelKey = (payload as any)[key] as string
   } else if (
     payloadPayload &&
     key in payloadPayload &&
-    typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
+    typeof (payloadPayload as any)[key] === "string"
   ) {
-    configLabelKey = payloadPayload[key as keyof typeof payloadPayload] as string
+    configLabelKey = (payloadPayload as any)[key] as string
   }
 
-  return configLabelKey in config ? config[configLabelKey] : config[key as keyof typeof config]
+  return configLabelKey in safeConfig ? safeConfig[configLabelKey as keyof ChartConfig] : safeConfig[key as keyof ChartConfig]
 }
 
 export { ChartContainer as Chart, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, ChartStyle }

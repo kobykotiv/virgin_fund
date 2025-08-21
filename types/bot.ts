@@ -67,3 +67,56 @@ export interface Bot {
   basketConfig?: BasketConfig
 }
 
+// Optional metadata used across UI and services
+export interface BotMetadata {
+  description?: string
+  lastTradeAt?: string
+}
+
+// Extend Bot with permissive runtime fields used throughout the app
+export interface Bot extends BotMetadata {
+  // Strategy and parameters are permissive to avoid widespread refactors
+  strategy?: StrategyType
+  parameters?: Record<string, any>
+}
+
+// Weak Order type used by some services
+export type Order = {
+  id?: string
+  symbol?: string
+  qty?: number
+  side?: 'buy' | 'sell' | string
+  type?: string
+  time_in_force?: string
+  filled_qty?: number
+  filled_avg_price?: number
+  status?: string
+}
+
+// Lightweight/compatible aliases used across the codebase.
+// These are intentionally permissive to reduce type friction while
+// we iteratively tidy up precise shapes in their own modules.
+import type { Position as _Position } from "./portfolio"
+
+export type TradingBot = Bot
+export type BotConfig = IndicatorConfig | GridConfig | DCAConfig | BasketConfig | Record<string, any>
+export type StrategyType = "meanReversion" | "momentum" | "grid" | "dca" | "indicator" | "basket" | string
+
+export type Trade = {
+  tradeId?: string
+  symbol?: string
+  action?: "buy" | "sell" | string
+  side?: "LONG" | "SHORT" | string
+  price?: number
+  quantity?: number
+  datetime?: string
+  value?: number
+}
+
+// Re-export Position from the canonical types/portfolio.ts
+export type Position = _Position | any
+
+// Backtest result - permissive alias used in services/backtest-engine and similar
+export type BacktestResult = any
+
+

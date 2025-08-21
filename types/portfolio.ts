@@ -15,6 +15,12 @@ export interface BasePosition {
   avgPrice?: number
   currentPrice?: number
   trades?: Trade[]
+  // Additional permissive runtime fields
+  symbol?: string
+  value?: number
+  pnl?: number
+  pnlPercentage?: number
+  [key: string]: any
 }
 
 export interface SinglePosition extends BasePosition {
@@ -37,7 +43,6 @@ export interface AllocationItem {
 }
 
 export interface Portfolio {
-  [x: string]: number
   id: string
   name: string
   focus: string
@@ -50,4 +55,8 @@ export interface Portfolio {
   chartVariant: string
   allocation: AllocationItem[]
   positions: Position[]
+  // Permissive optional fields used by UI
+  cashBalance?: number
+  baseValue?: number
+  [key: string]: any
 }

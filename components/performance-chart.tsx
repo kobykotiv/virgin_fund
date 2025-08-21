@@ -4,12 +4,12 @@ import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 
 interface PerformanceChartProps {
-  days: number
+  days?: number
   variant?: "default" | "Bitcoin" | "crypto" | "defi"
   className?: string
 }
 
-export function PerformanceChart({ days, variant = "default", className }: PerformanceChartProps) {
+export function PerformanceChart({ days = 30, variant = "default", className }: PerformanceChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {

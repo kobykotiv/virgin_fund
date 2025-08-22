@@ -1,7 +1,7 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +24,8 @@ export function UserAccountNav() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <DropdownMenuTrigger asChild>
+        <Button className={`${buttonVariants({ variant: "ghost" })} relative h-8 w-8 rounded-full`}>
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.image || ""} alt={user.name || ""} />
             <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
@@ -48,4 +48,3 @@ export function UserAccountNav() {
     </DropdownMenu>
   )
 }
-

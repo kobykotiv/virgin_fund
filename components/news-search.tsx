@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
+import { Badge, badgeVariants } from "@/components/ui/badge"
 import { Search, CalendarIcon, X, Filter } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -82,7 +82,7 @@ export function NewsSearch({ onSearch, isLoading = false }: NewsSearchProps) {
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
         </div>
-        <Button onClick={() => setShowFilters(!showFilters)} variant="outline" className="sm:w-auto w-full">
+        <Button onClick={() => setShowFilters(!showFilters)} className={cn(buttonVariants({ variant: "outline" }), "sm:w-auto w-full")}>
           <Filter className="h-4 w-4 mr-2" />
           Filters
           {(selectedSources.length > 0 || sentiment || startDate || endDate) && (
@@ -101,7 +101,7 @@ export function NewsSearch({ onSearch, isLoading = false }: NewsSearchProps) {
         <div className="p-4 border rounded-md space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-medium">Advanced Filters</h3>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 px-2 text-xs">
+            <Button onClick={handleReset} className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-8 px-2 text-xs")}>
               Reset All
             </Button>
           </div>
@@ -113,8 +113,8 @@ export function NewsSearch({ onSearch, isLoading = false }: NewsSearchProps) {
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
                       className={cn(
+                        buttonVariants({ variant: "outline" }),
                         "w-full justify-start text-left font-normal",
                         !startDate && "text-muted-foreground",
                       )}
@@ -131,8 +131,7 @@ export function NewsSearch({ onSearch, isLoading = false }: NewsSearchProps) {
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
-                      className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}
+                      className={cn(buttonVariants({ variant: "outline" }), "w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {endDate ? format(endDate, "PPP") : "End date"}
@@ -167,8 +166,7 @@ export function NewsSearch({ onSearch, isLoading = false }: NewsSearchProps) {
               {Object.values(NewsSource).map((source) => (
                 <Badge
                   key={source}
-                  variant={selectedSources.includes(source) ? "default" : "outline"}
-                  className="cursor-pointer"
+                  className={cn(badgeVariants({ variant: selectedSources.includes(source) ? "default" : "outline" }), "cursor-pointer")}
                   onClick={() => toggleSource(source)}
                 >
                   {source}
@@ -182,4 +180,3 @@ export function NewsSearch({ onSearch, isLoading = false }: NewsSearchProps) {
     </div>
   )
 }
-

@@ -1,8 +1,8 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Play, Pause, Trash, RefreshCw } from "lucide-react"
 
@@ -54,7 +54,7 @@ export function BasicDashboard({ apiConfig, onBotAction, isLoading }: BasicDashb
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Active Bots</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => {}} disabled={isLoading}>
+          <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`} onClick={() => {}} disabled={isLoading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -76,16 +76,16 @@ export function BasicDashboard({ apiConfig, onBotAction, isLoading }: BasicDashb
                 <TableCell>Grid-BTC-001</TableCell>
                 <TableCell>Grid Trading</TableCell>
                 <TableCell>
-                  <Badge className="success">Active</Badge>
+                  <Badge className={badgeVariants({ variant: "default" })}>Active</Badge>
                 </TableCell>
                 <TableCell>3</TableCell>
                 <TableCell className="text-green-500">+$542.10</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`}>
                       <Pause className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`}>
                       <Trash className="h-4 w-4" />
                     </Button>
                   </div>
@@ -120,11 +120,11 @@ export function BasicDashboard({ apiConfig, onBotAction, isLoading }: BasicDashb
                 <TableCell>Grid-BTC-001</TableCell>
                 <TableCell>BTC/USD</TableCell>
                 <TableCell>
-                  <Badge>BUY</Badge>
+                  <Badge className={badgeVariants({ variant: "default" })}>BUY</Badge>
                 </TableCell>
                 <TableCell>$65,420</TableCell>
                 <TableCell>
-                  <Badge className="outline">Filled</Badge>
+                  <Badge className={`${badgeVariants({ variant: "outline" })}`}>Filled</Badge>
                 </TableCell>
               </TableRow>
               {/* Add more rows as needed */}

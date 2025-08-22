@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarDays, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react"
 
@@ -215,17 +215,14 @@ export function NewsFeed() {
                     <div>
                       <CardTitle className="text-lg">{item.title}</CardTitle>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge className="outline">{item.source}</Badge>
+                        <Badge className={`${badgeVariants({ variant: "outline" })}`}>{item.source}</Badge>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <CalendarDays className="h-3 w-3" />
                           {formatDate(item.pubDate)}
                         </span>
                       </div>
                     </div>
-                    <Badge 
-                      className={`${item.sentiment === "positive" ? "default" : 
-                              item.sentiment === "negative" ? "destructive" : "secondary"} flex items-center gap-1`}
-                    >
+                    <Badge className={`${badgeVariants({ variant: item.sentiment === "positive" ? "default" : item.sentiment === "negative" ? "destructive" : "secondary" })} flex items-center gap-1`}>
                       {getSentimentIcon(item.sentiment || "neutral")}
                       {item.sentiment}
                     </Badge>
@@ -235,7 +232,7 @@ export function NewsFeed() {
                   <p className="text-muted-foreground">{item.description}</p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" size="sm" className="ml-auto" asChild>
+                  <Button className={`${buttonVariants({ variant: "outline", size: "sm" })} ml-auto`} asChild>
                     <a href={item.link} target="_blank" rel="noopener noreferrer">
                       Read Full Article <ExternalLink className="ml-2 h-3 w-3" />
                     </a>

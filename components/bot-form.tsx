@@ -202,13 +202,25 @@ export function BotForm({ initialBot, onSubmit, onCancel, presentationMode = fal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await apiPost('/api/bots', formData);
-      toast({ title: 'Bot created', description: `Bot ${res.bot?.name || 'created'}` });
-      router.push('/dashboard');
+      // If a parent provided an onSubmit handler (e.g., modal usage), delegate to it so
+      // callers can control mutations, toasts, and navigation. Otherwise fall back to the
+      // built-in API POST behavior for standalone pages.
+      if (onSubmit) {
+        // Ensure we await the caller's handler in case it returns a promise
+        await onSubmit(formData)
+      } else {
+        const res = await apiPost('/api/bots', formData);
+        toast({ title: 'Bot created', description: `Bot ${res.bot?.name || 'created'}` });
+        router.push('/dashboard');
+      }
     } catch (err: any) {
-      toast({ title: 'Error creating bot', description: err.message || 'Failed' , variant: 'destructive' });
+      toast({ title: 'Error creating bot', description: err?.message || 'Failed', variant: 'destructive' });
     }
   }
+
+  // Presentation mode navigation helpers
+  const nextStep = () => setCurrentStep((s) => Math.min(s + 1, steps.length - 1))
+  const prevStep = () => setCurrentStep((s) => Math.max(s - 1, 0))
 
   // If not in presentation mode, render the original form
   if (!presentationMode) {
@@ -1565,4 +1577,3 @@ function getCryptoByPortfolio(portfolio: string): string[] {
       return []
   }
 }
-

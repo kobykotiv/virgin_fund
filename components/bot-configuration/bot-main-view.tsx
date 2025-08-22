@@ -25,6 +25,9 @@ export function BotMainView({ bot, onAction }: { bot: MaybeBot; onAction: (actio
             <Button className={buttonVariants({ variant: "outline", size: "sm" })}>
               Expert
             </Button>
+            <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={() => onAction("edit")}>
+              Configure
+            </Button>
           </div>
         </div>
       </CardHeader>

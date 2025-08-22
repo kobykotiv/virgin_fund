@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -149,11 +149,10 @@ export function BacktestForm({ bots, onSubmit, onOptimize, isLoading }: Backtest
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
-                        variant="outline"
-                        className={cn(
+                        className={`${buttonVariants({ variant: "outline" })} ${cn(
                           "w-full justify-start text-left font-normal",
                           !startDate && "text-muted-foreground",
-                        )}
+                        )}`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {startDate ? format(startDate, "PPP") : "Select date"}
@@ -176,11 +175,10 @@ export function BacktestForm({ bots, onSubmit, onOptimize, isLoading }: Backtest
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
-                        variant="outline"
-                        className={cn(
+                        className={`${buttonVariants({ variant: "outline" })} ${cn(
                           "w-full justify-start text-left font-normal",
                           !endDate && "text-muted-foreground",
-                        )}
+                        )}`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {endDate ? format(endDate, "PPP") : "Select date"}

@@ -1,8 +1,8 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
 import { useAuth } from "@/providers/auth-provider"
 import { useRouter } from "next/navigation"
@@ -11,6 +11,7 @@ import { Settings, DollarSign, BarChart2, Newspaper } from "lucide-react"
 export function UserProfileWidget() {
   const { user, isDemoMode } = useAuth()
   const router = useRouter()
+  const displayName = (user as any)?.name ?? user?.email ?? "User"
 
   // Mock statistics for the demo
   const stats = {
@@ -29,11 +30,11 @@ export function UserProfileWidget() {
       <CardContent className="pt-4">
         <div className="flex flex-col items-center">
           <UserAvatar user={user} size="lg" />
-          <h3 className="mt-2 font-semibold text-lg">{user?.name || "User"}</h3>
+          <h3 className="mt-2 font-semibold text-lg">{displayName}</h3>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
 
           {isDemoMode && (
-            <Badge className="mt-2 bg-green-500 hover:bg-green-600">
+            <Badge className={`${badgeVariants({ variant: "default" })} mt-2 bg-green-500 hover:bg-green-600`}>
               <DollarSign className="h-3 w-3 mr-1" />
               Demo Account
             </Badge>
@@ -59,15 +60,15 @@ export function UserProfileWidget() {
           </div>
 
           <div className="w-full mt-4 space-y-2">
-            <Button variant="outline" className="w-full justify-start" onClick={() => router.push("/profile")}>
+            <Button className={`${buttonVariants({ variant: "outline" })} w-full justify-start`} onClick={() => router.push("/profile")}>
               <Settings className="mr-2 h-4 w-4" />
               Edit Profile
             </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={() => router.push("/backtest")}>
+            <Button className={`${buttonVariants({ variant: "outline" })} w-full justify-start`} onClick={() => router.push("/backtest")}>
               <BarChart2 className="mr-2 h-4 w-4" />
               View Backtests
             </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={() => router.push("/news")}>
+            <Button className={`${buttonVariants({ variant: "outline" })} w-full justify-start`} onClick={() => router.push("/news")}>
               <Newspaper className="mr-2 h-4 w-4" />
               Latest News
             </Button>
@@ -77,4 +78,3 @@ export function UserProfileWidget() {
     </Card>
   )
 }
-

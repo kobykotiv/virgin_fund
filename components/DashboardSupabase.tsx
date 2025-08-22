@@ -2,6 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import supabase from "@/lib/supabaseClient";
 import { AnimatePresence, motion } from "framer-motion";
+import { Fade } from "react-awesome-reveal";
+import Shapes from "react-awesome-shapes";
 import {
   LayoutDashboard,
   Bot as BotIcon,
@@ -172,34 +174,37 @@ const BotsView: React.FC<{ userId: string | null }> = ({ userId }) => {
     setShowModal(true);
   };
 
-  const submit = async (e?: React.FormEvent) => {
+    const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!userId) return;
     if (editing) {
-      updateBot.mutate({ id: editing.id, updates: { ...form }, user_id: userId });
+      // useUpdateBot expects { id, ...fields } per hooks/useBots.ts
+      updateBot.mutate({ id: editing.id, ...form });
     } else {
       const payload = {
-        user_id: userId,
         name: form.name,
         strategy: form.strategy,
         capital: form.capital,
         status: "Stopped",
         pnl: 0,
       };
+      // server-side will scope to authenticated user; do not send user_id from client
       createBot.mutate(payload);
     }
     setShowModal(false);
   };
 
-  const toggleStatus = (bot: any) => {
+    const toggleStatus = (bot: any) => {
     const newStatus = bot.status === "Running" ? "Paused" : "Running";
-    updateBot.mutate({ id: bot.id, updates: { status: newStatus }, user_id: userId });
+    // updateBot expects { id, ...fields }
+    updateBot.mutate({ id: bot.id, status: newStatus });
   };
 
-  const remove = (id: any) => {
+    const remove = (id: any) => {
     if (!userId) return;
     if (!confirm("Delete this bot?")) return;
-    deleteBot.mutate({ id, user_id: userId });
+    // useDeleteBot expects just the id string
+    deleteBot.mutate(id);
   };
 
   if (isLoading) return <div className="p-6">Loading bots...</div>;
@@ -222,7 +227,7 @@ const BotsView: React.FC<{ userId: string | null }> = ({ userId }) => {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
-              className="bg-gray-800 p-6 rounded"
+              className="bg-gray-800 p-6 rounded hover:shadow-lg hover:-translate-y-1 transition-transform"
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -232,7 +237,15 @@ const BotsView: React.FC<{ userId: string | null }> = ({ userId }) => {
               </div>
               <div className="mt-4 space-y-2 text-sm text-gray-300">
                 <div>
-                  Status: <span className={`ml-2 px-2 py-1 rounded ${bot.status === "Running" ? "bg-green-600" : "bg-red-600"}`}>{bot.status}</span>
+                  Status: <motion.span
+                    key={bot.status}
+                    initial={{ scale: 0.98, opacity: 0.8 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.18 }}
+                    className={`ml-2 px-2 py-1 rounded ${bot.status === "Running" ? "bg-green-600" : "bg-red-600"}`}
+                  >
+                    {bot.status}
+                  </motion.span>
                 </div>
                 <div>
                   PnL: <span className={`ml-2 ${Number(bot.pnl || 0) >= 0 ? "text-green-400" : "text-red-400"}`}>${Number(bot.pnl || 0).toFixed(2)}</span>
@@ -333,34 +346,56 @@ const DashboardSupabase: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const user = useUser();
   const balances = { usd: 5000, eur: 1000, btc: 0.5, eth: 2 };
+  const qc = useQueryClient();
 
-  // basic realtime subscription to bots for current user
+  // realtime subscription to bots, watchlists, and portfolio for current user
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
-      .channel(`public:bots:user=${user.id}`)
+      .channel(`public:realtime:user=${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "bots", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          // on change, invalidate queries - react-query is responsible for refetch
-          // Note: We do a lightweight call to refetch via window.__REACT_QUERY__ pattern is not used here,
-          // Instead rely on QueryClient invalidation via a small hack: call a lightweight endpoint or
-          // just let the useQuery refetch when appropriate. For simplicity we call the global instance below if present.
+        () => {
           try {
-            // @ts-ignore global queryClient exists in some setups; safe fallback
-            const qc = (window as any).__REACT_QUERY_CLIENT__;
-            qc?.invalidateQueries?.(["bots", user.id]);
+            qc.invalidateQueries({ queryKey: ["bots"] });
           } catch (e) {
-            // no-op
+            // ignore
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "watchlists", filter: `user_id=eq.${user.id}` },
+        () => {
+          try {
+            qc.invalidateQueries({ queryKey: ["watchlists"] });
+          } catch (e) {
+            // ignore
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "portfolio", filter: `user_id=eq.${user.id}` },
+        () => {
+          try {
+            qc.invalidateQueries({ queryKey: ["portfolio"] });
+          } catch (e) {
+            // ignore
           }
         }
       )
       .subscribe();
+
     return () => {
-      channel?.unsubscribe?.();
+      try {
+        channel?.unsubscribe?.();
+      } catch (e) {
+        // ignore
+      }
     };
-  }, [user?.id]);
+  }, [qc, user?.id]);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex">

@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { useCreateStrategy } from "@/hooks/useStrategies"
+import { useToast } from "@/hooks/use-toast"
 
 // Define types for our signal configuration
 interface SignalCondition {
@@ -22,6 +25,10 @@ interface SignalConfig {
 }
 
 export function SignalBuilder() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const createStrategy = useCreateStrategy()
+
   // Initialize with safe default values
   const [signalConfig, setSignalConfig] = useState<SignalConfig>({
     name: "",
@@ -57,16 +64,32 @@ export function SignalBuilder() {
     })
   }
 
-  const handleSave = () => {
-    // Ensure we're not passing null or undefined to Object.entries
-    if (!signalConfig) {
-      console.error("Signal configuration is undefined or null")
+  const handleSave = async () => {
+    if (!signalConfig || !signalConfig.name.trim()) {
+      toast({ title: "Invalid", description: "Please provide a signal name" })
       return
     }
 
-    // Here you would typically save the configuration
-    console.log("Saving signal configuration:", signalConfig)
-    // API call would go here
+    try {
+      const payload = {
+        name: signalConfig.name.trim(),
+        description: signalConfig.description.trim(),
+        // Persist conditions under a `parameters` object so strategies API can store them
+        parameters: { conditions: signalConfig.conditions },
+        is_public: false,
+      }
+
+      await createStrategy.mutateAsync(payload)
+      toast({ title: "Saved", description: "Signal saved to your Strategies library" })
+      // Optionally refresh the page so lists update
+      try {
+        router.refresh()
+      } catch (e) {
+        // no-op if router not available
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Failed to save strategy" })
+    }
   }
 
   return (
@@ -98,7 +121,7 @@ export function SignalBuilder() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label>Conditions</Label>
-            <Button variant="outline" size="sm" onClick={handleAddCondition}>
+            <Button className="text-sm px-3 py-1 border border-input bg-background hover:bg-accent" onClick={handleAddCondition}>
               Add Condition
             </Button>
           </div>
@@ -151,9 +174,7 @@ export function SignalBuilder() {
                   </div>
 
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2 text-destructive"
+                    className="mt-2 text-destructive bg-transparent"
                     onClick={() => handleRemoveCondition(index)}
                     disabled={signalConfig.conditions.length <= 1}
                   >
@@ -170,4 +191,3 @@ export function SignalBuilder() {
     </Card>
   )
 }
-

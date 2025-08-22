@@ -1,40 +1,84 @@
-import { NextResponse } from 'next/server'
-import { BacktestEngine } from '@/services/backtest-engine'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest, NextResponse } from "next/server";
+import { verifySessionToken } from "@/lib/session";
+import { runBacktest } from "@/lib/backtest/engine";
 
-export async function POST(request: Request) {
+/**
+ * POST /api/backtest
+ *
+ * Request body (JSON):
+ * {
+ *   symbol: string,
+ *   start: string (ISO date),
+ *   end: string (ISO date),
+ *   initialCapital: number,
+ *   dcaAmount: number,
+ *   frequency: 'daily' | 'weekly' | 'monthly' | 'manual',
+ *   slippagePct?: number,
+ *   commission?: number
+ * }
+ *
+ * - Verifies vf_session cookie
+ * - Runs runBacktest(params) and returns { timeseries, trades, summary }
+ * - Lightweight validation applied; callers should validate on client as well
+ */
+
+function parseCookie(header: string | null) {
+  if (!header) return {};
+  return Object.fromEntries(
+    header
+      .split(";")
+      .map((p) => p.trim())
+      .map((p) => {
+        const idx = p.indexOf("=");
+        if (idx === -1) return [p, ""];
+        return [p.slice(0, idx), decodeURIComponent(p.slice(idx + 1))];
+      })
+  );
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cookieHeader = req.headers.get("cookie");
+    const cookies = parseCookie(cookieHeader);
+    const sessionToken = cookies["vf_session"] || cookies["SESSION"] || null;
+    const session = await verifySessionToken(sessionToken as string);
+    if (!session || (session as any).expired) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
-    const { apiKey, secretKey, isPaper } = session.user as any
-    
-    if (!apiKey && !session.user.isDemoMode) {
-      return NextResponse.json({ error: 'API credentials not configured' }, { status: 400 })
+
+    const body = (await req.json().catch(() => ({} as any))) as Record<string, any>;
+
+    // Basic validation and defaults
+    const symbol = typeof body.symbol === "string" && body.symbol.trim() ? body.symbol.trim() : null;
+    const start = typeof body.start === "string" && body.start ? body.start : null;
+    const end = typeof body.end === "string" && body.end ? body.end : null;
+    const initialCapital = typeof body.initialCapital === "number" ? body.initialCapital : Number(body.initialCapital ?? 0);
+    const dcaAmount = typeof body.dcaAmount === "number" ? body.dcaAmount : Number(body.dcaAmount ?? 0);
+    const frequency = ["daily", "weekly", "monthly", "manual"].includes(body.frequency) ? body.frequency : "daily";
+    const slippagePct = typeof body.slippagePct === "number" ? body.slippagePct : Number(body.slippagePct ?? 0);
+    const commission = typeof body.commission === "number" ? body.commission : Number(body.commission ?? 0);
+
+    if (!symbol || !start || !end || !initialCapital || !dcaAmount) {
+      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
     }
-    
-    const { bot, startDate, endDate } = await request.json()
-    
-    if (!bot || !startDate || !endDate) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
-    }
-    
-    // Use demo keys for demo mode or when running backtests
-    const backtestEngine = new BacktestEngine(
-      apiKey || 'demo-key',
-      secretKey || 'demo-secret',
-      true // Always use paper trading for backtests
-    )
-    
-    const results = await backtestEngine.runBacktest(bot, startDate, endDate)
-    
-    return NextResponse.json(results)
-  } catch (error: any) {
-    console.error('Error running backtest:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Map to engine params (EngineBacktestParams)
+    const params = {
+      symbol,
+      start,
+      end,
+      initialCapital,
+      dcaAmount,
+      frequency,
+      slippagePct,
+      commission,
+    };
+
+    const result = await runBacktest(params as any);
+
+    return NextResponse.json({ result });
+  } catch (err) {
+    console.error("backtest POST error", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

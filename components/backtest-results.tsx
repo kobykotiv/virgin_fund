@@ -2,8 +2,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   LineChart,
@@ -22,7 +22,10 @@ import {
   Scatter,
   ZAxis,
 } from "recharts"
+import BacktestCharts, { ComparisonLegend } from "@/components/backtest/BacktestCharts"
+import ComparisonPanel from "@/components/backtest/ComparisonPanel"
 import { Download, Save, FileText } from "lucide-react"
+import { useMemo, useState } from "react"
 import type { BacktestResult } from "@/types/backtest"
 
 interface BacktestResultsProps {
@@ -140,6 +143,18 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
     document.body.removeChild(a)
   }
 
+  // Comparison visibility state (controls which comparison series are shown)
+  const [visibleIds, setVisibleIds] = useState<string[] | null>(null)
+
+  const filteredComparisonResults = useMemo(() => {
+    if (!comparisonResults) return []
+    if (visibleIds === null) return comparisonResults
+    return comparisonResults.filter((cr, idx) => {
+      const id = cr.id ? String(cr.id) : `cmp-${idx}`
+      return visibleIds.includes(id)
+    })
+  }, [comparisonResults, visibleIds])
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -151,15 +166,15 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => onSave(result)}>
+            <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`} onClick={() => onSave(result)}>
               <Save className="h-4 w-4 mr-2" />
               Save Results
             </Button>
-            <Button variant="outline" size="sm" onClick={exportCSV}>
+            <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`} onClick={exportCSV}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={exportReport}>
+            <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`} onClick={exportReport}>
               <FileText className="h-4 w-4 mr-2" />
               Export Report
             </Button>
@@ -314,27 +329,10 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
                 <CardTitle className="text-base">Equity Curve</CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={equityData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" tickFormatter={(value) => new Date(value).toLocaleDateString()} />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value) => [formatCurrency(Number(value)), "Equity"]}
-                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                      />
-                      <Legend />
-                      <Area
-                        type="monotone"
-                        dataKey="equity"
-                        stroke="hsl(var(--primary))"
-                        fill="hsl(var(--primary)/0.2)"
-                        name="Portfolio Value"
-                        activeDot={{ r: 8 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                <ComparisonPanel comparisonResults={comparisonResults} onChange={setVisibleIds} />
+                <BacktestCharts result={result} comparisonResults={filteredComparisonResults} height={300} />
+                <div className="mt-3">
+                  <ComparisonLegend comparisonResults={filteredComparisonResults} />
                 </div>
               </CardContent>
             </Card>
@@ -347,42 +345,10 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
                 <CardDescription>Portfolio value over time</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={equityData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" tickFormatter={(value) => new Date(value).toLocaleDateString()} />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value) => [formatCurrency(Number(value)), "Equity"]}
-                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="equity"
-                        stroke="hsl(var(--primary))"
-                        name="Portfolio Value"
-                        dot={false}
-                        activeDot={{ r: 8 }}
-                      />
-                      {comparisonResults?.map((compResult, index) => (
-                        <Line
-                          key={compResult.id}
-                          type="monotone"
-                          data={compResult.equityCurve.map((point) => ({
-                            date: point.timestamp,
-                            equity: point.equity,
-                          }))}
-                          dataKey="equity"
-                          stroke={`hsl(${(index + 1) * 60}, 70%, 50%)`}
-                          name={`${compResult.botName} (Comparison)`}
-                          dot={false}
-                          activeDot={{ r: 6 }}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
+                <ComparisonPanel comparisonResults={comparisonResults} onChange={setVisibleIds} />
+                <BacktestCharts result={result} comparisonResults={filteredComparisonResults} height={400} />
+                <div className="mt-3">
+                  <ComparisonLegend comparisonResults={filteredComparisonResults} />
                 </div>
               </CardContent>
             </Card>
@@ -422,7 +388,7 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
                             <TableCell>{formatDate(trade.timestamp)}</TableCell>
                             <TableCell>{trade.symbol}</TableCell>
                             <TableCell>
-                              <Badge className={trade.type === "buy" ? "default" : "secondary"}>
+                              <Badge className={`${badgeVariants({ variant: trade.type === "buy" ? "default" : "secondary" })}`}>
                                 {trade.type.toUpperCase()}
                               </Badge>
                             </TableCell>
@@ -577,7 +543,7 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
                         cursor={{ strokeDasharray: "3 3" }}
                         formatter={(value, name) => {
                           if (name === "Duration (days)") return [`${value} days`, name]
-                          if (name === "Depth (%)") return [`${value.toFixed(2)}%`, name]
+                          if (name === "Depth (%)") return [`${Number(value).toFixed(2)}%`, name]
                           return [value, name]
                         }}
                       />
@@ -639,7 +605,7 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
                         <YAxis />
                         <Tooltip
                           formatter={(value, name) => {
-                            if (name === "Performance") return [value.toFixed(2), "Sharpe Ratio"]
+                            if (name === "Performance") return [Number(value).toFixed(2), "Sharpe Ratio"]
                             return [value, name]
                           }}
                         />

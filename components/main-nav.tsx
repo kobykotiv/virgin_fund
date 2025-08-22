@@ -6,7 +6,7 @@ import { useState, useEffect, useContext } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   BarChart2,
   BookOpen,
@@ -50,7 +50,11 @@ import { UserAvatar } from "@/components/user-avatar"
 
 export function MainNav() {
   const pathname = usePathname()
-  const { user, logout, isDemoMode, disableDemoMode } = useContext(AuthContext) || {}
+  const auth = (useContext(AuthContext) as any) || {}
+  const user = auth.user
+  const logout = auth.logout
+  const isDemoMode = auth.isDemoMode
+  const disableDemoMode = auth.disableDemoMode
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -225,8 +229,8 @@ export function MainNav() {
 
                 return item.children ? (
                   <DropdownMenu key={title}>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="flex items-center gap-1 h-9 px-2">
+                      <DropdownMenuTrigger asChild>
+                      <Button className={`${buttonVariants({ variant: "ghost" })} flex items-center gap-1 h-9 px-2`}>
                         {icon}
                         {title}
                         <ChevronDown className="h-4 w-4 ml-1" />
@@ -287,7 +291,7 @@ export function MainNav() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                <Button className={`${buttonVariants({ variant: "ghost" })} relative h-8 w-8 rounded-full p-0`}>
                   <UserAvatar user={user} size="sm" />
                 </Button>
               </DropdownMenuTrigger>
@@ -329,21 +333,19 @@ export function MainNav() {
           ) : (
             <>
               <Link href="/login">
-                <Button variant="outline" size="sm">
+                <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`}>
                   Log In
                 </Button>
               </Link>
               <Link href="/home">
-                <Button size="sm">Dashboard</Button>
+                <Button className={`${buttonVariants({ size: "sm" })}`}>Dashboard</Button>
               </Link>
             </>
           )}
 
           {/* Mobile Menu Button */}
           <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
+            className={`${buttonVariants({ variant: "ghost", size: "sm" })} md:hidden`}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -490,4 +492,3 @@ export function MainNav() {
 }
 
 export { Shield, Bitcoin, TrendingUp, Search, Upload, Activity, RefreshCw }
-

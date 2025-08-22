@@ -8,6 +8,10 @@ interface AuthContextType {
   isAuthenticated: boolean
   hasApiKey: boolean
   apiKeyHash: string | null
+  // Public (non-secret) apiKey identifier; plaintext secret MUST NOT be exposed
+  apiKey?: string | null
+  // secretKey is intentionally typed as null to prevent accidental access to plaintext secrets in client code
+  secretKey?: null
   isPaper: boolean
   isDemoMode: boolean
   tier: string
@@ -70,6 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [hasApiKey, setHasApiKey] = useState(false)
   const [apiKeyHash, setApiKeyHash] = useState<string | null>(null)
+  // Public identifier for the api key (never store the secret in client state)
+  const [apiKey, setApiKey] = useState<string | null>(null)
   const [isPaper, setIsPaper] = useState(true)
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [tier, setTier] = useState<string>("free")
@@ -239,6 +245,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated,
       hasApiKey,
       apiKeyHash,
+      apiKey,
+      // secretKey intentionally not available client-side
+      secretKey: null,
       isPaper,
       isDemoMode,
       tier,

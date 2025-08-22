@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { NewsArticleCard } from "@/components/news-article"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RefreshCw, AlertCircle } from "lucide-react"
@@ -170,7 +170,7 @@ export function NewsList({ initialTicker }: NewsListProps) {
                   ? `News for ${searchParams.ticker}`
                   : "Latest News"}
         </h2>
-        <Button variant="outline" size="sm" onClick={loadNews} disabled={isLoading}>
+        <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={loadNews} disabled={isLoading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
@@ -210,10 +210,9 @@ export function NewsList({ initialTicker }: NewsListProps) {
 
       {!isLoading && articles.length > 0 && (
         <div className="flex justify-center mt-6">
-          <Button variant="outline">Load More</Button>
+          <Button className={buttonVariants({ variant: "outline" })}>Load More</Button>
         </div>
       )}
     </div>
   )
 }
-

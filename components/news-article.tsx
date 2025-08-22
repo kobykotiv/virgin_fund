@@ -1,8 +1,8 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ExternalLink, ThumbsUp, ThumbsDown, Share2, Bookmark, AlertTriangle } from "lucide-react"
 import { formatRelativeTime, type NewsArticle, NewsSentiment } from "@/lib/news-service"
 import Link from "next/link"
@@ -68,7 +68,7 @@ export function NewsArticleCard({ article, onSave, onShare, expanded = false }: 
 
         <div className="flex flex-wrap gap-2 mt-3">
           {article.tickers.map((ticker) => (
-            <Badge key={ticker} variant="outline" className="font-mono">
+            <Badge key={ticker} className={`${badgeVariants({ variant: "outline" })} font-mono`}>
               {ticker}
             </Badge>
           ))}
@@ -77,19 +77,19 @@ export function NewsArticleCard({ article, onSave, onShare, expanded = false }: 
       <CardFooter className="flex justify-between pt-2">
         <div className="flex gap-2">
           {onSave && (
-            <Button variant="ghost" size="sm" onClick={() => onSave(article)}>
+            <Button className={`${buttonVariants({ variant: "ghost", size: "sm" })}`} onClick={() => onSave(article)}>
               <Bookmark className="h-4 w-4 mr-1" />
               <span className="sr-only sm:not-sr-only sm:text-xs">Save</span>
             </Button>
           )}
           {onShare && (
-            <Button variant="ghost" size="sm" onClick={() => onShare(article)}>
+            <Button className={`${buttonVariants({ variant: "ghost", size: "sm" })}`} onClick={() => onShare(article)}>
               <Share2 className="h-4 w-4 mr-1" />
               <span className="sr-only sm:not-sr-only sm:text-xs">Share</span>
             </Button>
           )}
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button className={`${buttonVariants({ variant: "outline", size: "sm" })}`} asChild>
           <Link href={article.url} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4 mr-1" />
             <span className="text-xs">Read Full Article</span>
@@ -99,4 +99,3 @@ export function NewsArticleCard({ article, onSave, onShare, expanded = false }: 
     </Card>
   )
 }
-

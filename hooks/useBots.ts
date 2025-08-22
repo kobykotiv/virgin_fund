@@ -18,6 +18,9 @@ type CreateBotPayload = {
   name: string;
   strategy: string;
   capital?: number;
+  // Optional runtime fields allowed when creating/updating bots
+  status?: string;
+  pnl?: number;
   metadata?: Record<string, unknown>;
 };
 

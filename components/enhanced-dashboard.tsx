@@ -1,6 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Fade } from "react-awesome-reveal"
+import Shapes from "react-awesome-shapes"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -594,9 +597,11 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
           <TabsTrigger value="backtest">Backtest</TabsTrigger>
         </TabsList>
 
+        <Fade triggerOnce cascade>
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
+            <Card className="relative overflow-hidden">
+              <Shapes className="pointer-events-none absolute -z-10 opacity-20" shape="blob" color="#0ea5e9" style={{ width: 160, height: 160, right: -24, top: -24 }} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Bot Status</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -888,7 +893,9 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
             </CardContent>
           </Card>
         </TabsContent>
+        </Fade>
 
+        <Fade triggerOnce cascade>
         <TabsContent value="bots" className="space-y-8">
           <div className="flex justify-end space-x-2">
             <Button 
@@ -913,7 +920,15 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
         
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bots.map(bot => (
-              <div key={bot.id} className={`cursor-pointer ${selectedBot?.id === bot.id ? 'border-2 border-blue-500' : ''}`} onClick={() => setSelectedBot(bot)}>
+              <motion.div
+                key={bot.id}
+                className={`cursor-pointer ${selectedBot?.id === bot.id ? 'border-2 border-blue-500' : ''} transform-gpu transition-transform hover:shadow-lg hover:-translate-y-1`}
+                onClick={() => setSelectedBot(bot)}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                layout
+              >
                 {viewMode === 'expert' ? (
                   <ExpertView bot={bot} />
                 ) : viewMode === 'advanced' ? (
@@ -924,7 +939,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                 <div className="flex justify-end mt-2">
                   {renderBotControls(bot)}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
           {selectedBot && (
@@ -941,11 +956,16 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
             />
           )}
         </TabsContent>
+        </Fade>
 
+        <Fade triggerOnce cascade>
         {renderPerformanceTab()}
+        </Fade>
 
+        <Fade triggerOnce cascade>
         <TabsContent value="portfolio" className="space-y-6">
-          <Card>
+          <Card className="relative overflow-hidden">
+            <Shapes className="pointer-events-none absolute -z-10 opacity-20" shape="blob" color="#a78bfa" style={{ width: 180, height: 180, left: -36, top: -36 }} />
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
@@ -1014,7 +1034,9 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
             </CardContent>
           </Card>
         </TabsContent>
+        </Fade>
 
+        <Fade triggerOnce cascade>
         <TabsContent value="market" className="space-y-6">
           <Card>
             <CardHeader>
@@ -1220,6 +1242,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
             </CardContent>
           </Card>
         </TabsContent>
+        </Fade>
         {renderBacktestingTab()}
       </Tabs>
     </div>

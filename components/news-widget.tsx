@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RefreshCw, Newspaper, ExternalLink, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -71,7 +71,7 @@ export function NewsWidget({ ticker, limit = 5 }: NewsWidgetProps) {
             <CardTitle className="text-base">Market News</CardTitle>
             <CardDescription>{ticker ? `Latest news for ${ticker}` : "Latest market news"}</CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={loadNews} disabled={isLoading}>
+          <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={loadNews} disabled={isLoading}>
             <RefreshCw className={`h-3.5 w-3.5 mr-2 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
@@ -92,7 +92,7 @@ export function NewsWidget({ ticker, limit = 5 }: NewsWidgetProps) {
                     <div className="text-xs text-muted-foreground">
                       {article.source} • {formatRelativeTime(article.publishedAt)}
                     </div>
-                    <Badge className="outline font-mono text-xs">
+                    <Badge className={`${badgeVariants({ variant: "outline" })} font-mono text-xs`}>
                       {article.tickers[0]}
                     </Badge>
                   </div>
@@ -140,7 +140,7 @@ export function NewsWidget({ ticker, limit = 5 }: NewsWidgetProps) {
         )}
       </CardContent>
       <CardFooter className="pt-2">
-        <Button variant="outline" size="sm" className="w-full" onClick={() => router.push("/news")}>
+        <Button className={`${buttonVariants({ variant: "outline", size: "sm" })} w-full`} onClick={() => router.push("/news")}>
           <ExternalLink className="h-4 w-4 mr-2" />
           View All News
         </Button>
@@ -148,4 +148,3 @@ export function NewsWidget({ ticker, limit = 5 }: NewsWidgetProps) {
     </Card>
   )
 }
-

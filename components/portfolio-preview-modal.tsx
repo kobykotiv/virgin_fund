@@ -184,7 +184,7 @@ export function PortfolioPreviewModal({
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">Risk Profile</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge variant={
+                    <Badge className={
                       portfolio.risk === "Low" ? "outline" : 
                       portfolio.risk === "Moderate" ? "secondary" : "destructive"
                     }>
@@ -212,7 +212,7 @@ export function PortfolioPreviewModal({
               <h3 className="text-sm font-medium mb-2">Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {portfolio.tags.map((tag) => (
-                  <Badge variant="outline" key={tag}>
+                  <Badge className="outline" key={tag}>
                     {tag}
                   </Badge>
                 ))}
@@ -223,11 +223,9 @@ export function PortfolioPreviewModal({
               <div>
                 <h3 className="text-sm font-medium mb-2">Market Sentiment</h3>
                 <div className="flex items-center gap-2">
-                  <Badge variant={
-                    portfolio.sentiment === "bullish" ? "success" : 
+                  <Badge className={`${portfolio.sentiment === "bullish" ? "success" : 
                     portfolio.sentiment === "bearish" ? "destructive" : 
-                    "secondary"
-                  } className="flex items-center gap-1">
+                    "secondary"} flex items-center gap-1`}>
                     {portfolio.sentiment === "bullish" && <TrendingUp className="h-3 w-3" />}
                     {portfolio.sentiment === "bearish" && <TrendingDown className="h-3 w-3" />}
                     {portfolio.sentiment.charAt(0).toUpperCase() + portfolio.sentiment.slice(1)}

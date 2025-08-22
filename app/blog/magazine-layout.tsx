@@ -87,7 +87,7 @@ export function MagazineGrid({ articles, title, description }: MagazineGridProps
               </div>
               <CardHeader className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline">{article.category}</Badge>
+                  <Badge className="outline">{article.category}</Badge>
                   <span className="text-xs text-muted-foreground">{article.date}</span>
                 </div>
                 <CardTitle className="line-clamp-2">

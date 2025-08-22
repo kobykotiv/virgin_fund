@@ -61,7 +61,7 @@ export function SimpleDataView({ data }: { data: any }) {
           {data.recentTrades.map((trade: any) => (
             <div key={trade.id} className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Badge variant={trade.side === 'buy' ? 'default' : 'secondary'}>
+                <Badge className={trade.side === 'buy' ? 'default' : 'secondary'}>
                   {trade.side.toUpperCase()}
                 </Badge>
                 <span>{trade.symbol}</span>

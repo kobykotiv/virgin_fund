@@ -123,14 +123,14 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
                         </Badge>
                       ))}
                       {bot.assets.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="outline text-xs">
                           +{bot.assets.length - 3}
                         </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(bot.status)}>
+                    <Badge className={getStatusBadgeVariant(bot.status)}>
                       {bot.status.charAt(0).toUpperCase() + bot.status.slice(1)}
                     </Badge>
                   </TableCell>

@@ -17,7 +17,7 @@ import { Slider } from "@/components/ui/slider"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import type { Bot } from "@/types/bot"
-import type { BacktestParams } from "@/lib/backtest-service"
+import type { BacktestParams } from "@/types/backtest"
 
 interface BacktestFormProps {
   bots: Bot[]
@@ -404,4 +404,3 @@ export function BacktestForm({ bots, onSubmit, onOptimize, isLoading }: Backtest
     </Card>
   )
 }
-

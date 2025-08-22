@@ -1,74 +1,15 @@
 import type { Bot, IndicatorConfig, GridConfig, DCAConfig } from "@/types/bot"
 import { fetchHistoricalData } from "@/services/market-data-service"
 
-export interface BacktestParams {
-  botId: string
-  startDate: string
-  endDate: string
-  initialCapital: number
-  slippage?: number // Percentage slippage for more realistic execution
-  commission?: number // Commission percentage
-  dataSource?: "alpaca" | "yahoo" | "mock" // Source of historical data
-}
-
-export interface TradeRecord {
-  timestamp: string
-  type: "buy" | "sell"
-  price: number
-  quantity: number
-  value: number
-  symbol: string
-  fees?: number
-  slippage?: number
-  executionTime?: number // Simulated execution time in ms
-}
-
-export interface BacktestResult {
-  id: string
-  botId: string
-  botName: string
-  startDate: string
-  endDate: string
-  initialCapital: number
-  finalCapital: number
-  totalPnL: number
-  pnlPercentage: number
-  maxDrawdown: number
-  sharpeRatio: number
-  trades: TradeRecord[]
-  equityCurve: { timestamp: string; equity: number }[]
-  assetPerformance: { symbol: string; performance: number }[]
-  statistics: {
-    totalTrades: number
-    winningTrades: number
-    losingTrades: number
-    winRate: number
-    averageWin: number
-    averageLoss: number
-    largestWin: number
-    largestLoss: number
-    profitFactor: number
-    expectancy: number
-    annualizedReturn: number
-    volatility: number
-    sortinoRatio: number
-    calmarRatio: number
-    maxConsecutiveWins: number
-    maxConsecutiveLosses: number
-    averageHoldingPeriod: number
-    averageDailyReturn: number
-  }
-  monthlyReturns: { month: string; return: number }[]
-  drawdowns: { start: string; end: string; depth: number; duration: number }[]
-  optimizationResults?: { parameter: string; value: number; performance: number }[]
-}
+import type { BacktestParams, TradeRecord, BacktestResult } from "@/types/backtest"
+export type { BacktestParams, TradeRecord, BacktestResult } from "@/types/backtest"
 
 // Fetch historical market data (real or mock)
 async function getHistoricalData(
   symbols: string[],
   startDate: string,
   endDate: string,
-  dataSource: "alpaca" | "yahoo" | "mock" = "mock",
+  dataSource: string = "mock",
 ): Promise<Record<string, { date: string; open: number; high: number; low: number; close: number; volume: number }[]>> {
   if (dataSource === "mock") {
     return generateMockHistoricalData(symbols, startDate, endDate)
@@ -79,8 +20,24 @@ async function getHistoricalData(
     const data: Record<string, any[]> = {}
 
     for (const symbol of symbols) {
-      const historicalData = await fetchHistoricalData(symbol, startDate, endDate, dataSource)
-      data[symbol] = historicalData
+      // fetchHistoricalData provider signature: fetchHistoricalData(symbol, timeframe, limit)
+      // derive a reasonable timeframe/limit from start/end
+      const start = new Date(startDate)
+      const end = new Date(endDate)
+      const msPerDay = 1000 * 60 * 60 * 24
+      const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / msPerDay) + 1)
+      const timeframe = "1D"
+
+      const historicalRaw = await fetchHistoricalData(symbol, timeframe, days)
+      // map provider's {date, value} shape into OHLCV expected by backtester
+      data[symbol] = historicalRaw.map((h: any) => ({
+        date: h.date,
+        open: h.value,
+        high: h.value,
+        low: h.value,
+        close: h.value,
+        volume: h.volume ?? 0,
+      }))
     }
 
     return data

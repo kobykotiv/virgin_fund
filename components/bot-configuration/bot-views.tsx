@@ -19,7 +19,7 @@ export function SimpleView({ bot }: { bot: any }) {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span>Status</span>
-            <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
+            <Badge className={bot.status === 'active' ? 'bg-green-500 text-white' : 'bg-secondary text-secondary-foreground'}>
               {bot.status}
             </Badge>
           </div>
@@ -49,7 +49,7 @@ export function AdvancedView({ bot }: { bot: any }) {
             <CardDescription>{bot.strategy}</CardDescription>
           </div>
           <div className="space-y-1 text-right">
-            <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
+            <Badge className={bot.status === 'active' ? 'bg-green-500 text-white' : 'bg-secondary text-secondary-foreground'}>
               {bot.status}
             </Badge>
             <p className="text-xs text-muted-foreground">
@@ -102,7 +102,7 @@ export function ExpertView({ bot }: { bot: any }) {
           </div>
           <div className="flex items-center space-x-2">
             <Shield className={`h-5 w-5 ${bot.riskScore < 50 ? 'text-green-500' : 'text-yellow-500'}`} />
-            <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
+            <Badge className={bot.status === 'active' ? 'bg-green-500 text-white' : 'bg-secondary text-secondary-foreground'}>
               {bot.status}
             </Badge>
           </div>
@@ -161,7 +161,6 @@ export function ExpertView({ bot }: { bot: any }) {
               <Progress 
                 value={bot.riskMetrics.capitalAtRisk} 
                 className="h-2"
-                variant={bot.riskMetrics.capitalAtRisk > 75 ? 'destructive' : 'default'}
               />
             </div>
           </TabsContent>

@@ -92,7 +92,7 @@ export function NewsWidget({ ticker, limit = 5 }: NewsWidgetProps) {
                     <div className="text-xs text-muted-foreground">
                       {article.source} • {formatRelativeTime(article.publishedAt)}
                     </div>
-                    <Badge variant="outline" className="font-mono text-xs">
+                    <Badge className="outline font-mono text-xs">
                       {article.tickers[0]}
                     </Badge>
                   </div>

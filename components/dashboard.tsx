@@ -101,7 +101,7 @@ export function Dashboard({ bots, apiConfig }: DashboardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium">Dashboard Mode:</span>
-              <Badge variant="outline">
+              <Badge className="outline">
                 {dashboardMode === 'enhanced' ? 'Enhanced' : 'Basic'}
               </Badge>
             </div>

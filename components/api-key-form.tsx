@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
+import { useCreateApiKey } from "@/hooks/useApiKeys"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,6 +30,7 @@ export function ApiKeyForm({ onSave, onCancel, currentConfig }: ApiKeyFormProps)
   const [isPaper, setIsPaper] = useState(currentConfig?.isPaper !== undefined ? currentConfig.isPaper : true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const createApiKey = useCreateApiKey()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,25 +38,15 @@ export function ApiKeyForm({ onSave, onCancel, currentConfig }: ApiKeyFormProps)
     setError(null)
 
     try {
-      const response = await fetch("/api/alpaca/configure", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          keyId,
-          secretKey,
-          baseUrl,
-          isPaper,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to configure API keys")
+      const payload = {
+        api_key: keyId,
+        secret_key: secretKey,
+        is_paper: isPaper,
+        name: "Alpaca",
+        provider: "alpaca",
+        metadata: { baseUrl },
       }
-
+      await createApiKey.mutateAsync(payload)
       onSave()
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred")
@@ -193,4 +185,3 @@ export function ApiKeyForm({ onSave, onCancel, currentConfig }: ApiKeyFormProps)
     </form>
   )
 }
-

@@ -23,7 +23,7 @@ import {
   ZAxis,
 } from "recharts"
 import { Download, Save, FileText } from "lucide-react"
-import type { BacktestResult } from "@/lib/backtest-service"
+import type { BacktestResult } from "@/types/backtest"
 
 interface BacktestResultsProps {
   result: BacktestResult
@@ -422,7 +422,7 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
                             <TableCell>{formatDate(trade.timestamp)}</TableCell>
                             <TableCell>{trade.symbol}</TableCell>
                             <TableCell>
-                              <Badge variant={trade.type === "buy" ? "default" : "secondary"}>
+                              <Badge className={trade.type === "buy" ? "default" : "secondary"}>
                                 {trade.type.toUpperCase()}
                               </Badge>
                             </TableCell>
@@ -695,4 +695,3 @@ export function BacktestResults({ result, onSave, comparisonResults }: BacktestR
     </Card>
   )
 }
-

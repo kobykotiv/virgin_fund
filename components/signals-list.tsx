@@ -80,8 +80,7 @@ export function SignalsList() {
                 <span className="font-medium">{signal.ticker}</span>
               </div>
               <Badge 
-                variant={signal.action === "buy" ? "success" : "destructive"}
-                className="ml-auto flex items-center gap-1"
+                className={`${signal.action === "buy" ? "success" : "destructive"} ml-auto flex items-center gap-1`}
               >
                 {signal.action === "buy" ? (
                   <ArrowUpRightIcon className="h-3 w-3" />
@@ -99,12 +98,9 @@ export function SignalsList() {
             
             <div className="flex justify-between items-center mt-1">
               <Badge 
-                variant="outline" 
-                className={
-                  signal.strength === "strong" ? "border-green-500 text-green-500" :
+                className={`outline ${signal.strength === "strong" ? "border-green-500 text-green-500" :
                   signal.strength === "medium" ? "border-yellow-500 text-yellow-500" :
-                  "border-muted-foreground text-muted-foreground"
-                }
+                  "border-muted-foreground text-muted-foreground"}`}
               >
                 {signal.strength}
               </Badge>

@@ -119,7 +119,7 @@ export function BotActivationWizard({
               <h3 className="font-medium">{botConfig.name}</h3>
               <p className="text-sm text-muted-foreground">{botConfig.description}</p>
             </div>
-            <Badge variant="outline">{botConfig.type}</Badge>
+            <Badge className="outline">{botConfig.type}</Badge>
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>

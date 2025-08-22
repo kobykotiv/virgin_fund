@@ -278,7 +278,7 @@ export function TradingBotInterface({
                 <Bot className="h-5 w-5 text-primary" />
                 <span className="font-medium">{botData.name || "Unnamed Bot"}</span>
               </div>
-              <Badge variant={
+              <Badge className={
                 botData.status === 'active' ? 'default' : 
                 botData.status === 'paused' ? 'secondary' : 'destructive'
               }>

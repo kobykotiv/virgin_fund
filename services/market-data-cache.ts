@@ -5,15 +5,10 @@ class MarketDataCacheService {
   private alpaca: any | null = null;
 
   constructor() {
-    // Initialize Alpaca client if credentials are available in env (server) or localStorage (browser)
-    if (typeof window !== 'undefined') {
-      const apiKey = localStorage.getItem('alpaca_api_key');
-      const apiSecret = localStorage.getItem('alpaca_secret_key');
-      if (apiKey && apiSecret) {
-        // Lazy: use fetch-based proxy via app/api/alpaca-proxy instead of Alpaca SDK when running in browser
-        this.alpaca = { initialized: true };
-      }
-    }
+    // Do NOT read secrets from localStorage in the browser.
+    // API keys and secrets are stored encrypted server-side and accessed via server endpoints (e.g. /api/alpaca).
+    // Keep the client-side Alpaca client uninitialized; use server proxy endpoints for market-data fetches.
+    this.alpaca = null;
   }
 
   public isInitialized(): boolean {

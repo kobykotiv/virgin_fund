@@ -171,7 +171,7 @@ export default function BlogPage() {
                         </div>
                         <CardHeader>
                           <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline">{post.category}</Badge>
+                            <Badge className="outline">{post.category}</Badge>
                             <span className="text-xs text-muted-foreground">{post.date}</span>
                           </div>
                           <CardTitle className="text-lg">
@@ -212,7 +212,7 @@ export default function BlogPage() {
                           </div>
                           <CardHeader>
                             <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="outline">{post.category}</Badge>
+                              <Badge className="outline">{post.category}</Badge>
                               <span className="text-xs text-muted-foreground">{post.date}</span>
                             </div>
                             <CardTitle className="text-lg">
@@ -303,13 +303,13 @@ export default function BlogPage() {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Popular Tags</h3>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">Cryptocurrency</Badge>
-                <Badge variant="outline">Stocks</Badge>
-                <Badge variant="outline">Technical Analysis</Badge>
-                <Badge variant="outline">Risk Management</Badge>
-                <Badge variant="outline">Backtesting</Badge>
-                <Badge variant="outline">Algorithmic Trading</Badge>
-                <Badge variant="outline">Market Trends</Badge>
+                <Badge className="outline">Cryptocurrency</Badge>
+                <Badge className="outline">Stocks</Badge>
+                <Badge className="outline">Technical Analysis</Badge>
+                <Badge className="outline">Risk Management</Badge>
+                <Badge className="outline">Backtesting</Badge>
+                <Badge className="outline">Algorithmic Trading</Badge>
+                <Badge className="outline">Market Trends</Badge>
               </div>
             </div>
 

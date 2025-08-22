@@ -75,26 +75,88 @@ export class AlpacaProvider implements MarketDataProvider {
   }
 
   watchSymbol(symbol: string, callback: (data: Quote) => void): () => void {
-    const ws = this.client.crypto.data_stream_v2;
-    
-    ws.onConnect(() => {
-      console.log('Connected to Alpaca WebSocket');
-      ws.subscribe([symbol]);
-    });
+    // Not all Alpaca clients expose crypto.data_stream_v2 in every environment.
+    // Guard access and gracefully fall back to a polling-based watcher when websocket isn't available.
+    const ws: any =
+      (this.client as any)?.crypto?.data_stream_v2 ||
+      (this.client as any)?.data_stream_v2 ||
+      (this.client as any)?.websocket ||
+      null;
 
-    ws.onStockTrade((trade) => {
-      if (trade.Symbol === symbol) {
-        callback({
-          symbol,
-          price: trade.Price,
-          timestamp: new Date(trade.Timestamp).getTime(),
-          source: 'alpaca'
+    if (!ws) {
+      // Fallback: poll latest quote periodically
+      const intervalMs = 3000;
+      let stopped = false;
+
+      const poll = async () => {
+        if (stopped) return;
+        try {
+          const q = await this.getQuote(symbol);
+          callback(q);
+        } catch (e) {
+          // swallow
+        } finally {
+          if (!stopped) setTimeout(poll, intervalMs);
+        }
+      };
+
+      setTimeout(poll, 0);
+      return () => {
+        stopped = true;
+      };
+    }
+
+    try {
+      ws.onConnect(() => {
+        try {
+          console.log('Connected to Alpaca WebSocket');
+          if (typeof ws.subscribe === 'function') ws.subscribe([symbol]);
+        } catch (e) {
+          // ignore
+        }
+      });
+
+      if (typeof ws.onStockTrade === 'function') {
+        ws.onStockTrade((trade: any) => {
+          if (trade.Symbol === symbol) {
+            callback({
+              symbol,
+              price: trade.Price,
+              timestamp: new Date(trade.Timestamp).getTime(),
+              source: 'alpaca'
+            });
+          }
         });
       }
-    });
+    } catch (e) {
+      // If websocket wiring fails, fall back to polling
+      const intervalMs = 3000;
+      let stopped = false;
+
+      const poll = async () => {
+        if (stopped) return;
+        try {
+          const q = await this.getQuote(symbol);
+          callback(q);
+        } catch (err) {
+          // swallow
+        } finally {
+          if (!stopped) setTimeout(poll, intervalMs);
+        }
+      };
+
+      setTimeout(poll, 0);
+      return () => {
+        stopped = true;
+      };
+    }
 
     return () => {
-      ws.unsubscribe([symbol]);
+      try {
+        if (typeof ws.unsubscribe === 'function') ws.unsubscribe([symbol]);
+      } catch (e) {
+        // ignore
+      }
     };
   }
 

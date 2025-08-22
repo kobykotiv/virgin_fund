@@ -8,11 +8,12 @@ export type BotStatus =
   | "active" // Bot is running
   | "paused" // Bot is paused
   | "error" // Bot has encountered an error
+  | string // allow permissive strings during incremental typing
 
-export type Timeframe = "1min" | "5min" | "15min" | "30min" | "1hour" | "2hour" | "4hour" | "1day" | "1week" | "1month"
+export type Timeframe = "1min" | "5min" | "15min" | "30min" | "1hour" | "2hour" | "4hour" | "1day" | "1d" | "1D" | "1week" | "1month" | string
 
 export interface IndicatorConfig {
-  type: "rsi" | "macd" | "bollinger"
+  type: "rsi" | "macd" | "bollinger" | string
   timeframe: Timeframe
   entryThreshold: number
   exitThreshold: number
@@ -118,5 +119,3 @@ export type Position = _Position | any
 
 // Backtest result - permissive alias used in services/backtest-engine and similar
 export type BacktestResult = any
-
-

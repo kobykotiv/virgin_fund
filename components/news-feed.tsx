@@ -215,7 +215,7 @@ export function NewsFeed() {
                     <div>
                       <CardTitle className="text-lg">{item.title}</CardTitle>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline">{item.source}</Badge>
+                        <Badge className="outline">{item.source}</Badge>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <CalendarDays className="h-3 w-3" />
                           {formatDate(item.pubDate)}
@@ -223,9 +223,8 @@ export function NewsFeed() {
                       </div>
                     </div>
                     <Badge 
-                      variant={item.sentiment === "positive" ? "default" : 
-                              item.sentiment === "negative" ? "destructive" : "secondary"}
-                      className="flex items-center gap-1"
+                      className={`${item.sentiment === "positive" ? "default" : 
+                              item.sentiment === "negative" ? "destructive" : "secondary"} flex items-center gap-1`}
                     >
                       {getSentimentIcon(item.sentiment || "neutral")}
                       {item.sentiment}

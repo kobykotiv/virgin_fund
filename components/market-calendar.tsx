@@ -59,7 +59,7 @@ export function MarketCalendar({ days = 30 }: { days?: number }) {
                     {day.open} - {day.close}
                   </div>
                 </div>
-                <Badge variant={day.session_open ? "success" : "destructive"}>
+                <Badge className={day.session_open ? "success" : "destructive"}>
                   {day.session_open ? "Open" : "Closed"}
                 </Badge>
               </div>

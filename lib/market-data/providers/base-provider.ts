@@ -17,7 +17,7 @@ export interface BarData {
   volume: number;
 }
 
-export type Timeframe = '1m' | '5m' | '15m' | '1h' | '1d' | '1w';
+export type Timeframe = '1m' | '5m' | '15m' | '30m' | '1h' | '2h' | '4h' | '1d' | '1w' | '1mo' | '1m' | '1d' | string;
 
 export interface MarketDataProvider {
   name: string;

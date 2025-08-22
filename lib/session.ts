@@ -17,22 +17,27 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "./supabaseAdmin";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+import { assertEnv } from "./env";
+const env = assertEnv();
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables");
-}
+const SUPABASE_URL = env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+// Default admin supabase client used when a client is not injected (production usage).
+const defaultSupabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "vf_session";
-const SESSION_MAX_AGE_SECONDS = Number(process.env.SESSION_MAX_AGE_SECONDS || 60 * 60 * 24 * 7); // 7 days by default
+function getDb(client?: SupabaseClient) {
+  return client ?? defaultSupabase;
+}
 
-type SessionRow = {
+export const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "vf_session";
+export const SESSION_MAX_AGE_SECONDS = Number(process.env.SESSION_MAX_AGE_SECONDS || 60 * 60 * 24 * 7); // 7 days by default
+
+export type SessionRow = {
   id: string;
   user_id: string;
   session_token: string;
@@ -44,11 +49,36 @@ type SessionRow = {
   metadata?: Record<string, unknown>;
 };
 
+type CookieSpec = {
+  name: string;
+  value: string;
+  opts?: {
+    httpOnly?: boolean;
+    secure?: boolean;
+    sameSite?: "lax" | "strict" | "none" | string;
+    path?: string;
+    maxAge?: number;
+    domain?: string;
+    expires?: string;
+  };
+};
+
 /**
  * Create a new session row and return cookie info.
  */
-export async function createSession(userId: string, opts?: { maxAgeSeconds?: number; metadata?: Record<string, unknown> }) {
+export async function createSession(
+  userId: string,
+  opts?: { maxAgeSeconds?: number; metadata?: Record<string, unknown> },
+  client?: SupabaseClient
+): Promise<{
+  sessionToken: string;
+  refreshToken: string;
+  cookie: CookieSpec;
+  row: SessionRow;
+}> {
   if (!userId) throw new Error("userId is required");
+
+  const db = getDb(client);
 
   const sessionToken = crypto.randomUUID();
   const refreshToken = crypto.randomUUID();
@@ -67,7 +97,7 @@ export async function createSession(userId: string, opts?: { maxAgeSeconds?: num
     metadata: opts?.metadata ?? {},
   };
 
-  const { data, error } = await supabase.from("sessions").insert([payload]).select().single();
+  const { data, error } = await db.from("sessions").insert([payload]).select().single();
 
   if (error) {
     throw new Error(`Failed to create session: ${error.message}`);
@@ -96,10 +126,15 @@ export async function createSession(userId: string, opts?: { maxAgeSeconds?: num
 /**
  * Query session row by session token and validate expiry/revocation.
  */
-export async function verifySessionToken(sessionToken: string) {
+export async function verifySessionToken(
+  sessionToken: string,
+  client?: SupabaseClient
+): Promise<any> {
   if (!sessionToken) return null;
 
-  const { data, error } = await supabase
+  const db = getDb(client);
+
+  const { data, error } = await db
     .from("sessions")
     .select("*")
     .eq("session_token", sessionToken)
@@ -119,7 +154,7 @@ export async function verifySessionToken(sessionToken: string) {
 
   // update last_used_at
   try {
-    await supabase.from("sessions").update({ last_used_at: new Date().toISOString() }).eq("id", data.id);
+    await db.from("sessions").update({ last_used_at: new Date().toISOString() }).eq("id", data.id);
   } catch (e) {
     // non-fatal
     console.warn("failed to update last_used_at", e);
@@ -132,11 +167,22 @@ export async function verifySessionToken(sessionToken: string) {
  * Refresh a session using a refresh token (rotates both tokens).
  * Implements single-use refresh token semantics (rotate on use).
  */
-export async function refreshSession(refreshToken: string) {
+export async function refreshSession(
+  refreshToken: string,
+  client?: SupabaseClient
+): Promise<{
+  success: boolean;
+  userId?: string;
+  cookie?: CookieSpec;
+  refreshToken?: string;
+  error?: string;
+}> {
   if (!refreshToken) return { success: false, error: "missing refresh token" };
 
+  const db = getDb(client);
+
   // Lookup by refresh token
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("sessions")
     .select("*")
     .eq("refresh_token", refreshToken)
@@ -164,7 +210,7 @@ export async function refreshSession(refreshToken: string) {
     last_rotated_at: now.toISOString(),
   };
 
-  const { error: updateError } = await supabase.from("sessions").update(updates).eq("id", data.id);
+  const { error: updateError } = await db.from("sessions").update(updates).eq("id", data.id);
 
   if (updateError) {
     return { success: false, error: updateError.message };
@@ -192,20 +238,70 @@ export async function refreshSession(refreshToken: string) {
 
 /**
  * Revoke a session by session token (or id).
+ *
+ * Behavior:
+ *  - Marks the session row revoked in the local `sessions` table.
+ *  - If `SESSION_REVOKE_SUPABASE === "true"` environment variable is set,
+ *    attempts to revoke Supabase refresh tokens for the session's user id
+ *    using the Supabase admin API (best-effort).
  */
-export async function revokeSession(sessionTokenOrId: string) {
+export async function revokeSession(
+  sessionTokenOrId: string,
+  client?: SupabaseClient,
+  adminGetter?: () => any
+): Promise<{ success: boolean; error?: string }> {
   if (!sessionTokenOrId) return { success: false, error: "missing token" };
 
-  // Attempt by session_token first, then id
-  let q = supabase.from("sessions").update({ revoked: true }).eq("session_token", sessionTokenOrId);
-  const { error } = await q;
+  const db = getDb(client);
 
-  // If update didn't match, try by id
-  // (supabase JS returns error only on failure; we don't get row count easily here, so perform a secondary attempt)
+  // Lookup session row by session_token or id to obtain user_id (if available)
+  let sessionRow: any = null;
   try {
-    await supabase.from("sessions").update({ revoked: true }).eq("id", sessionTokenOrId);
+    const { data, error } = await db
+      .from("sessions")
+      .select("*")
+      .or(`session_token.eq.${sessionTokenOrId},id.eq.${sessionTokenOrId}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      sessionRow = data;
+    }
   } catch (e) {
-    // ignore
+    // non-fatal, continue with best-effort revocation
+    console.warn("revokeSession: lookup failed", e);
+  }
+
+  // Mark the session revoked (by id when known, otherwise try both token/id)
+  try {
+    if (sessionRow?.id) {
+      await db.from("sessions").update({ revoked: true }).eq("id", sessionRow.id);
+    } else {
+      // best-effort: try by session_token then by id
+      await db.from("sessions").update({ revoked: true }).eq("session_token", sessionTokenOrId);
+      await db.from("sessions").update({ revoked: true }).eq("id", sessionTokenOrId);
+    }
+  } catch (e) {
+    console.warn("revokeSession: failed to mark revoked", e);
+  }
+
+  // Optionally revoke Supabase auth refresh tokens for the user (best-effort)
+  if (process.env.SESSION_REVOKE_SUPABASE === "true" && sessionRow?.user_id) {
+    try {
+      // Use injected adminGetter when provided (test-friendly), otherwise fallback to runtime getter.
+      const admin = adminGetter ? adminGetter() : getSupabaseAdmin();
+      // supabase-js exposes admin methods under auth.admin for recent versions
+      if ((admin as any).auth?.admin?.revokeRefreshTokensForUser) {
+        await (admin as any).auth.admin.revokeRefreshTokensForUser(sessionRow.user_id);
+      } else if ((admin as any).auth?.revokeRefreshTokensForUser) {
+        // fallback older naming
+        await (admin as any).auth.revokeRefreshTokensForUser(sessionRow.user_id);
+      } else {
+        console.warn("revokeSession: supabase admin revoke API not available on client");
+      }
+    } catch (e) {
+      console.warn("revokeSession: failed to revoke supabase auth tokens (best-effort)", e);
+    }
   }
 
   return { success: true };
@@ -215,7 +311,10 @@ export async function revokeSession(sessionTokenOrId: string) {
  * requireRecentSession - helper to enforce session recency (e.g., for reveal endpoints).
  * Throws Error when session is not fresh.
  */
-export function requireRecentSession(sessionRow: SessionRow | { last_used_at?: string; issued_at?: string } | null, maxAgeMs = 15 * 60 * 1000) {
+export function requireRecentSession(
+  sessionRow: SessionRow | { last_used_at?: string; issued_at?: string } | null,
+  maxAgeMs = 15 * 60 * 1000
+): boolean {
   if (!sessionRow) throw new Error("No session");
   const last = sessionRow.last_used_at ?? sessionRow.issued_at;
   if (!last) throw new Error("Session missing timestamps");

@@ -95,7 +95,7 @@ export default function StrategiesTab() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Category:</span>
-                      <Badge variant="outline">{strategy.category}</Badge>
+                      <Badge className="outline">{strategy.category}</Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -134,7 +134,7 @@ export default function StrategiesTab() {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Category:</span>
-                      <Badge variant="outline">{strategy.category}</Badge>
+                      <Badge className="outline">{strategy.category}</Badge>
                     </div>
                   </div>
                 </CardContent>

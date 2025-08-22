@@ -1,7 +1,13 @@
 import adapter from '@/lib/alpaca';
 import { Bar } from '@/lib/alpaca/adapter';
 
-export type BacktestParams = {
+import type { BacktestParams as CanonicalBacktestParams } from "@/types/backtest";
+
+/**
+ * Engine-specific backtest params (kept for backward compatibility with existing engine callers).
+ * Canonical backtest types are defined in types/backtest.ts (imported above). Migrate callers to CanonicalBacktestParams when ready.
+ */
+export type EngineBacktestParams = {
   symbol: string;
   start: string;
   end: string;
@@ -12,7 +18,7 @@ export type BacktestParams = {
   commission?: number;
 };
 
-export async function runBacktest(params: BacktestParams) {
+export async function runBacktest(params: EngineBacktestParams) {
   const bars = await adapter.getBars(params.symbol, params.start, params.end, '1Day');
   const timeseries: { t: string; balance: number }[] = [];
   let cash = params.initialCapital;

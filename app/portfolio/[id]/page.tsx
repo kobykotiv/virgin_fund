@@ -139,14 +139,13 @@ export default function PortfolioPage({ params }: Props) {
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{portfolio.risk} Risk</Badge>
+            <Badge className="outline">{portfolio.risk} Risk</Badge>
             {portfolio.tags.map(tag => (
               <Badge key={tag} variant="secondary">{tag}</Badge>
             ))}
             {portfolio.sentiment && (
               <Badge 
-                variant={getSentimentColor(portfolio.sentiment)} 
-                className="flex items-center gap-1"
+                className={`${getSentimentColor(portfolio.sentiment)} flex items-center gap-1`}
               >
                 {portfolio.sentiment === "bullish" ? <TrendingUp className="h-3 w-3" /> : 
                  portfolio.sentiment === "bearish" ? <TrendingDown className="h-3 w-3" /> : null}
@@ -544,7 +543,7 @@ export default function PortfolioPage({ params }: Props) {
                     <div>
                       <h3 className="text-lg font-medium mb-2">Risk Profile</h3>
                       <div className="flex items-center gap-2">
-                        <Badge variant={
+                        <Badge className={
                           portfolio.risk === "Low" ? "outline" : 
                           portfolio.risk === "Moderate" ? "secondary" : 
                           "destructive"
@@ -563,7 +562,7 @@ export default function PortfolioPage({ params }: Props) {
                       <div>
                         <h3 className="text-lg font-medium mb-2">Market Outlook</h3>
                         <div className="flex items-center gap-2">
-                          <Badge variant={getSentimentColor(portfolio.sentiment)}>
+                          <Badge className={getSentimentColor(portfolio.sentiment)}>
                             {portfolio.sentiment.charAt(0).toUpperCase() + portfolio.sentiment.slice(1)}
                           </Badge>
                           <span className="text-sm text-muted-foreground">
@@ -882,7 +881,7 @@ function MobileStrategySection({ portfolio, getSentimentColor }) {
             <div>
               <h3 className="text-sm font-medium mb-1">Risk Profile</h3>
               <div className="flex items-center gap-2">
-                <Badge variant={
+                <Badge className={
                   portfolio.risk === "Low" ? "outline" : 
                   portfolio.risk === "Moderate" ? "secondary" : 
                   "destructive"
@@ -901,7 +900,7 @@ function MobileStrategySection({ portfolio, getSentimentColor }) {
               <div>
                 <h3 className="text-sm font-medium mb-1">Market Sentiment</h3>
                 <div className="flex items-center gap-2">
-                  <Badge variant={getSentimentColor(portfolio.sentiment)}>
+                  <Badge className={getSentimentColor(portfolio.sentiment)}>
                     {portfolio.sentiment.charAt(0).toUpperCase() + portfolio.sentiment.slice(1)}
                   </Badge>
                   <span className="text-xs text-muted-foreground">

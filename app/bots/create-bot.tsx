@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import BotForm from '@/components/bot-form';
+import { BotForm } from '@/components/bot-form';
 import { toast } from '@/components/ui/use-toast';
+import { useCreateBot } from '@/hooks/useBots';
 
 const TEMPLATES = [
 	{
@@ -112,8 +113,9 @@ const TEMPLATES = [
 ];
 
 export default function CreateBotPage() {
-	const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
-	const [showForm, setShowForm] = useState(false);
+const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+const [showForm, setShowForm] = useState(false);
+const createBot = useCreateBot();
 
 	const handleTemplateClick = (template: any) => {
 		setSelectedTemplate(template);
@@ -180,7 +182,24 @@ export default function CreateBotPage() {
 					>
 						&rarr; Back to templates
 					</button>
-					<BotForm prefill={{ ...selectedTemplate?.prefill, recurringBuys: true }} />
+<BotForm
+  initialBot={selectedTemplate ? { ...selectedTemplate.prefill, recurringBuys: true } : null}
+  onSubmit={async (bot) => {
+    try {
+      await createBot.mutateAsync({
+        name: bot.name ?? (selectedTemplate?.name ?? "New Bot"),
+        strategy: bot.strategy ?? selectedTemplate?.prefill?.strategy ?? "default",
+        capital: bot.capital ?? 10000,
+        metadata: bot,
+      });
+      toast({ title: 'Bot created' });
+      setShowForm(false);
+    } catch (e: any) {
+      toast({ title: 'Failed to create bot', description: e?.message ?? 'Unknown error', variant: 'destructive' });
+    }
+  }}
+  onCancel={() => setShowForm(false)}
+/>
 				</div>
 			)}
 		</div>

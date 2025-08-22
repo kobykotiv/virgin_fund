@@ -174,13 +174,13 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Environment:</span>
-                <Badge variant="outline">
+                <Badge className="outline">
                   {isDemoMode ? "Demo Mode" : apiConfig?.isPaper ? "Paper Trading" : "Live Trading"}
                 </Badge>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm font-medium">Data Source:</span>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge className="outline bg-green-50 text-green-700 border-green-200">
                   {isDemoMode ? "Simulated Data" : "Alpaca Markets + Yahoo Finance"}
                 </Badge>
               </div>
@@ -229,14 +229,14 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                   <>
                     <div className="text-2xl font-bold">{totalBots}</div>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
+                      <Badge className="secondary bg-green-100 text-green-800 hover:bg-green-200">
                         {activeBots} active
                       </Badge>
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-200">
+                      <Badge className="secondary bg-gray-100 text-gray-800 hover:bg-gray-200">
                         {pausedBots} paused
                       </Badge>
                       {errorBots > 0 && (
-                        <Badge variant="secondary" className="bg-red-100 text-red-800 hover:bg-red-200">
+                        <Badge className="secondary bg-red-100 text-red-800 hover:bg-red-200">
                           {errorBots} error
                         </Badge>
                       )}
@@ -471,7 +471,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                         <tr key={bot.id} className="border-b">
                           <td className="py-3 px-4 font-medium">{bot.name}</td>
                           <td className="py-3 px-4">
-                            <Badge variant={
+                            <Badge className={
                               bot.status === 'active' ? 'default' : 
                               bot.status === 'paused' ? 'secondary' : 'destructive'
                             }>

@@ -79,15 +79,15 @@ export function DashboardFooter() {
             <span>
               Market: {" "}
               {marketStatus === "open" ? (
-                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
+                <Badge className="outline bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
                   Open
                 </Badge>
               ) : marketStatus === "closed" ? (
-                <Badge variant="outline" className="bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-900">
+                <Badge className="outline bg-amber-100 text-amber-800 hover:bg-amber-200 hover:text-amber-900">
                   Closed
                 </Badge>
               ) : (
-                <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-200 hover:text-gray-900">
+                <Badge className="outline bg-gray-100 text-gray-800 hover:bg-gray-200 hover:text-gray-900">
                   Unknown
                 </Badge>
               )}
@@ -98,13 +98,13 @@ export function DashboardFooter() {
             <Globe className="h-3 w-3" />
             <span>
               {apiMode === "demo" ? (
-                <Badge variant="outline" className="bg-purple-100 text-purple-800">Demo Mode</Badge>
+                <Badge className="outline bg-purple-100 text-purple-800">Demo Mode</Badge>
               ) : apiMode === "paper" ? (
-                <Badge variant="outline" className="bg-blue-100 text-blue-800">Paper Trading</Badge>
+                <Badge className="outline bg-blue-100 text-blue-800">Paper Trading</Badge>
               ) : apiMode === "live" ? (
-                <Badge variant="outline" className="bg-red-100 text-red-800">Live Trading</Badge>
+                <Badge className="outline bg-red-100 text-red-800">Live Trading</Badge>
               ) : (
-                <Badge variant="outline">Disconnected</Badge>
+                <Badge className="outline">Disconnected</Badge>
               )}
             </span>
           </div>

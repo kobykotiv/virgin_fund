@@ -52,7 +52,7 @@ import { runBacktest } from "@/services/backtest-service"
 import { BotHero, BotGrid } from "@/components/bot-management"
 import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-views"
 import { BotAnalytics } from "./bot-configuration/bot-analytics"
-import { BacktestResult } from "@/lib/backtest-service"
+import type { BacktestResult } from "@/types/backtest"
 import { portfolios } from "@/lib/demo-portfolios"
 
 interface EnhancedDashboardProps {
@@ -307,7 +307,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
         <div key={position.id} className="space-y-2">
           <div className="font-medium flex items-center space-x-2">
             <div className="ml-4">{position.name}</div>
-            <Badge variant="outline">Basket</Badge>
+            <Badge className="outline">Basket</Badge>
           </div>
           <div className="pl-8 space-y-2">
             {position.positions.map(pos => renderPosition(pos, level + 1))}
@@ -421,7 +421,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
               <TableRow key={item.name}>
                 <TableCell>{item.name}</TableCell>
                 <TableCell>
-                  <Badge variant="outline">
+                  <Badge className="outline">
                     {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
                   </Badge>
                 </TableCell>
@@ -530,7 +530,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                 <TableRow key={item.name}>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">
+                    <Badge className="outline">
                       {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
                     </Badge>
                   </TableCell>
@@ -603,14 +603,14 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
               <CardContent>
                 <div className="text-2xl font-bold">{totalBots}</div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="success" className="text-xs">
+                  <Badge className="success text-xs">
                     {activeBots} active
                   </Badge>
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge className="secondary text-xs">
                     {pausedBots} paused
                   </Badge>
                   {errorBots > 0 && (
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge className="destructive text-xs">
                       {errorBots} error
                     </Badge>
                   )}
@@ -701,13 +701,13 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Environment:</span>
-                    <Badge variant="outline">
+                    <Badge className="outline">
                       {isDemoMode ? "Demo Mode" : apiConfig?.isPaper ? "Paper Trading" : "Live Trading"}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Data Source:</span>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge className="outline bg-green-50 text-green-700 border-green-200">
                       {isDemoMode ? "Simulated Data" : "Alpaca Markets + Yahoo Finance"}
                     </Badge>
                   </div>
@@ -867,14 +867,14 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                         <TableRow key={order.id}>
                           <TableCell className="font-medium">{order.symbol}</TableCell>
                           <TableCell>
-                            <Badge variant={order.side === "buy" ? "default" : "secondary"}>
+                            <Badge className={order.side === "buy" ? "default" : "secondary"}>
                               {order.side.toUpperCase()}
                             </Badge>
                           </TableCell>
                           <TableCell>{order.type.toUpperCase()}</TableCell>
                           <TableCell>{order.quantity}</TableCell>
                           <TableCell>
-                            <Badge variant={order.status === "filled" ? "success" : "outline"}>
+                            <Badge className={order.status === "filled" ? "success" : "outline"}>
                               {order.status.toUpperCase()}
                             </Badge>
                           </TableCell>
@@ -992,12 +992,12 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                     <TableRow key={trade.tradeId}>
                       <TableCell>{new Date(trade.datetime).toLocaleString()}</TableCell>
                       <TableCell>
-                        <Badge variant={trade.action === 'BUY' ? 'default' : 'secondary'}>
+                        <Badge className={trade.action === 'BUY' ? 'default' : 'secondary'}>
                           {trade.action}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={trade.side === 'LONG' ? 'success' : 'destructive'}>
+                        <Badge className={trade.side === 'LONG' ? 'success' : 'destructive'}>
                           {trade.side}
                         </Badge>
                       </TableCell>
@@ -1222,4 +1222,3 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
     </div>
   )
 }
-

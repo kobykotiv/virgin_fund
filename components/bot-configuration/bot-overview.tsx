@@ -16,7 +16,7 @@ export function SimpleBotOverview({ bot }: { bot: any }) {
             <CardTitle>{bot.name}</CardTitle>
             <CardDescription>Simple trading bot overview</CardDescription>
           </div>
-          <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
+          <Badge className={bot.status === 'active' ? 'bg-green-500 text-white' : 'bg-secondary text-secondary-foreground'}>
             {bot.status}
           </Badge>
         </div>
@@ -64,7 +64,7 @@ export function SimpleBotOverview({ bot }: { bot: any }) {
           <div className="grid grid-cols-2 gap-2">
             {bot.portfolio.positions.filter((p: any) => p.assetType !== 'basket').map((position: any) => (
               <div key={position.id} className="flex justify-between items-center text-sm">
-                <Badge variant="outline">{position.ticker}</Badge>
+                <Badge className="border bg-transparent text-foreground">{position.ticker}</Badge>
                 <span className={position.avgPrice < position.currentPrice ? 'text-green-500' : 'text-red-500'}>
                   ${position.currentPrice.toLocaleString()}
                 </span>
@@ -98,7 +98,7 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
             <CardDescription>Advanced trading metrics</CardDescription>
           </div>
           <div className="space-y-2 text-right">
-            <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
+            <Badge className={bot.status === 'active' ? 'bg-green-500 text-white' : 'bg-secondary text-secondary-foreground'}>
               {bot.status}
             </Badge>
             <div className="text-sm text-muted-foreground">
@@ -164,15 +164,15 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
           <div className="grid grid-cols-2 gap-2">
             {bot.portfolio.positions.map((position: any) => (
               <div key={position.id} className="flex justify-between items-center text-sm">
-                <Badge variant="outline" className="flex items-center gap-2">
-                  {position.assetType === 'basket' ? position.name : position.ticker}
-                  {position.assetType === 'basket' && (
-                    <span className="text-xs opacity-70">({position.positions.length})</span>
-                  )}
-                  <span className={`ml-1 text-xs ${getReturnClass(position)}`}>
-                    {getPositionReturn(position)}%
-                  </span>
-                </Badge>
+            <Badge className="flex items-center gap-2 border bg-transparent text-foreground">
+              {position.assetType === 'basket' ? position.name : position.ticker}
+              {position.assetType === 'basket' && (
+                <span className="text-xs opacity-70">({position.positions.length})</span>
+              )}
+              <span className={`ml-1 text-xs ${getReturnClass(position)}`}>
+                {getPositionReturn(position)}%
+              </span>
+            </Badge>
                 <span>{((getPositionValue(position) / totalValue) * 100).toFixed(1)}%</span>
               </div>
             ))}
@@ -210,7 +210,7 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
           <div className="grid grid-cols-2 gap-2">
             {bot.portfolio.positions.map((position: any) => (
               <div key={position.id} className="flex justify-between items-center text-sm">
-                <Badge variant="outline">
+                <Badge className="border bg-transparent text-foreground">
                   {position.assetType === 'basket' ? position.name : position.ticker}
                   <span className="ml-1 text-xs opacity-70">
                     {position.assetType === 'basket' ? `(${position.positions.length})` : ''}
@@ -249,7 +249,7 @@ export function ExpertBotOverview({ bot }: { bot: any }) {
             </div>
             <div className="flex items-center space-x-2">
               <ShieldCheck className={`h-5 w-5 ${bot.riskScore < 50 ? 'text-green-500' : 'text-yellow-500'}`} />
-              <Badge variant={bot.status === 'active' ? 'success' : 'secondary'}>
+              <Badge className={bot.status === 'active' ? 'success' : 'secondary'}>
                 {bot.status}
               </Badge>
             </div>
@@ -293,7 +293,9 @@ export function ExpertBotOverview({ bot }: { bot: any }) {
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(bot.positionTypes).map(([type, count]: [string, any]) => (
                 <div key={type} className="flex justify-between items-center">
-                  <Badge variant="outline">{type}</Badge>
+                  <Badge className="border bg-transparent text-foreground">{type}</Badge>
+              <Badge className="border bg-transparent text-foreground">{type}</Badge>
+              <Badge className="border bg-transparent text-foreground">{type}</Badge>
                   <span>{((count / bot.totalPositions) * 100).toFixed(1)}%</span>
                 </div>
               ))}
@@ -316,7 +318,6 @@ export function ExpertBotOverview({ bot }: { bot: any }) {
             <Progress 
               value={bot.riskMetrics.capitalAtRisk} 
               className="h-2"
-              variant={bot.riskMetrics.capitalAtRisk > 75 ? 'destructive' : 'default'}
             />
           </div>
         </CardContent>

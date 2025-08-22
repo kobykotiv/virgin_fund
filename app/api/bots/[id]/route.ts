@@ -1,85 +1,134 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { verifySessionToken } from "@/lib/session";
 
-const SUPABASE_URL = process.env.SUPABASE_URL as string;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+/**
+ * PUT /api/bots/:id
+ * DELETE /api/bots/:id
+ *
+ * - Uses server session cookie (vf_session) to identify user via lib/session.verifySessionToken
+ * - Uses Supabase service-role client for DB operations
+ * - Enforces multi-tenant access by filtering on user_id
+ */
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment');
+function parseCookie(header: string | null) {
+  if (!header) return {};
+  return Object.fromEntries(
+    header
+      .split(";")
+      .map((p) => p.trim())
+      .map((p) => {
+        const idx = p.indexOf("=");
+        if (idx === -1) return [p, ""];
+        return [p.slice(0, idx), decodeURIComponent(p.slice(idx + 1))];
+      })
+  );
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
-
-async function getUser(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.split(' ')[1];
-  if (!token) return null;
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error) return null;
-  return data.user;
-}
-
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const user = await getUser(request);
-  if (!user) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
-
-  const id = params.id;
-  const body = await request.json().catch(() => null);
-  if (!body) return NextResponse.json({ error: { message: 'Invalid JSON' } }, { status: 400 });
-
-  // Allow only specific fields to be updated
-  const allowed = ['name', 'dca_amount', 'dca_frequency', 'stop_loss', 'stop_loss_mode', 'trailing_distance_pct', 'exchange_account', 'enabled'];
-  const payload: any = {};
-  for (const key of allowed) {
-    if (key in body) payload[key] = body[key];
-  }
-
-  if (Object.keys(payload).length === 0) return NextResponse.json({ error: { message: 'No updatable fields provided' } }, { status: 422 });
-
-  // Basic validation
-  if (payload.exchange_account) {
-    if (!['paper', 'live'].includes(payload.exchange_account)) return NextResponse.json({ error: { message: 'invalid exchange_account' } }, { status: 422 });
-  }
-  if (payload.stop_loss_mode) {
-    if (!['none', 'fixed', 'trailing'].includes(payload.stop_loss_mode)) return NextResponse.json({ error: { message: 'invalid stop_loss_mode' } }, { status: 422 });
-  }
-
-  const { data, error } = await supabase
-    .from('bots')
-    .update({ ...payload, updated_at: new Date().toISOString() })
-    .match({ id: Number(id), user_id: user.id })
-    .select()
-    .maybeSingle();
-
-  if (error) return NextResponse.json({ error: { message: error.message, code: error.code } }, { status: 500 });
-  if (!data) return NextResponse.json({ error: { message: 'Bot not found' } }, { status: 404 });
-
-  return NextResponse.json({ data });
-}
-
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const user = await getUser(request);
-  if (!user) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
-
-  const id = params.id;
-
-  // Soft-delete — set enabled = false and updated_at
-  const { data, error } = await supabase
-    .from('bots')
-    .update({ enabled: false, updated_at: new Date().toISOString() })
-    .match({ id: Number(id), user_id: user.id })
-    .select()
-    .maybeSingle();
-
-  if (error) return NextResponse.json({ error: { message: error.message, code: error.code } }, { status: 500 });
-  if (!data) return NextResponse.json({ error: { message: 'Bot not found' } }, { status: 404 });
-
-  // Audit: insert a small webhook_log style entry
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await supabase.from('webhook_logs').insert({ source: 'api:bots:delete', payload: { bot_id: id, user_id: user.id, action: 'soft-delete' }, headers: {} });
-  } catch (e) {
-    // non-fatal
-  }
+    const cookieHeader = req.headers.get("cookie");
+    const cookies = parseCookie(cookieHeader);
+    const sessionToken = cookies["vf_session"] || cookies["SESSION"] || null;
+    const session = await verifySessionToken(sessionToken as string);
+    if (!session || (session as any).expired) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  return NextResponse.json({ data });
+    const userId = (session as any).user_id;
+    const botId = params.id;
+    if (!botId) return NextResponse.json({ error: "Missing bot id" }, { status: 400 });
+
+    const supabase = getSupabaseAdmin();
+
+    const body = (await req.json().catch(() => ({} as any))) as Record<string, any>;
+    const allowed: Record<string, any> = {};
+    // Only allow a small whitelist of updatable fields
+    const updatable = ["name", "strategy", "status", "capital", "pnl", "last_trade_at", "metadata"];
+    for (const k of updatable) {
+      if (k in body) allowed[k] = body[k];
+    }
+
+    if (Object.keys(allowed).length === 0) {
+      return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
+    }
+
+    const { data: existing, error: fetchErr } = await supabase
+      .from("bots")
+      .select("id,user_id")
+      .eq("id", botId)
+      .limit(1)
+      .maybeSingle();
+
+    if (fetchErr || !existing) {
+      return NextResponse.json({ error: "Bot not found" }, { status: 404 });
+    }
+
+    if (existing.user_id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { data: updated, error: updateErr } = await supabase
+      .from("bots")
+      .update(allowed)
+      .eq("id", botId)
+      .select()
+      .limit(1)
+      .maybeSingle();
+
+    if (updateErr) {
+      console.error("bots PUT update failed", updateErr);
+      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ bot: updated });
+  } catch (err) {
+    console.error("bots PUT error", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const cookieHeader = req.headers.get("cookie");
+    const cookies = parseCookie(cookieHeader);
+    const sessionToken = cookies["vf_session"] || cookies["SESSION"] || null;
+    const session = await verifySessionToken(sessionToken as string);
+    if (!session || (session as any).expired) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = (session as any).user_id;
+    const botId = params.id;
+    if (!botId) return NextResponse.json({ error: "Missing bot id" }, { status: 400 });
+
+    const supabase = getSupabaseAdmin();
+
+    const { data: existing, error: fetchErr } = await supabase
+      .from("bots")
+      .select("id,user_id")
+      .eq("id", botId)
+      .limit(1)
+      .maybeSingle();
+
+    if (fetchErr || !existing) {
+      return NextResponse.json({ error: "Bot not found" }, { status: 404 });
+    }
+
+    if (existing.user_id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { error: deleteErr } = await supabase.from("bots").delete().eq("id", botId);
+
+    if (deleteErr) {
+      console.error("bots DELETE failed", deleteErr);
+      return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("bots DELETE error", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

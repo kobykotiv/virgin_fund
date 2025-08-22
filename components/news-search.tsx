@@ -86,7 +86,7 @@ export function NewsSearch({ onSearch, isLoading = false }: NewsSearchProps) {
           <Filter className="h-4 w-4 mr-2" />
           Filters
           {(selectedSources.length > 0 || sentiment || startDate || endDate) && (
-            <Badge variant="secondary" className="ml-2 px-1 py-0 h-5 min-w-5 flex items-center justify-center">
+            <Badge className="secondary ml-2 px-1 py-0 h-5 min-w-5 flex items-center justify-center">
               {selectedSources.length + (sentiment ? 1 : 0) + (startDate || endDate ? 1 : 0)}
             </Badge>
           )}

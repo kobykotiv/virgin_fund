@@ -57,7 +57,7 @@ function MetricCard({ title, value, change, chart, isNegative }: any) {
         <div className="flex flex-col gap-1">
           <div className="text-2xl font-bold">{value}</div>
           <div className="flex items-center gap-2">
-            <Badge variant={trend === 'up' ? 'success' : 'destructive'}>
+            <Badge className={trend === 'up' ? 'success' : 'destructive'}>
               {change > 0 ? '+' : ''}{change.toFixed(2)}%
             </Badge>
             <span className="text-xs text-muted-foreground">vs last period</span>

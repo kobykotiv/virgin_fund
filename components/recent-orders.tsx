@@ -124,7 +124,7 @@ export function RecentOrders() {
                     {order.limit_price ? formatCurrency(parseFloat(order.limit_price)) : 'Market'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getStatusColor(order.status)}>
+                    <Badge className={`outline ${getStatusColor(order.status)}`}>
                       {order.status}
                     </Badge>
                   </TableCell>

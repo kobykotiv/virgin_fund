@@ -7,7 +7,7 @@ import { BacktestResults } from "@/components/backtest-results"
 import { runBacktest, saveBacktestResult, optimizeStrategy, getSavedBacktests } from "@/lib/backtest-service"
 import { fetchBots } from "@/services/bot-service"
 import type { Bot } from "@/types/bot"
-import type { BacktestParams, BacktestResult } from "@/lib/backtest-service"
+import type { BacktestParams, BacktestResult } from "@/types/backtest"
 import { ArrowLeft, BarChart2, History } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -315,4 +315,3 @@ export default function BacktestPage() {
     </div>
   )
 }
-

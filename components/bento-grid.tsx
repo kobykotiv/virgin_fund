@@ -117,7 +117,7 @@ export function BentoGridItem({ item, className = "", featured = false }: BentoG
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20 flex flex-col justify-end p-6">
             <div className="flex items-center gap-2 mb-3">
               <Badge className="bg-primary text-primary-foreground">Featured</Badge>
-              <Badge variant="outline" className="bg-black/50 backdrop-blur-sm text-white border-white/10 flex items-center gap-1">
+              <Badge className="outline bg-black/50 backdrop-blur-sm text-white border-white/10 flex items-center gap-1">
                 {getCategoryIcon()}
                 {item.category}
               </Badge>
@@ -167,7 +167,7 @@ export function BentoGridItem({ item, className = "", featured = false }: BentoG
       </div>
       <CardHeader className="flex-1 p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Badge variant="outline" className="flex items-center gap-1">
+          <Badge className="outline flex items-center gap-1">
             {getCategoryIcon()}
             {item.category}
           </Badge>

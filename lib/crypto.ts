@@ -1,40 +1,94 @@
 import crypto from "crypto";
 
-// Simple AES-256-GCM encryption/decryption using a base64 key in env
-const KEY_B64 = process.env.KEY_ENCRYPTION_KEY || "";
-const KEY = KEY_B64 ? Buffer.from(KEY_B64, "base64") : null;
+/**
+ * lib/crypto.ts
+ *
+ * Server-side helpers for encrypting/decrypting API secrets.
+ * - AES-256-GCM with 12 byte IV and 16 byte auth tag.
+ * - Exposes: encryptSecret(plainText) -> base64(iv||ciphertext||tag)
+ *            decryptSecret(base64Blob) -> plainText
+ *            hashApiKey(apiKey) -> base64(sha256)
+ *
+ * NOTE:
+ * - Uses SESSION_ENCRYPTION_KEY env var. Provide a 32-byte key (recommended as base64 or utf8 string).
+ * - This module MUST only be imported from server code.
+ */
 
-export async function encrypt(plaintext: string): Promise<string> {
-  if (!KEY || KEY.length !== 32) {
-    throw new Error("Invalid KEY_ENCRYPTION_KEY (expect base64 of 32 bytes)");
+function resolveKey(): Buffer {
+  const raw = process.env.SESSION_ENCRYPTION_KEY || "";
+  if (!raw) {
+    throw new Error("Missing SESSION_ENCRYPTION_KEY env var required for secret encryption");
   }
 
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", KEY, iv);
-  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  // store as: iv(12) | tag(16) | ciphertext
-  return Buffer.concat([iv, tag, encrypted]).toString("base64");
+  // Accept either a base64-encoded 32-byte key or a raw utf8 key (>=32 bytes recommended)
+  try {
+    const maybe = Buffer.from(raw, "base64");
+    if (maybe.length === 32) return maybe;
+  } catch (e) {
+    // ignore
+  }
+
+  const buf = Buffer.from(raw, "utf8");
+  if (buf.length < 32) {
+    // still allow, but warn (not throwing to preserve dev experience)
+    console.warn("SESSION_ENCRYPTION_KEY shorter than 32 bytes; consider using a 32-byte key (base64-encoded)");
+  }
+  // If longer than 32, truncate to 32 bytes for AES-256
+  return buf.length === 32 ? buf : buf.slice(0, 32);
 }
 
-export async function decrypt(payloadB64: string): Promise<string> {
-  if (!KEY || KEY.length !== 32) {
-    throw new Error("Invalid KEY_ENCRYPTION_KEY (expect base64 of 32 bytes)");
+/**
+ * Encrypt plaintext and return base64(iv||ciphertext||tag)
+ */
+export function encryptSecret(plainText: string) {
+  const key = resolveKey();
+  const iv = crypto.randomBytes(12); // 96-bit IV recommended for GCM
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const ciphertext = Buffer.concat([cipher.update(plainText, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  const out = Buffer.concat([iv, ciphertext, tag]);
+  return out.toString("base64");
+}
+
+/**
+ * Decrypt base64(iv||ciphertext||tag) to plaintext
+ */
+export function decryptSecret(base64Blob: string) {
+  const key = resolveKey();
+  const buf = Buffer.from(base64Blob, "base64");
+  if (buf.length < 12 + 16) {
+    throw new Error("Malformed encrypted blob");
   }
-  const data = Buffer.from(payloadB64, "base64");
-  const iv = data.slice(0, 12);
-  const tag = data.slice(12, 28);
-  const encrypted = data.slice(28);
-  const decipher = crypto.createDecipheriv("aes-256-gcm", KEY, iv);
+  const iv = buf.slice(0, 12);
+  const tag = buf.slice(buf.length - 16);
+  const ciphertext = buf.slice(12, buf.length - 16);
+
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(tag);
-  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+  const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   return decrypted.toString("utf8");
 }
 
-export function maskApiKey(key: string) {
-  if (!key) return "";
-  if (key.length <= 8) return key.replace(/.(?=.{4})/g, "*");
-  return `${key.slice(0, 4)}****${key.slice(-4)}`;
+/**
+ * Compute SHA-256 hash of apiKey and return base64 string for storage/lookup.
+ * This avoids storing raw API keys and allows matching.
+ */
+export function hashApiKey(apiKey: string) {
+  const h = crypto.createHash("sha256").update(apiKey, "utf8").digest();
+  return h.toString("base64");
 }
 
-export default { encrypt, decrypt, maskApiKey };
+export const encrypt = encryptSecret;
+export const decrypt = decryptSecret;
+export const hash = hashApiKey;
+
+// Default export for modules that import the library as a default
+export default {
+  encrypt,
+  decrypt,
+  hash,
+  encryptSecret,
+  decryptSecret,
+  hashApiKey,
+};

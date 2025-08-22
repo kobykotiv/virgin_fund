@@ -43,7 +43,7 @@ export function BotMonitoring({ metrics, onPositionSelect }: {
               <CardDescription>Real-time bot metrics</CardDescription>
             </div>
             <Badge 
-              variant={
+              className={
                 metrics.status === 'active' ? 'success' : 
                 metrics.status === 'error' ? 'destructive' : 
                 'secondary'
@@ -109,7 +109,7 @@ export function BotMonitoring({ metrics, onPositionSelect }: {
                 >
                   <TableCell>{position.symbol}</TableCell>
                   <TableCell>
-                    <Badge variant={position.side === 'long' ? 'default' : 'secondary'}>
+                    <Badge className={position.side === 'long' ? 'default' : 'secondary'}>
                       {position.side.toUpperCase()}
                     </Badge>
                   </TableCell>
@@ -138,7 +138,7 @@ export function BotMonitoring({ metrics, onPositionSelect }: {
                 className="flex items-center justify-between py-3 border-b last:border-0"
               >
                 <div className="flex items-center gap-4">
-                  <Badge variant={trade.side === 'buy' ? 'default' : 'secondary'}>
+                  <Badge className={trade.side === 'buy' ? 'default' : 'secondary'}>
                     {trade.side.toUpperCase()}
                   </Badge>
                   <div>

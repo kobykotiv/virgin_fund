@@ -207,8 +207,7 @@ export function MainNav() {
           </Link>
           {isDemoMode && (
             <Badge
-              variant="outline"
-              className="ml-2 bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800"
+              className="outline ml-2 bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800"
             >
               <DollarSign className="h-3 w-3 mr-1" />
               Demo Mode

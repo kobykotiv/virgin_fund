@@ -6,22 +6,34 @@ import { supabase } from '@/lib/supabaseClient'
 
 interface AuthContextType {
   isAuthenticated: boolean
-  apiKey: string | null
-  secretKey: string | null
+  hasApiKey: boolean
+  apiKeyHash: string | null
   isPaper: boolean
   isDemoMode: boolean
-  tier: string // e.g., 'free', 'basic', 'premium'
+  tier: string
   user: { email?: string; id?: string } | null
   loading: boolean
   getAccessToken: () => Promise<string | null>
-  login: (credentials: {apiKey: string, secretKey: string, isPaper: boolean}) => Promise<void>
-  logout: () => void
+  saveApiKey: (payload: { apiKey: string; secretKey: string; isPaper: boolean }) => Promise<void>
+  clearApiKey: () => Promise<void>
+  logout: () => Promise<void>
   enableDemoMode: () => void
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple function to verify Alpaca API credentials
+async function fetchApiKeys() {
+  try {
+    const res = await fetch("/api/api-keys", { credentials: "same-origin" });
+    if (!res.ok) return [];
+    const json = await res.json().catch(() => ({}));
+    return json.keys ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// Simple function to verify Alpaca API credentials (keeps existing behavior)
 export async function verifyCredentials(apiKey: string, secretKey: string, isPaper: boolean): Promise<{ valid: boolean; error?: string }> {
   try {
     const baseUrl = isPaper ? 
@@ -56,138 +68,167 @@ export async function verifyCredentials(apiKey: string, secretKey: string, isPap
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [apiKey, setApiKey] = useState<string | null>(null)
-  const [secretKey, setSecretKey] = useState<string | null>(null)
+  const [hasApiKey, setHasApiKey] = useState(false)
+  const [apiKeyHash, setApiKeyHash] = useState<string | null>(null)
   const [isPaper, setIsPaper] = useState(true)
   const [isDemoMode, setIsDemoMode] = useState(false)
-  const [tier, setTier] = useState<string>("free") // default tier
+  const [tier, setTier] = useState<string>("free")
   const [user, setUser] = useState<{ email?: string; id?: string } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Sync Supabase auth session and listen for changes
+  // Initialize auth session and api-keys from server
   useEffect(() => {
     let mounted = true
-    async function init() {
-      const { data } = await supabase.auth.getSession()
-      const session = data.session
-      if (session && mounted) {
-        setUser({ email: session.user.email ?? undefined, id: session.user.id })
-        setIsAuthenticated(true)
+
+    const init = async () => {
+      try {
+        // Get Supabase client-side session for convenience (server sets vf_session cookie on login)
+        try {
+          const { data } = await supabase.auth.getSession()
+          const session = data?.session
+          if (session && mounted) {
+            setUser({ email: session.user?.email ?? undefined, id: session.user?.id })
+            setIsAuthenticated(true)
+          }
+        } catch (e) {
+          // non-fatal; session may be server-side only
+        }
+
+        // Fetch stored API keys metadata from server (no secrets returned)
+        const keys = await fetchApiKeys()
+        if (!mounted) return
+        if (keys && keys.length > 0) {
+          // Use the first key by default
+          const k = keys[0]
+          setHasApiKey(true)
+          setApiKeyHash(k.api_key_hash ?? null)
+          setIsPaper(!!k.is_paper)
+        } else {
+          setHasApiKey(false)
+          setApiKeyHash(null)
+        }
+      } finally {
+        if (mounted) setLoading(false)
       }
-      setLoading(false)
     }
+
     init()
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-      if (event === 'SIGNED_IN' && session) {
-        setUser({ email: session.user.email ?? undefined, id: session.user.id })
-        setIsAuthenticated(true)
-        setLoading(false)
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null)
-        setIsAuthenticated(false)
-      }
-    })
-
-    return () => {
-      mounted = false
-      try { listener.subscription.unsubscribe() } catch (_) {}
-    }
-  }, [])
-
-  // Check for stored Alpaca credentials on mount (keeps existing behavior)
-  useEffect(() => {
-    const storedApiKey = localStorage.getItem('alpaca_api_key')
-    const storedSecretKey = localStorage.getItem('alpaca_secret_key')
-    const storedIsPaper = localStorage.getItem('alpaca_is_paper') === 'true'
-    const storedIsDemoMode = localStorage.getItem('is_demo_mode') === 'true'
-    const storedTier = localStorage.getItem('user_tier') || 'free'
-    setTier(storedTier)
-    if (storedIsDemoMode) {
-      setIsDemoMode(true)
-      setIsAuthenticated(true)
-    } else if (storedApiKey && storedSecretKey) {
-      setApiKey(storedApiKey)
-      setSecretKey(storedSecretKey)
-      setIsPaper(storedIsPaper)
-      setIsAuthenticated(true)
-    }
+    return () => { mounted = false }
   }, [])
 
   const getAccessToken = async () => {
-    const { data } = await supabase.auth.getSession()
-    return data.session?.access_token ?? null
+    try {
+      const { data } = await supabase.auth.getSession()
+      return data.session?.access_token ?? null
+    } catch {
+      return null
+    }
   }
 
-  const login = async (credentials: {apiKey: string, secretKey: string, isPaper: boolean}) => {
+  // Saves Alpaca API key/secret via server route which encrypts secret server-side.
+  // Keeps client-side from storing secrets.
+  const saveApiKey = async ({ apiKey, secretKey, isPaper: paper }: { apiKey: string; secretKey: string; isPaper: boolean }) => {
     try {
-      // Verify Alpaca credentials if provided
-      if (credentials.apiKey && credentials.secretKey) {
-        const result = await verifyCredentials(
-          credentials.apiKey, 
-          credentials.secretKey, 
-          credentials.isPaper
-        );
+      // Client-side verify first to give immediate feedback
+      const verify = await verifyCredentials(apiKey, secretKey, paper)
+      if (!verify.valid) throw new Error(verify.error || "Invalid credentials")
 
-        if (!result.valid) throw new Error(result.error || 'Invalid credentials')
+      const res = await fetch("/api/api-keys", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: apiKey,
+          secret_key: secretKey,
+          is_paper: paper,
+          name: "Alpaca",
+          provider: "alpaca",
+        }),
+      })
 
-        // Store Alpaca credentials in localStorage
-        localStorage.setItem('alpaca_api_key', credentials.apiKey)
-        localStorage.setItem('alpaca_secret_key', credentials.secretKey)
-        localStorage.setItem('alpaca_is_paper', String(credentials.isPaper))
-        // Set tier from backend/user profile in future
-        localStorage.setItem('user_tier', tier)
-        setApiKey(credentials.apiKey)
-        setSecretKey(credentials.secretKey)
-        setIsPaper(credentials.isPaper)
-        setIsAuthenticated(true)
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(json?.error || "Failed to save API key")
       }
 
-      toast({ 
-        title: "Authenticated successfully",
-        description: "You are now connected to Alpaca"
+      // Server returns key metadata including api_key_hash
+      const key = json.key
+      setHasApiKey(true)
+      setApiKeyHash(key?.api_key_hash ?? null)
+      setIsPaper(!!key?.is_paper)
+
+      toast({
+        title: "API key saved",
+        description: "Your Alpaca API key has been saved securely."
       })
-    } catch (error) {
-      toast({ 
-        title: "Authentication failed",
-        description: "Could not verify your Alpaca API credentials",
+    } catch (e: any) {
+      toast({
+        title: "Failed to save API key",
+        description: e?.message ?? "Unknown error",
         variant: "destructive"
       })
-      throw error
+      throw e
+    }
+  }
+
+  // Clear stored API key on server (optional: you may implement delete endpoint)
+  const clearApiKey = async () => {
+    try {
+      // Attempt to deactivate keys on server if a delete endpoint exists; FALLBACK: inform user to remove via settings
+      // For now, call API-KEYS delete endpoint if present
+      try {
+        const res = await fetch("/api/api-keys", {
+          method: "DELETE",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider: "alpaca" }),
+        })
+        if (res.ok) {
+          setHasApiKey(false)
+          setApiKeyHash(null)
+          setIsPaper(true)
+        }
+      } catch {
+        // ignore
+        setHasApiKey(false)
+        setApiKeyHash(null)
+      }
+      toast({
+        title: "API key removed",
+        description: "Your Alpaca API key has been removed from the server."
+      })
+    } catch (e) {
+      console.warn("clearApiKey failed", e)
+      toast({
+        title: "Failed to remove key",
+        description: "Could not remove API key"
+      })
     }
   }
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut()
+      // Call server logout to clear vf_session cookie / revoke session
+      await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" })
     } catch {}
-
-    localStorage.removeItem('alpaca_api_key')
-    localStorage.removeItem('alpaca_secret_key')
-    localStorage.removeItem('alpaca_is_paper')
-    localStorage.removeItem('is_demo_mode')
-    localStorage.removeItem('user_tier')
-    setApiKey(null)
-    setSecretKey(null)
     setIsAuthenticated(false)
-    setIsDemoMode(false)
-    setTier('free')
     setUser(null)
-
-    toast({ 
+    setHasApiKey(false)
+    setApiKeyHash(null)
+    setIsDemoMode(false)
+    setTier("free")
+    toast({
       title: "Logged out",
       description: "You have been logged out successfully"
     })
   }
 
   const enableDemoMode = () => {
-    localStorage.setItem('is_demo_mode', 'true')
+    // Demo mode remains a client-side toggle
     setIsDemoMode(true)
     setIsAuthenticated(true)
-    setTier('free')
-
-    toast({ 
+    setTier("free")
+    toast({
       title: "Demo mode enabled",
       description: "You are now using the platform with simulated data"
     })
@@ -196,15 +237,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
-      apiKey,
-      secretKey,
+      hasApiKey,
+      apiKeyHash,
       isPaper,
       isDemoMode,
       tier,
       user,
       loading,
       getAccessToken,
-      login,
+      saveApiKey,
+      clearApiKey,
       logout,
       enableDemoMode
     }}>
@@ -220,4 +262,3 @@ export const useAuth = () => {
   }
   return context
 }
-

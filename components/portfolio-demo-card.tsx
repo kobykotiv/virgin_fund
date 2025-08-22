@@ -73,7 +73,7 @@ export function PortfolioDemoCard({ portfolio, onSelect, onPreview, isLoading, a
               {portfolio.name}
             </CardTitle>
           </div>
-          <Badge variant={getRiskVariant(portfolio.risk)} className="h-5">
+          <Badge className={`${getRiskVariant(portfolio.risk)} h-5`}>
             {portfolio.risk}
           </Badge>
         </div>

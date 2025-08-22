@@ -76,7 +76,7 @@ export function BasicDashboard({ apiConfig, onBotAction, isLoading }: BasicDashb
                 <TableCell>Grid-BTC-001</TableCell>
                 <TableCell>Grid Trading</TableCell>
                 <TableCell>
-                  <Badge variant="success">Active</Badge>
+                  <Badge className="success">Active</Badge>
                 </TableCell>
                 <TableCell>3</TableCell>
                 <TableCell className="text-green-500">+$542.10</TableCell>
@@ -124,7 +124,7 @@ export function BasicDashboard({ apiConfig, onBotAction, isLoading }: BasicDashb
                 </TableCell>
                 <TableCell>$65,420</TableCell>
                 <TableCell>
-                  <Badge variant="outline">Filled</Badge>
+                  <Badge className="outline">Filled</Badge>
                 </TableCell>
               </TableRow>
               {/* Add more rows as needed */}

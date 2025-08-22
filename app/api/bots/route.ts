@@ -1,79 +1,107 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { verifySessionToken } from "@/lib/session";
 
-const SUPABASE_URL = process.env.SUPABASE_URL as string;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+/**
+ * GET /api/bots
+ * POST /api/bots
+ *
+ * - Uses server session cookie (vf_session) to identify user via lib/session.verifySessionToken
+ * - Uses Supabase service-role client for DB operations
+ * - All returned bot rows are scoped to the current user
+ */
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment');
+function parseCookie(header: string | null) {
+  if (!header) return {};
+  return Object.fromEntries(
+    header
+      .split(";")
+      .map((p) => p.trim())
+      .map((p) => {
+        const idx = p.indexOf("=");
+        if (idx === -1) return [p, ""];
+        return [p.slice(0, idx), decodeURIComponent(p.slice(idx + 1))];
+      })
+  );
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false }
-});
+export async function GET(req: NextRequest) {
+  try {
+    const cookieHeader = req.headers.get("cookie");
+    const cookies = parseCookie(cookieHeader);
+    const sessionToken = cookies["vf_session"] || cookies["SESSION"] || null;
+    const session = await verifySessionToken(sessionToken as string);
+    if (!session || (session as any).expired) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-async function getUser(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.split(' ')[1];
-  if (!token) return null;
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error) return null;
-  return data.user;
+    const userId = (session as any).user_id;
+    const supabase = getSupabaseAdmin();
+
+    const { data, error } = await supabase
+      .from("bots")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("bots GET db error", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ bots: data || [] });
+  } catch (err) {
+    console.error("bots GET error", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
-export async function GET(request: Request) {
-  const user = await getUser(request);
-  if (!user) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
+export async function POST(req: NextRequest) {
+  try {
+    const cookieHeader = req.headers.get("cookie");
+    const cookies = parseCookie(cookieHeader);
+    const sessionToken = cookies["vf_session"] || cookies["SESSION"] || null;
+    const session = await verifySessionToken(sessionToken as string);
+    if (!session || (session as any).expired) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const limit = Number(new URL(request.url).searchParams.get('limit') || 100);
+    const userId = (session as any).user_id;
+    const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase
-    .from('bots')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('last_trade_at', { ascending: false, nulls: 'last' })
-    .limit(limit);
+    const body = (await req.json().catch(() => ({} as any))) as {
+      name?: string;
+      strategy?: string;
+      capital?: number;
+      metadata?: Record<string, unknown>;
+    };
 
-  if (error) return NextResponse.json({ error: { message: error.message, code: error.code } }, { status: 500 });
+    const name = typeof body.name === "string" && body.name.trim() ? body.name.trim() : "New Bot";
+    const strategy = typeof body.strategy === "string" && body.strategy.trim() ? body.strategy.trim() : "default";
+    const capital = typeof body.capital === "number" ? body.capital : 10000;
+    const metadata = body.metadata ?? {};
 
-  return NextResponse.json({ data });
-}
+    const payload = {
+      user_id: userId,
+      name,
+      strategy,
+      status: "paused",
+      capital,
+      pnl: 0,
+      last_trade_at: null,
+      metadata,
+    };
 
-export async function POST(request: Request) {
-  const user = await getUser(request);
-  if (!user) return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 });
+    const { data: inserted, error: insertErr } = await supabase.from("bots").insert([payload]).select().limit(1).maybeSingle();
 
-  const body = await request.json().catch(() => null);
-  if (!body) return NextResponse.json({ error: { message: 'Invalid JSON' } }, { status: 400 });
+    if (insertErr) {
+      console.error("bots insert failed", insertErr);
+      return NextResponse.json({ error: insertErr.message }, { status: 500 });
+    }
 
-  const { name, currency, dca_amount = 0, dca_frequency = 'manual', stop_loss = -5, stop_loss_mode = 'fixed', trailing_distance_pct = 0, exchange_account = 'paper', enabled = true } = body;
-
-  // Basic validation
-  const allowedCurrencies = ['USD', 'EUR', 'BTC', 'ETH'];
-  const allowedStopModes = ['none', 'fixed', 'trailing'];
-  const allowedExchange = ['paper', 'live'];
-
-  if (!name || typeof name !== 'string') return NextResponse.json({ error: { message: 'name is required' } }, { status: 422 });
-  if (!allowedCurrencies.includes(currency)) return NextResponse.json({ error: { message: 'invalid currency' } }, { status: 422 });
-  if (!allowedStopModes.includes(stop_loss_mode)) return NextResponse.json({ error: { message: 'invalid stop_loss_mode' } }, { status: 422 });
-  if (!allowedExchange.includes(exchange_account)) return NextResponse.json({ error: { message: 'invalid exchange_account' } }, { status: 422 });
-
-  const insertPayload = {
-    user_id: user.id,
-    name,
-    currency,
-    dca_amount,
-    dca_frequency,
-    stop_loss,
-    stop_loss_mode,
-    trailing_distance_pct,
-    exchange_account,
-    enabled
-  } as any;
-
-  const { data, error } = await supabase.from('bots').insert(insertPayload).select().maybeSingle();
-
-  if (error) return NextResponse.json({ error: { message: error.message, code: error.code } }, { status: 500 });
-
-  return NextResponse.json({ data }, { status: 201 });
+    return NextResponse.json({ bot: inserted });
+  } catch (err) {
+    console.error("bots POST error", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

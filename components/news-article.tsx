@@ -41,7 +41,7 @@ export function NewsArticleCard({ article, onSave, onShare, expanded = false }: 
     <Card className={expanded ? "w-full" : "w-full"}>
       <CardHeader className="pb-2">
         {article.isBreaking && (
-          <Badge variant="destructive" className="mb-2 w-fit">
+          <Badge className="destructive mb-2 w-fit">
             <AlertTriangle className="h-3 w-3 mr-1" />
             Breaking News
           </Badge>

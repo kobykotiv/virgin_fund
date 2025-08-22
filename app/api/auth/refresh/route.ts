@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken, refreshSession } from "../../../../lib/session";
+import { verifySessionToken, refreshSession, COOKIE_NAME } from "../../../../lib/session";
+import { setResponseCookie, clearResponseCookie } from "../../../../lib/serverCookies";
 
 /**
  * POST /api/auth/refresh
@@ -17,7 +18,7 @@ import { verifySessionToken, refreshSession } from "../../../../lib/session";
 
 export async function POST(req: NextRequest) {
   try {
-    const cookie = req.cookies.get("vf_session")?.value || null;
+    const cookie = req.cookies.get(COOKIE_NAME)?.value || null;
     if (!cookie) {
       return NextResponse.json({ error: "No session cookie" }, { status: 401 });
     }
@@ -40,17 +41,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: result.error || "Refresh failed" }, { status: 401 });
       }
 
-      // Build Set-Cookie header for new session token
-      const cookieParts = [];
-      cookieParts.push(`${result.cookie.name}=${result.cookie.value}`);
-      cookieParts.push(`Path=${result.cookie.opts.path || "/"}`);
-      cookieParts.push(`Max-Age=${result.cookie.opts.maxAge}`);
-      cookieParts.push(`SameSite=${result.cookie.opts.sameSite}`);
-      if (result.cookie.opts.httpOnly) cookieParts.push("HttpOnly");
-      if (result.cookie.opts.secure) cookieParts.push("Secure");
-
       const res = NextResponse.json({ success: true }, { status: 200 });
-      res.headers.set("Set-Cookie", cookieParts.join("; "));
+      if (result.cookie) {
+        setResponseCookie(res, result.cookie);
+      } else {
+        // ensure cookie cleared if no cookie returned
+        clearResponseCookie(res, COOKIE_NAME);
+      }
       return res;
     }
 

@@ -219,7 +219,7 @@ function TickerItem({
     <div className="border rounded-lg p-3 flex flex-col">
       <div className="flex justify-between items-center mb-1">
         <span className="font-semibold">{ticker.symbol}</span>
-        <Badge variant={ticker.change >= 0 ? "success" : "destructive"} className="text-xs">
+        <Badge className={`${ticker.change >= 0 ? "success" : "destructive"} text-xs`}>
           {ticker.change >= 0 ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
           {Math.abs(ticker.change).toFixed(2)}%
         </Badge>

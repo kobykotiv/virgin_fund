@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   BarChart,
@@ -54,6 +54,8 @@ import { SimpleView, AdvancedView, ExpertView } from "./bot-configuration/bot-vi
 import { BotAnalytics } from "./bot-configuration/bot-analytics"
 import type { BacktestResult } from "@/types/backtest"
 import { portfolios } from "@/lib/demo-portfolios"
+import type { Bot as ClientBot } from "@/types/bot";
+type MaybeBot = Partial<ClientBot> & Record<string, any>;
 
 interface EnhancedDashboardProps {
   apiConfig?: {
@@ -73,16 +75,16 @@ interface EnhancedDashboardProps {
 
 export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio }: EnhancedDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview")
-  const [bots, setBots] = useState<any[]>([])
+  const [bots, setBots] = useState<MaybeBot[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [marketData, setMarketData] = useState<any[]>([])
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const { toast } = useToast()
   const { isDemoMode } = useAuth()
-  const [backtestResults, setBacktestResults] = useState<BacktestResult | null>(null)
+  const [backtestResults, setBacktestResults] = useState<Partial<BacktestResult> | null>(null)
   const [viewMode, setViewMode] = useState<'simple' | 'advanced' | 'expert'>('simple')
   // Add selectedBot and selectedPosition state
-  const [selectedBot, setSelectedBot] = useState<any | null>(null)
+  const [selectedBot, setSelectedBot] = useState<MaybeBot | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<any | null>(null)
 
   // Get unique assets from portfolio and bots
@@ -256,8 +258,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
   const renderBotControls = (bot: any) => (
     <div className="flex items-center space-x-2">
       <Button
-        variant="outline"
-        size="sm"
+        className={buttonVariants({ variant: "outline", size: "sm" })}
         onClick={() => onBotAction(bot.id, bot.status === 'active' ? 'stop' : 'start')}
         disabled={isLoading}
       >
@@ -268,8 +269,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
         )}
       </Button>
       <Button
-        variant="outline"
-        size="sm"
+        className={buttonVariants({ variant: "outline", size: "sm" })}
         onClick={() => onBotAction(bot.id, 'delete')}
         disabled={isLoading || bot.status === 'active'}
       >
@@ -470,18 +470,18 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
     <TabsContent value="performance" className="space-y-6">
       {/* Historical Performance Chart */}
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Portfolio Performance</CardTitle>
-              <CardDescription>Historical P&L and trade activity</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={isLoading}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Portfolio Performance</CardTitle>
+            <CardDescription>Historical P&L and trade activity</CardDescription>
           </div>
-        </CardHeader>
+          <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={loadDashboardData} disabled={isLoading}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </CardHeader>
         <CardContent>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -551,10 +551,11 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
     </TabsContent>
   )
 
-  const handleBacktest = async (options: BacktestOptions) => {
+      const handleBacktest = async (options: BacktestOptions) => {
     try {
       const results = await runBacktest(options)
-      setBacktestResults(results)
+      // BacktestResult.trade types differ from UI TradeRecord; cast to satisfy state shape used in UI.
+      setBacktestResults(results as unknown as Partial<BacktestResult>)
     } catch (error) {
       toast({
         title: "Backtest Error",
@@ -714,9 +715,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                 </div>
                 <div className="flex items-center justify-center md:justify-end">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
+                    className={buttonVariants({ variant: "outline", size: "sm" }) + " text-xs"}
                     onClick={() => {
                       // This would trigger the API settings modal in a real implementation
                       const event = new CustomEvent("openApiSettings")
@@ -893,19 +892,19 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
         <TabsContent value="bots" className="space-y-8">
           <div className="flex justify-end space-x-2">
             <Button 
-              variant={viewMode === 'simple' ? 'default' : 'outline'}
+              className={buttonVariants({ variant: viewMode === 'simple' ? 'default' : 'outline' })}
               onClick={() => setViewMode('simple')}
             >
               Simple
             </Button>
             <Button 
-              variant={viewMode === 'advanced' ? 'default' : 'outline'}
+              className={buttonVariants({ variant: viewMode === 'advanced' ? 'default' : 'outline' })}
               onClick={() => setViewMode('advanced')}
             >
               Advanced
             </Button>
             <Button 
-              variant={viewMode === 'expert' ? 'default' : 'outline'}
+              className={buttonVariants({ variant: viewMode === 'expert' ? 'default' : 'outline' })}
               onClick={() => setViewMode('expert')}
             >
               Expert
@@ -953,7 +952,11 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                   <CardTitle>Portfolio Allocation</CardTitle>
                   <CardDescription>Current asset distribution including baskets</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={isLoading}>
+                <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={loadDashboardData} disabled={isLoading}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+                <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={loadDashboardData} disabled={isLoading}>
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh
                 </Button>
@@ -1020,7 +1023,7 @@ export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio
                   <CardTitle>Market Data</CardTitle>
                   <CardDescription>Current prices for assets used in your bots</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="h-8" onClick={loadDashboardData} disabled={isLoading}>
+                <Button className={buttonVariants({ variant: "outline", size: "sm" }) + " h-8"} onClick={loadDashboardData} disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <RefreshCw className="h-3.5 w-3.5 mr-2 animate-spin" />

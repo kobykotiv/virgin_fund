@@ -2,8 +2,8 @@
 
 import type { Bot } from "@/types/bot"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Edit, Trash2, Play, Pause, AlertTriangle, RefreshCw, DollarSign } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
@@ -118,19 +118,19 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {bot.assets.slice(0, 3).map((asset) => (
-                        <Badge key={asset} variant="outline" className="text-xs">
+                        <Badge key={asset} className={`${badgeVariants({ variant: "outline" })} text-xs`}>
                           {asset}
                         </Badge>
                       ))}
                       {bot.assets.length > 3 && (
-                        <Badge className="outline text-xs">
+                        <Badge className={`${badgeVariants({ variant: "outline" })} text-xs`}>
                           +{bot.assets.length - 3}
                         </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusBadgeVariant(bot.status)}>
+                    <Badge className={badgeVariants({ variant: getStatusBadgeVariant(bot.status) })}>
                       {bot.status.charAt(0).toUpperCase() + bot.status.slice(1)}
                     </Badge>
                   </TableCell>
@@ -163,31 +163,20 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
                   )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
+                      <Button className={buttonVariants({ variant: "outline", size: "icon" })} onClick={() => {
                           console.log(`Toggle status clicked for bot: ${bot.id}`) // Add logging
                           bot.status !== "error" && onToggleStatus(bot.id)
-                        }}
-                        title={getStatusToggleTitle(bot.status)}
-                        disabled={bot.status === "error"}
-                      >
+                        }} title={getStatusToggleTitle(bot.status)} disabled={bot.status === "error"}>
                         {getStatusToggleIcon(bot.status)}
                       </Button>
 
-                      <Button variant="outline" size="icon" onClick={() => onEdit(bot)} title="Edit Bot">
+                      <Button className={buttonVariants({ variant: "outline", size: "icon" })} onClick={() => onEdit(bot)} title="Edit Bot">
                         <Edit className="h-4 w-4" />
                       </Button>
 
                       <AlertDialog open={botToDelete === bot.id} onOpenChange={(open) => !open && setBotToDelete(null)}>
                         <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setBotToDelete(bot.id)}
-                            title="Delete Bot"
-                          >
+                          <Button className={buttonVariants({ variant: "outline", size: "icon" })} onClick={() => setBotToDelete(bot.id)} title="Delete Bot">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -218,4 +207,3 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
     </Card>
   )
 }
-

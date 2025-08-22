@@ -7,7 +7,12 @@ import {
   AlertTriangle, ShieldCheck, Network, Lock
 } from "lucide-react"
 
-export function SimpleBotOverview({ bot }: { bot: any }) {
+import type { Bot as ClientBot } from "@/types/bot";
+import type { ComponentType } from "react";
+
+type MaybeBot = Partial<ClientBot> & Record<string, any>;
+
+export function SimpleBotOverview({ bot }: { bot: MaybeBot }) {
   return (
     <Card>
       <CardHeader>
@@ -77,10 +82,10 @@ export function SimpleBotOverview({ bot }: { bot: any }) {
   )
 }
 
-export function AdvancedBotOverview({ bot }: { bot: any }) {
-  const getPositionValue = (position: any) => {
+export function AdvancedBotOverview({ bot }: { bot: MaybeBot }) {
+  const getPositionValue = (position: Record<string, any>) => {
     if (position.assetType === 'basket') {
-      return position.positions.reduce((sum: number, pos: any) => 
+      return position.positions.reduce((sum: number, pos: Record<string, any>) => 
         sum + (pos.quantity * pos.currentPrice), 0)
     }
     return position.quantity * position.currentPrice
@@ -226,18 +231,18 @@ export function AdvancedBotOverview({ bot }: { bot: any }) {
   )
 }
 
-function getReturnClass(position: any) {
+function getReturnClass(position: Record<string, any>) {
   if (!position.avgPrice || !position.currentPrice) return ''
   const returnPct = ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100
   return returnPct >= 0 ? 'text-green-500' : 'text-red-500'
 }
 
-function getPositionReturn(position: any) {
+function getPositionReturn(position: Record<string, any>) {
   if (!position.avgPrice || !position.currentPrice) return 0
   return (((position.currentPrice - position.avgPrice) / position.avgPrice) * 100).toFixed(1)
 }
 
-export function ExpertBotOverview({ bot }: { bot: any }) {
+export function ExpertBotOverview({ bot }: { bot: MaybeBot }) {
   return (
     <div className="space-y-6">
       <Card>
@@ -326,7 +331,7 @@ export function ExpertBotOverview({ bot }: { bot: any }) {
   )
 }
 
-function MetricCard({ icon: Icon, label, value, trend }: any) {
+function MetricCard({ icon: Icon, label, value, trend }: { icon: ComponentType<any>, label: string, value: string, trend?: 'up' | 'down' | 'neutral' }) {
   return (
     <div className="p-4 border rounded-lg space-y-2">
       <div className="flex justify-between items-center">

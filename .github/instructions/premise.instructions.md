@@ -215,3 +215,36 @@ Charts/visuals with Recharts
 Animations with Framer Motion
 
 Modular structure so new strategies, bots, or data sources can be added easily
+
+
+Here are the next 4 prompts you can give to Cline, inspired by #websearch "react awesome" and best practices for a modern, interactive React/Supabase dashboard:
+
+---
+
+**1. Add React Awesome Reveal Animations**  
+> Integrate [React Awesome Reveal](https://react-awesome-reveal.morello.dev) to add scroll and entrance animations to dashboard sections (e.g., bot cards, watchlists, charts).  
+> Use simple fade/slide/zoom effects to make the UI feel lively and modern, matching the style of top React sites.
+
+---
+
+**2. Implement Fast, Interactive Updates with React Query and Supabase Realtime**  
+> Use Supabase Realtime (Postgres changes) to subscribe to updates for bots, watchlists, and portfolio tables.  
+> Invalidate or refetch React Query caches on relevant events so the UI updates instantly without reloads, as seen in awesome React website examples.
+
+---
+
+**3. Add Custom Shapes or Visuals with React Awesome Shapes**  
+> Use [React Awesome Shapes](https://awesomeshapes.netlify.app) to insert visually engaging SVG shapes or backgrounds into the dashboard.  
+> Place shapes behind headers, cards, or charts to make the UI more visually appealing and unique.
+
+---
+
+**4. Showcase Interactive Examples and Animations**  
+> Take inspiration from [awesome React website examples](https://htmlburger.com/blog/react-website-examples/) and add interactive elements:  
+> - Animate bot status changes (start/pause) with Framer Motion or React Awesome Reveal.  
+> - Add hover effects and transitions to buttons and cards.  
+> - Ensure the dashboard feels fast, smooth, and fun to use, with no full-page reloads.
+
+---
+
+These prompts will help you build a visually engaging, interactive, and modern React dashboard, leveraging the best of the "react awesome" ecosystem.

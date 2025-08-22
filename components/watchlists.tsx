@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, X, RefreshCw, PlusCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -155,7 +155,7 @@ export function Watchlists() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle>Watchlists</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setIsCreating(true)} disabled={isCreating}>
+          <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={() => setIsCreating(true)} disabled={isCreating}>
             <Plus className="h-4 w-4 mr-2" />
             New Watchlist
           </Button>
@@ -178,8 +178,8 @@ export function Watchlists() {
                   onChange={(e) => setNewWatchlistName(e.target.value)}
                   className="mr-2"
                 />
-                <Button size="sm" onClick={createWatchlist}>Create</Button>
-                <Button variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
+                <Button className={buttonVariants({ size: "sm" })} onClick={createWatchlist}>Create</Button>
+                <Button className={buttonVariants({ variant: "ghost", size: "sm" })} onClick={() => setIsCreating(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -189,8 +189,7 @@ export function Watchlists() {
               {watchlists.map((watchlist) => (
                 <Badge
                   key={watchlist.id}
-                  variant={activeWatchlist?.id === watchlist.id ? "default" : "outline"}
-                  className="cursor-pointer"
+                  className={`${badgeVariants({ variant: activeWatchlist?.id === watchlist.id ? "default" : "outline" })} cursor-pointer`}
                   onClick={() => setActiveWatchlist(watchlist)}
                 >
                   {watchlist.name}

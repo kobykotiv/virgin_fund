@@ -8,7 +8,12 @@ import {
   AlertTriangle, Shield, Settings2, LineChart
 } from "lucide-react"
 
-export function SimpleView({ bot }: { bot: any }) {
+import type { Bot as ClientBot } from "@/types/bot";
+import type { ComponentType } from "react";
+
+type MaybeBot = Partial<ClientBot> & Record<string, any>;
+
+export function SimpleView({ bot }: { bot: MaybeBot }) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -39,7 +44,7 @@ export function SimpleView({ bot }: { bot: any }) {
   )
 }
 
-export function AdvancedView({ bot }: { bot: any }) {
+export function AdvancedView({ bot }: { bot: MaybeBot }) {
   return (
     <Card>
       <CardHeader>
@@ -91,7 +96,7 @@ export function AdvancedView({ bot }: { bot: any }) {
   )
 }
 
-export function ExpertView({ bot }: { bot: any }) {
+export function ExpertView({ bot }: { bot: MaybeBot }) {
   return (
     <Card>
       <CardHeader>
@@ -174,7 +179,7 @@ export function ExpertView({ bot }: { bot: any }) {
   )
 }
 
-function MetricCard({ label, value, icon: Icon, trend }: any) {
+function MetricCard({ label, value, icon: Icon, trend }: { label: string, value: string | number, icon: ComponentType<any>, trend?: 'up' | 'down' | 'neutral' }) {
   return (
     <div className="p-4 border rounded-lg space-y-2">
       <div className="flex justify-between items-center">

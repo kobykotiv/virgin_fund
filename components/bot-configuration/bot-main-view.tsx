@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { SimpleView, AdvancedView, ExpertView } from "./bot-views"
 import { BotActivationWizard } from "./activation"
-import { Bot } from "@/types/bot"
+import type { Bot as ClientBot } from "@/types/bot"
+type MaybeBot = Partial<ClientBot> & Record<string, any>;
 
-export function BotMainView({ bot, onAction }: { bot: Bot; onAction: (action: string) => void }) {
+export function BotMainView({ bot, onAction }: { bot: MaybeBot; onAction: (action: string) => void }) {
   return (
     <Card className="w-full">
       <CardHeader>
@@ -15,13 +16,13 @@ export function BotMainView({ bot, onAction }: { bot: Bot; onAction: (action: st
             <CardDescription>Monitor and manage your trading bot</CardDescription>
           </div>
           <div className="space-x-2">
-            <Button variant="outline" size="sm">
+            <Button className={buttonVariants({ variant: "outline", size: "sm" })}>
               Simple
             </Button>
-            <Button variant="outline" size="sm">
+            <Button className={buttonVariants({ variant: "outline", size: "sm" })}>
               Advanced
             </Button>
-            <Button variant="outline" size="sm">
+            <Button className={buttonVariants({ variant: "outline", size: "sm" })}>
               Expert
             </Button>
           </div>

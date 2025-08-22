@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlusCircle, X, AlertCircle, Save, Trash2 } from 'lucide-react';
@@ -209,7 +209,7 @@ export function WatchlistsManager() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Watchlists</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setIsCreating(!isCreating)}>
+          <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={() => setIsCreating(!isCreating)}>
             {isCreating ? <X className="h-4 w-4 mr-2" /> : <PlusCircle className="h-4 w-4 mr-2" />}
             {isCreating ? 'Cancel' : 'New Watchlist'}
           </Button>
@@ -244,7 +244,7 @@ export function WatchlistsManager() {
         ) : watchlists.length === 0 ? (
           <div className="text-center py-6 border rounded">
             <p className="text-muted-foreground mb-2">No watchlists found</p>
-            <Button variant="outline" size="sm" onClick={() => setIsCreating(true)}>
+            <Button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={() => setIsCreating(true)}>
               Create your first watchlist
             </Button>
           </div>
@@ -254,8 +254,7 @@ export function WatchlistsManager() {
               {watchlists.map((watchlist) => (
                 <Badge
                   key={watchlist.id}
-                  variant={activeWatchlist?.id === watchlist.id ? 'default' : 'outline'}
-                  className="cursor-pointer"
+                  className={`${badgeVariants({ variant: activeWatchlist?.id === watchlist.id ? 'default' : 'outline' })} cursor-pointer`}
                   onClick={() => {
                     if (hasChanges && 
                         !confirm('You have unsaved changes. Discard them?')) {
@@ -276,32 +275,18 @@ export function WatchlistsManager() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">{activeWatchlist.name}</h3>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant={editMode ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={toggleEditMode}
-                    >
+                    <Button className={buttonVariants({ variant: editMode ? 'default' : 'outline', size: "sm" })} onClick={toggleEditMode}>
                       {editMode ? 'Exit Edit' : 'Edit'}
                     </Button>
                     
                     {editMode && (
                       <>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteWatchlist(activeWatchlist.id)}
-                          disabled={loading}
-                        >
+                        <Button className={buttonVariants({ variant: "destructive", size: "sm" })} onClick={() => deleteWatchlist(activeWatchlist.id)} disabled={loading}>
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete
                         </Button>
                         
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={saveWatchlist}
-                          disabled={loading || !hasChanges}
-                        >
+                        <Button className={buttonVariants({ variant: "default", size: "sm" })} onClick={saveWatchlist} disabled={loading || !hasChanges}>
                           <Save className="h-4 w-4 mr-2" />
                           Save
                         </Button>
@@ -351,11 +336,7 @@ export function WatchlistsManager() {
                             <TableCell>{symbol}</TableCell>
                             {editMode && (
                               <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeSymbol(symbol)}
-                                >
+                                <Button className={buttonVariants({ variant: "ghost", size: "sm" })} onClick={() => removeSymbol(symbol)}>
                                   <X className="h-4 w-4" />
                                 </Button>
                               </TableCell>

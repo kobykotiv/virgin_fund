@@ -42,6 +42,7 @@ export default function StrategyList({ onImport }: { onImport?: (s: StrategyShap
   const [editing, setEditing] = useState<StrategyShape | null>(null)
   const [editName, setEditName] = useState("")
   const [editDesc, setEditDesc] = useState("")
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleCreate = async () => {
     if (!newName.trim()) {
@@ -88,11 +89,14 @@ export default function StrategyList({ onImport }: { onImport?: (s: StrategyShap
   }
 
   const handleDelete = async (id: string) => {
+    setDeletingId(id)
     try {
       await remove.mutateAsync(id)
       toast({ title: "Deleted", description: "Strategy deleted" })
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Failed to delete" })
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -110,8 +114,18 @@ export default function StrategyList({ onImport }: { onImport?: (s: StrategyShap
       {creating ? (
         <Card className="p-4">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <Input placeholder="Strategy name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-            <Textarea placeholder="Short description" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+            <Input
+              placeholder="Strategy name"
+              aria-label="New strategy name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <Textarea
+              placeholder="Short description"
+              aria-label="New strategy description"
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+            />
             <div className="flex items-center gap-2">
               <Button className="text-sm px-3 py-1" onClick={handleCreate} disabled={creatingLoading}>
                 {creatingLoading ? "Creating..." : "Create"}
@@ -124,8 +138,18 @@ export default function StrategyList({ onImport }: { onImport?: (s: StrategyShap
       {editing ? (
         <Card className="p-4">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <Input placeholder="Strategy name" value={editName} onChange={(e) => setEditName(e.target.value)} />
-            <Textarea placeholder="Short description" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+            <Input
+              placeholder="Strategy name"
+              aria-label="Edit strategy name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
+            <Textarea
+              placeholder="Short description"
+              aria-label="Edit strategy description"
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+            />
             <div className="flex items-center gap-2">
               <Button className="text-sm px-3 py-1" onClick={handleSaveEdit} disabled={savingLoading}>
                 {savingLoading ? "Saving..." : "Save"}
@@ -142,13 +166,14 @@ export default function StrategyList({ onImport }: { onImport?: (s: StrategyShap
         {isLoading ? (
           <div>Loading strategies...</div>
         ) : (
-          (strategies ?? []).map((s: StrategyShape) => (
+            (strategies ?? []).map((s: StrategyShape) => (
             <StrategyCard
               key={s.id}
               strategy={s}
               onEdit={(st) => handleStartEdit(st)}
               onDelete={(id) => handleDelete(id)}
               onImport={(st) => onImport?.(st)}
+              isProcessing={deletingId === s.id}
             />
           ))
         )}

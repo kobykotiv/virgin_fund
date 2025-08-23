@@ -1,7 +1,7 @@
 import adapter from '@/lib/alpaca';
 import { Bar } from '@/lib/alpaca/adapter';
 
-import type { BacktestParams as CanonicalBacktestParams } from "@/types/backtest";
+import type { BacktestParams as CanonicalBacktestParams, TradeRecord } from "@/types/backtest";
 
 /**
  * Engine-specific backtest params (kept for backward compatibility with existing engine callers).
@@ -20,7 +20,7 @@ export type EngineBacktestParams = {
 
 export async function runBacktest(params: EngineBacktestParams) {
   const bars = await adapter.getBars(params.symbol, params.start, params.end, '1Day');
-  const timeseries: { t: string; balance: number }[] = [];
+  const timeseries: { timestamp: string; balance: number }[] = [];
   let cash = params.initialCapital;
   let positionQty = 0;
   let positionAvg = 0;
@@ -42,13 +42,13 @@ export async function runBacktest(params: EngineBacktestParams) {
         cash -= cost;
         positionAvg = (positionAvg * positionQty + price * qty) / (positionQty + qty || 1);
         positionQty += qty;
-        trades.push({ t: bar.t, side: 'buy', qty, price });
+        trades.push({ timestamp: bar.t, type: 'buy', price, quantity: qty, value: price * qty, symbol: params.symbol } as TradeRecord);
       }
     }
 
     const marketValue = positionQty * bars[i].c;
     const balance = cash + marketValue;
-    timeseries.push({ t: bar.t, balance });
+    timeseries.push({ timestamp: bar.t, balance });
   }
 
   const summary = {

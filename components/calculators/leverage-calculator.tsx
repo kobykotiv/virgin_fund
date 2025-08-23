@@ -9,17 +9,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 
+export type PotentialReturnItem = {
+  priceMove: number
+  pnl: number
+  roi: number
+}
+
+export type LeverageResults = {
+  requiredMargin: number
+  maxLoss: number
+  liquidationPrice: number
+  potentialReturn: PotentialReturnItem[]
+} | null
+
 export function LeverageCalculator() {
   const [position, setPosition] = useState<number>(10000)
   const [leverage, setLeverage] = useState<number>(5)
   const [price, setPrice] = useState<number>(100)
   const [direction, setDirection] = useState<"long" | "short">("long")
-  const [results, setResults] = useState<{
-    requiredMargin: number
-    maxLoss: number
-    liquidationPrice: number
-    potentialReturn: number[]
-  } | null>(null)
+
+  const [results, setResults] = useState<LeverageResults>(null)
 
   const calculateLeverage = () => {
     const margin = position / leverage

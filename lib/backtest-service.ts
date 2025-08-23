@@ -1,5 +1,6 @@
 import type { Bot, IndicatorConfig, GridConfig, DCAConfig } from "@/types/bot"
 import { fetchHistoricalData } from "@/services/market-data-service"
+import * as indicators from "@/lib/indicators"
 
 import type { BacktestParams, TradeRecord, BacktestResult } from "@/types/backtest"
 export type { BacktestParams, TradeRecord, BacktestResult } from "@/types/backtest"
@@ -138,149 +139,43 @@ function generateHistoricalPrices(
   return prices
 }
 
-// Calculate technical indicators
+ // Calculate technical indicators
 function calculateIndicators(
   prices: { date: string; open: number; high: number; low: number; close: number; volume: number }[],
   config: IndicatorConfig,
 ) {
-  const result: Record<string, number[]> = {}
-
-  switch (config.type) {
-    case "rsi":
-      result.rsi = calculateRSI(
-        prices.map((p) => p.close),
-        config.entryThreshold,
-      )
-      break
-    case "macd":
-      const macdResult = calculateMACD(prices.map((p) => p.close))
-      result.macd = macdResult.macd
-      result.signal = macdResult.signal
-      result.histogram = macdResult.histogram
-      break
-    case "bollinger":
-      const bollingerResult = calculateBollingerBands(prices.map((p) => p.close))
-      result.upper = bollingerResult.upper
-      result.middle = bollingerResult.middle
-      result.lower = bollingerResult.lower
-      break
-  }
-
-  return result
+  // Delegate to shared indicators module which provides consistent, tested implementations.
+  // The helper returns an object keyed by indicator names (rsi, macd, upper/middle/lower, etc).
+  return indicators.calculateIndicatorsFromOHLC(prices, config as any)
 }
 
-// Calculate RSI
+ // Calculate RSI
 function calculateRSI(prices: number[], period = 14): number[] {
-  const rsi: number[] = []
-  const gains: number[] = []
-  const losses: number[] = []
-
-  // Initialize with empty values for the first period
-  for (let i = 0; i < period; i++) {
-    rsi.push(0)
-  }
-
-  for (let i = 1; i < prices.length; i++) {
-    const change = prices[i] - prices[i - 1]
-    gains.push(change > 0 ? change : 0)
-    losses.push(change < 0 ? Math.abs(change) : 0)
-
-    if (i >= period) {
-      const avgGain = gains.slice(-period).reduce((sum, val) => sum + val, 0) / period
-      const avgLoss = losses.slice(-period).reduce((sum, val) => sum + val, 0) / period
-
-      const rs = avgLoss === 0 ? 100 : avgGain / avgLoss
-      const rsiValue = 100 - 100 / (1 + rs)
-
-      rsi.push(rsiValue)
-    }
-  }
-
-  return rsi
+  return indicators.calculateRSI(prices, period)
 }
 
-// Calculate MACD
+ // Calculate MACD
 function calculateMACD(
   prices: number[],
   fastPeriod = 12,
   slowPeriod = 26,
   signalPeriod = 9,
 ): { macd: number[]; signal: number[]; histogram: number[] } {
-  const ema12 = calculateEMA(prices, fastPeriod)
-  const ema26 = calculateEMA(prices, slowPeriod)
-
-  const macd: number[] = []
-
-  for (let i = 0; i < prices.length; i++) {
-    if (i < Math.max(fastPeriod, slowPeriod) - 1) {
-      macd.push(0)
-    } else {
-      macd.push(ema12[i] - ema26[i])
-    }
-  }
-
-  const signal = calculateEMA(macd, signalPeriod)
-  const histogram: number[] = []
-
-  for (let i = 0; i < macd.length; i++) {
-    histogram.push(macd[i] - signal[i])
-  }
-
-  return { macd, signal, histogram }
+  return indicators.calculateMACD(prices, fastPeriod, slowPeriod, signalPeriod)
 }
 
-// Calculate EMA
+ // Calculate EMA
 function calculateEMA(prices: number[], period: number): number[] {
-  const ema: number[] = []
-  const multiplier = 2 / (period + 1)
-
-  // Start with SMA
-  let sum = 0
-  for (let i = 0; i < period; i++) {
-    sum += prices[i]
-    ema.push(0)
-  }
-
-  ema[period - 1] = sum / period
-
-  // Calculate EMA
-  for (let i = period; i < prices.length; i++) {
-    ema.push((prices[i] - ema[i - 1]) * multiplier + ema[i - 1])
-  }
-
-  return ema
+  return indicators.calculateEMA(prices, period)
 }
 
-// Calculate Bollinger Bands
+ // Calculate Bollinger Bands
 function calculateBollingerBands(
   prices: number[],
   period = 20,
   stdDev = 2,
 ): { upper: number[]; middle: number[]; lower: number[] } {
-  const upper: number[] = []
-  const middle: number[] = []
-  const lower: number[] = []
-
-  for (let i = 0; i < prices.length; i++) {
-    if (i < period - 1) {
-      upper.push(0)
-      middle.push(0)
-      lower.push(0)
-    } else {
-      const slice = prices.slice(i - period + 1, i + 1)
-      const sma = slice.reduce((sum, price) => sum + price, 0) / period
-
-      const squaredDiffs = slice.map((price) => Math.pow(price - sma, 2))
-      const variance = squaredDiffs.reduce((sum, diff) => sum + diff, 0) / period
-      const sd = Math.sqrt(variance)
-
-      upper.push(sma + stdDev * sd)
-      middle.push(sma)
-      lower.push(sma - stdDev * sd)
-    }
-  }
-
-  return { upper, middle, lower }
+  return indicators.calculateBollingerBands(prices, period, stdDev)
 }
 
 // Simulate trades based on bot type and historical prices

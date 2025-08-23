@@ -1,64 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-interface Quote {
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  timestamp: string;
-}
-
-interface MarketData {
-  quotes: Record<string, Quote>;
-  loading: boolean;
-  error: string | null;
-}
-
-export function useMarketData(symbols: string[]): MarketData {
-  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+/**
+ * Generic market-data hook compatible with multiple call sites.
+ * - Accepts either an array of symbols or a key string and options object.
+ * - Returns a flexible shape: { data?: T, loading: boolean, error?: any }
+ *
+ * This keeps callers (Calendar, charts, etc.) type-safe while being permissive.
+ */
+export function useMarketData<T = any>(
+  keyOrSymbols: string | string[],
+  opts?: any,
+): { data?: T; loading: boolean; error?: any } {
+  const [data, setData] = useState<T | undefined>(undefined)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<any>(null)
 
   useEffect(() => {
+    let canceled = false
+
     const fetchData = async () => {
       try {
-        setLoading(true);
-        
-        if (!symbols.length) {
-          setQuotes({});
-          return;
+        setLoading(true)
+        setError(null)
+
+        if (typeof keyOrSymbols === "string") {
+          // Generic key-based endpoint (adaptable)
+          const res = await fetch(
+            `/api/market-data?key=${encodeURIComponent(keyOrSymbols)}&opts=${encodeURIComponent(
+              JSON.stringify(opts ?? {}),
+            )}`,
+          )
+          if (!res.ok) throw new Error(res.statusText)
+          const json = await res.json()
+          if (!canceled) setData(json?.data as T)
+          return
         }
 
-        // Filter out any undefined symbols
-        const validSymbols = symbols.filter(Boolean);
-        if (!validSymbols.length) {
-          setQuotes({});
-          return;
-        }
+        if (Array.isArray(keyOrSymbols)) {
+          const symbols = keyOrSymbols.filter(Boolean)
+          if (symbols.length === 0) {
+            if (!canceled) setData(undefined)
+            return
+          }
 
-        const response = await fetch(`/api/alpaca/market?symbols=${validSymbols.join(',')}`);
-        
-        if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
+          const res = await fetch(`/api/alpaca/market?symbols=${encodeURIComponent(symbols.join(","))}`)
+          if (!res.ok) throw new Error(res.statusText)
+          const json = await res.json()
+          if (!canceled) setData(json?.data as T)
+          return
         }
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Unknown error occurred');
-        }
-        
-        setQuotes(result.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        console.error('Error fetching market data:', err);
+        if (!canceled) setError(err instanceof Error ? err.message : err)
+        console.error("Error fetching market data:", err)
       } finally {
-        setLoading(false);
+        if (!canceled) setLoading(false)
       }
-    };
-    
-    fetchData();
-  }, [symbols.join(',')]);
-  
-  return { quotes, loading, error };
+    }
+
+    fetchData()
+
+    return () => {
+      canceled = true
+    }
+    // keyOrSymbols can be string or array; normalize dependency
+  }, [Array.isArray(keyOrSymbols) ? keyOrSymbols.join(",") : keyOrSymbols, JSON.stringify(opts)])
+
+  return { data, loading, error }
 }

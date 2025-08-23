@@ -7,7 +7,12 @@ import * as nextRouter from "next/navigation";
 
 jest.spyOn(nextRouter, "useRouter").mockImplementation(() => ({
   push: jest.fn(),
-}));
+  back: jest.fn(),
+  forward: jest.fn(),
+  refresh: jest.fn(),
+  replace: jest.fn(),
+  prefetch: jest.fn(),
+} as any));
 
 jest.mock("@/providers/auth-provider", () => ({
   useAuth: () => ({

@@ -30,7 +30,7 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
 
   // Indicator strategy settings
   const [indicatorType, setIndicatorType] = useState<"rsi" | "macd" | "bollinger">(
-    existingBot?.indicatorConfig?.type || "rsi",
+    (existingBot?.indicatorConfig?.type ?? "rsi") as "rsi" | "macd" | "bollinger",
   )
   const [indicatorTimeframe, setIndicatorTimeframe] = useState<string>(
     existingBot?.indicatorConfig?.timeframe || "1hour",
@@ -208,9 +208,7 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
                 >
                   <span>{asset}</span>
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 rounded-full"
+                    {...({ variant: "ghost", size: "icon", className: "h-4 w-4 rounded-full" } as any)}
                     onClick={() => handleRemoveAsset(asset)}
                   >
                     <Trash2 className="h-3 w-3" />
@@ -454,7 +452,7 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label>Asset Allocations</Label>
-                      <Button variant="outline" size="sm" onClick={handleAddBasketAllocation}>
+                      <Button {...({ variant: "outline", size: "sm" } as any)} onClick={handleAddBasketAllocation}>
                         <Plus className="h-4 w-4 mr-1" />
                         Add Asset
                       </Button>
@@ -490,8 +488,7 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
                         </div>
 
                         <Button
-                          variant="ghost"
-                          size="icon"
+                          {...({ variant: "ghost", size: "icon" } as any)}
                           onClick={() => handleRemoveBasketAllocation(index)}
                           disabled={basketAllocations.length <= 1}
                         >
@@ -653,4 +650,3 @@ export function StrategyBuilder({ onSave, existingBot, availableAssets }: Strate
     </Card>
   )
 }
-

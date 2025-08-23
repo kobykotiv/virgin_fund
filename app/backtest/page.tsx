@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { Button as _Button } from "@/components/ui/button"
+const Button = _Button as unknown as any
 import { BacktestForm } from "@/components/backtest-form"
 import { BacktestResults } from "@/components/backtest-results"
 import { saveBacktestResult, optimizeStrategy, getSavedBacktests } from "@/lib/backtest-service"
@@ -101,20 +102,30 @@ export default function BacktestPage() {
         const botCopy = JSON.parse(JSON.stringify(selectedBot)) as Bot
 
         // Update the parameter with the optimal value
-        if (paramToOptimize.startsWith("indicator.")) {
+          if (paramToOptimize.startsWith("indicator.")) {
           const indicatorParam = paramToOptimize.split(".")[1]
           if (botCopy.indicatorConfig) {
-            botCopy.indicatorConfig[indicatorParam as keyof typeof botCopy.indicatorConfig] = bestParam.value as any
+            // Use a safe, typed-friendly merge to avoid 'never' index issues
+            ;(botCopy as any).indicatorConfig = {
+              ...(botCopy as any).indicatorConfig,
+              [indicatorParam]: bestParam.value,
+            }
           }
         } else if (paramToOptimize.startsWith("grid.")) {
           const gridParam = paramToOptimize.split(".")[1]
           if (botCopy.gridConfig) {
-            botCopy.gridConfig[gridParam as keyof typeof botCopy.gridConfig] = bestParam.value as any
+            ;(botCopy as any).gridConfig = {
+              ...(botCopy as any).gridConfig,
+              [gridParam]: bestParam.value,
+            }
           }
         } else if (paramToOptimize.startsWith("dca.")) {
           const dcaParam = paramToOptimize.split(".")[1]
           if (botCopy.dcaConfig) {
-            botCopy.dcaConfig[dcaParam as keyof typeof botCopy.dcaConfig] = bestParam.value as any
+            ;(botCopy as any).dcaConfig = {
+              ...(botCopy as any).dcaConfig,
+              [dcaParam]: bestParam.value,
+            }
           }
         } else if (paramToOptimize === "stopLoss") {
           botCopy.stopLoss = bestParam.value

@@ -74,6 +74,10 @@ interface EnhancedDashboardProps {
     totalValue?: number
     cashBalance?: number
   }
+  // Optional props passed from parent dashboards
+  scenarios?: any
+  selectedScenario?: string | null
+  onScenarioSelect?: (scenario: any) => void
 }
 
 export function EnhancedDashboard({ apiConfig, onBotAction, isLoading, portfolio }: EnhancedDashboardProps) {

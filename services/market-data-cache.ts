@@ -90,6 +90,31 @@ class MarketDataCacheService {
     });
   }
 
+  // Proxy methods for server-side alpaca endpoints — cached via in-memory layer
+  public async getOrders(status: string = "open") {
+    const cacheKey = `orders:${status}`;
+    return this.getData(cacheKey, async () => {
+      const res = await fetch(`/api/alpaca/orders?status=${encodeURIComponent(status)}`);
+      return res.json();
+    });
+  }
+
+  public async getPositions() {
+    const cacheKey = `positions:all`;
+    return this.getData(cacheKey, async () => {
+      const res = await fetch(`/api/alpaca/positions`);
+      return res.json();
+    });
+  }
+
+  public async getAccount() {
+    const cacheKey = `account:summary`;
+    return this.getData(cacheKey, async () => {
+      const res = await fetch(`/api/alpaca/account`);
+      return res.json();
+    });
+  }
+
   async cacheData(symbol: string, timeframe: string, data: any[]) {
     // store to in-memory cache
     const key = `cache:${symbol}:${timeframe}`;

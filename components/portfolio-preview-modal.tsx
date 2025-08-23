@@ -89,12 +89,13 @@ export function PortfolioPreviewModal({
           return acc;
         }, {} as Record<string, number>);
 
-        // Convert to array format
+        // Convert to array format (ensure numeric values)
         const formattedData = Object.entries(combinedData)
-          .map(([timestamp, value]) => ({ timestamp, value }))
+          .map(([timestamp, value]) => ({ timestamp, value: Number(value) }))
           .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-        setHistoricalData(formattedData);
+        // Ensure the state uses number values to satisfy typings
+        setHistoricalData(formattedData as { timestamp: string; value: number }[]);
       } catch (error) {
         console.error('Error fetching historical data:', error);
         // Fallback to mock data

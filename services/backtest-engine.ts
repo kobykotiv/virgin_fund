@@ -77,13 +77,13 @@ export class BacktestEngine {
                 }
               }
               
-              // Record trade
+              // Record trade (align with canonical Trade shape)
               trades.push({
-                date: currentDate,
+                datetime: currentDate,
                 symbol,
                 action: 'buy',
                 price,
-                shares,
+                quantity: shares,
                 value: cost
               })
             }
@@ -99,13 +99,13 @@ export class BacktestEngine {
                 delete positions[symbol]
               }
               
-              // Record trade
+              // Record trade (align with canonical Trade shape)
               trades.push({
-                date: currentDate,
+                datetime: currentDate,
                 symbol,
                 action: 'sell',
                 price,
-                shares,
+                quantity: shares,
                 value: revenue
               })
             }

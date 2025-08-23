@@ -1,39 +1,30 @@
-# Current Implementation Tasks — Bots Manager & Strategies
+# TASKS — Backtest & Performance Dashboard
 
-- [x] Inspect existing Bots Manager, BotForm, and BotMainView
-- [x] Wire Create Bot modal to useCreateBot via BotForm.onSubmit
-- [x] Add Edit Bot modal and wire updateBot.mutateAsync
-- [x] Add "Configure" button in BotMainView to emit edit action
-- [x] Add Framer Motion enter/exit animation for bot cards and modals
-- [x] Add Vitest test scaffold for create/update/delete flows
+Summary
+- Goal: finish Backtest features and deliver a robust Performance & Analytics dashboard, resolve TypeScript compilation errors, and prepare the codebase for tests and persistence decisions.
 
-- [ ] Expand unit tests:
-  - [ ] Assert toast calls and router.refresh behavior
-  - [ ] Test delete flow and confirmation dialog
-  - [ ] Add coverage for subscription tier restrictions in BotForm
+Roadmap / Checklist
+- [x] Analyze requirements and existing implementation (Backtest UI, PerformanceDashboard, charts, server routes)
+- [x] Fix PerformanceDashboard immediate issues
+  - [x] Replace missing `strategyName` usage with `botName` in trades flattening
+  - [x] Replace incorrect Button usage with `buttonVariants(...)` or proper Button API
+- [x] Fix next-auth getServerSession typing in alpaca routes
+  - [x] Replace `getServerSession(authOptions)` with `getServerSession()`
+- [x] Add market-data cache proxy methods required by API routes
+- [x] Extract and wire BacktestCharts and ComparisonPanel into BacktestResults
+- [ ] Run full type-check (bun tsc --noEmit) and collect current error list
+- [ ] Fix blocking TypeScript errors in test helpers and scripts (Cannot find module / missing stubs)
+- [ ] Fix Recharts typing mismatches in `components/ui/chart.tsx` and `components/performance/*`
+- [ ] Repair missing helper functions / imports in `lib/indicators` and `services/backtest-service.ts`
+- [ ] Address middleware cookie typing (middleware/authMiddleware.ts)
+- [ ] Re-run type-check and iterate until zero TypeScript errors
+- [ ] Add / update unit tests for changed components (Vitest)
+- [ ] Decide persistence for backtests (Supabase migrations) — request explicit approval before migrations
+- [ ] Add CSV/PDF export support (request approval before adding jsPDF/html2canvas)
+- [ ] Final QA: run app locally, verify PerformanceDashboard flows, charts and export
+- [ ] Create PR with summary of changes and migration or dependency notes
 
-- [ ] Fix any remaining TypeScript prop issues discovered in CI
-
-- [ ] Strategies & Signal Builder — backend
-  - [ ] Add supabase migration: `supabase/migrations/YYYYMMDD_add_strategies_table.sql`
-  - [ ] Implement API routes: `app/api/strategies/route.ts` and `app/api/strategies/[id]/route.ts`
-
-- [ ] Strategies & Signal Builder — frontend
-  - [ ] Implement `components/strategies/StrategyList.tsx` and `StrategyCard.tsx`
-  - [ ] Extend `components/signal-builder.tsx` for save/import/export
-  - [ ] Add "Save as Strategy" flow that POSTs to /api/strategies
-  - [ ] Add sharing/import (public flag or tokenized link)
-
-- [ ] UX polish
-  - [ ] Add hover elevation and micro-interactions for bot cards
-  - [ ] Improve modal accessibility (focus trap, ESC to close)
-  - [ ] Add visual indicators for bot status and P&L (animated badges)
-
-- [ ] QA & Verification
-  - [ ] Run unit tests (vitest) and fix failures
-  - [ ] Start dev server and manually verify modals, animations, and builder UX
-  - [ ] Add PROGRESS.md summary and docs for strategy JSON shape
-
-Notes:
-- I will follow project .clinerules for DB migrations, API routes, and testing.
-- Request explicit approval before running dev server or installing packages.
+Notes
+- Use Bun and PowerShell for commands (per .clinerules). Do not run migrations or install heavy deps without approval.
+- Prioritize TypeScript errors that block compilation first (test stubs, chart typings, service helpers).
+- Keep changes small and targeted; prefer replace_in_file style edits for existing files.

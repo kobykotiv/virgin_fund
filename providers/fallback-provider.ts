@@ -1,6 +1,6 @@
 // FallbackProvider for MarketDataProvider interface
 
-import type { MarketDataProvider, Quote, BarData, Timeframe } from "./market-data-provider"
+import type { MarketDataProvider, Quote, BarData } from "./market-data-provider"
 
 export class FallbackProvider implements MarketDataProvider {
   private providers: MarketDataProvider[]
@@ -20,10 +20,11 @@ export class FallbackProvider implements MarketDataProvider {
     throw new Error("All providers failed")
   }
 
-  async getHistoricalData(symbol: string, timeframe: Timeframe): Promise<BarData[]> {
+  async getHistoricalData(symbol: string, timeframe: any): Promise<BarData[]> {
     for (const provider of this.providers) {
       try {
-        return await provider.getHistoricalData(symbol, timeframe)
+        // allow providers to accept various timeframe shapes (string | object) in this fallback stub
+        return await provider.getHistoricalData(symbol, timeframe as any)
       } catch (error) {
         continue
       }

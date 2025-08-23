@@ -163,13 +163,13 @@ app.get('/v1/profile', async (req: Request, res: Response) => {
 app.put('/v1/profile', async (req: Request, res: Response) => {
   const { display_name }: UpdateProfileRequestBody = req.body;
   // TODO: Validate JWT, update profile
-  res.json<UpdateProfileResponse>({ id: 'demo-user', display_name });
+  res.json({ id: 'demo-user', display_name });
 });
 
 // POST /logout - logout user (JWT required)
 app.post('/v1/logout', async (req: Request, res: Response) => {
   // TODO: Invalidate refresh token
-  res.json<LogoutResponse>({ ok: true });
+  res.json({ ok: true });
 });
 
 app.get('/v1/portfolios', async (req: Request, res: Response) => {

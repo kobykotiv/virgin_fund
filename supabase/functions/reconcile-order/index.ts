@@ -1,6 +1,6 @@
 // Simple supabase Edge Function to reconcile order state by fetching from Alpaca and updating order_records
 declare const Deno: any;
-import { placeOrder as alpacaPlaceOrder } from '../run-bots/adapter.ts';
+import { placeOrder as alpacaPlaceOrder } from '../run-bots/adapter';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

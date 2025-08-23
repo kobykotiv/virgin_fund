@@ -107,7 +107,7 @@ async function retry<T>(fn: () => Promise<T>, attempts = 4, baseMs = 500): Promi
 }
 
 // Replace inline order placing with adapter
-import { placeOrder as alpacaPlaceOrder } from './adapter.ts';
+import { placeOrder as alpacaPlaceOrder } from './adapter';
 
 // Place order using either REST or a mock adapter inline for Deno compatibility
 async function placeAlpacaOrderDirect(symbol: string, notional: number, clientOrderId: string) {

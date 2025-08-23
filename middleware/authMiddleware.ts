@@ -14,7 +14,7 @@ export interface AuthRequest extends NextRequest {
 
 export async function authMiddleware(req: AuthRequest): Promise<NextResponse | null> {
   // Get token from cookie or authorization header
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value || 
     req.headers.get('Authorization')?.replace('Bearer ', '');
   

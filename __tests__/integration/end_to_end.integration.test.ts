@@ -1,12 +1,12 @@
 import { Pool } from 'pg';
 import fs from 'fs/promises';
 import path from 'path';
-import { computeSummary } from '../../../scripts/process_backtests';
+import { computeSummary } from '../../scripts/process_backtests';
 
 describe('integration: migrations + backtest processing', () => {
   const dbUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
   if (!dbUrl) throw new Error('Set TEST_DATABASE_URL or DATABASE_URL pointing to a test Postgres instance');
-  const pool = new Pool({ connectionString: dbUrl });
+  const pool = new Pool({ connectionString: dbUrl }) as any;
 
   const migrationFiles = [
     path.join(__dirname, '..', '..', 'supabase', 'migrations', '20250818_add_last_trade_at.sql'),
@@ -75,7 +75,7 @@ describe('integration: migrations + backtest processing', () => {
     // Apply the Up section of the first migration (add_last_trade_at)
   const migration1Path = migrationFiles[0];
   // Use migration runner to execute Up block safely
-  const { runMigrationFile } = await import('../../../scripts/migration_runner');
+  const { runMigrationFile } = await import('../../scripts/migration_runner');
   await runMigrationFile(migration1Path, 'up');
 
     // Verify backfill: bots.last_trade_at should equal latest executed_at

@@ -33,7 +33,8 @@ export class BotStrategyExecutor {
   }
   
   private async executeMeanReversionStrategy(bot: TradingBot, latestData: any): Promise<Order | null> {
-    const { symbol } = bot.assets[0]
+    const firstAsset = bot.assets[0] as any
+    const symbol = typeof firstAsset === 'string' ? firstAsset : firstAsset?.symbol ?? String(firstAsset)
     const { parameters } = bot
     
     // Get historical data for calculating mean

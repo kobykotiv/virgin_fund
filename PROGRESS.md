@@ -1,3 +1,29 @@
+# Progress Report — 2025-08-23
+
+**Summary of Next Planned Change:**  
+Extend bot CRUD UI for strategy/asset assignment and cloning.
+
+---
+
+**Summary of completed tasks:**
+- Integrated CoinGecko and Alpaca APIs for unified, source-annotated market data.
+- Updated UI to display asset data sources in bot views.
+
+**Current status:**
+- Market data integration is architecturally complete and live.
+- Bot management flows (CRUD) are functional and extensible.
+
+**Outstanding tasks:**
+1. Extend bot CRUD UI for strategy/asset assignment and cloning.
+2. Implement watchlist CRUD and alert logic.
+3. Build trade history and performance chart views in `ExpertView`.
+4. Polish UI/UX with animation and accessibility improvements.
+
+**Blockers or questions:**
+-
+
+---
+
 # Progress Update — API Key Management & Sessions
 
 Date: 2025-08-21

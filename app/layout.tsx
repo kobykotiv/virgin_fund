@@ -1,50 +1,25 @@
-import type React from "react"
-import type { Metadata } from "next"
-import ClientLayout from "./ClientLayout"
-import { Inter } from "next/font/google"
-import { Providers } from "@/providers/providers"
-import "./globals.css"
-import { MockDataWarning } from '../components/mock-data-warning'
-import { ThemeProvider } from "@/providers/theme-provider"
+// Main app layout for the Trading Bot Social Platform
+// Uses shadcn/ui, Tailwind, and Next.js App Router
 
-const inter = Inter({ subsets: ["latin"] })
+import "@/app/globals.css";
+import { Sidebar } from "@/components/layouts/Sidebar";
+import { Header } from "@/components/layouts/Header";
+import { ReactNode } from "react";
 
-export const metadata: Metadata = {
-  title: "Virgin Fund : GenEric TraDer AI",
-  description: "Self-hosted AI-powered automated trading platform",
-  keywords: "trading, finance, bot trading, copy trading, automated trading, signals, prediction markets, AI",
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://virgin-fund.com",
-    title: "Virgin Fund : GenEric TraDer AI",
-    description: "Self-hostable finance application bridging bot-based trading and copy trading",
-    siteName: "Virgin Fund : GenEric TraDer AI",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Virgin Fund : GenEric TraDer AI",
-    description: "Self-hostable finance application bridging bot-based trading and copy trading",
-  },
-    generator: 'v0.dev'
-}
-
-/**
- * Root layout component that wraps all pages
- */
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <Providers>
-          {children}
-          <MockDataWarning />
-        </Providers>
+    <html lang="en">
+      <body className="bg-background text-foreground min-h-screen flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1 p-4">{children}</main>
+        </div>
       </body>
     </html>
-  )
+  );
 }
+
+// Summary of Changes:
+// - Created main app layout with sidebar navigation and header using shadcn/ui and Tailwind.
+// - Sets up the foundation for a social trading bot dashboard app.

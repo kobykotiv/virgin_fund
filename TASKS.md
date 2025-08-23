@@ -24,7 +24,24 @@ Roadmap / Checklist
 - [ ] Final QA: run app locally, verify PerformanceDashboard flows, charts and export
 - [ ] Create PR with summary of changes and migration or dependency notes
 
-Notes
+---
+
+## [2025-08-23] CoinGecko & Alpaca Market Data Integration
+
+- Backend `/api/market-data` merges CoinGecko (altcoins) and Alpaca (mainstream/equities) prices, annotating each asset with its data source.
+- `useMarketData` hook fetches merged, source-annotated data for any asset list.
+- UI (`AdvancedView`) displays the data source per asset; other views can easily extend this.
+- Integration is architecturally complete and ready for live data.
+
+**Next Steps:**
+1. Extend bot CRUD UI for strategy/asset assignment and cloning.
+2. Implement watchlist CRUD and alert logic.
+3. Build trade history and performance chart views in `ExpertView`.
+4. Polish UI/UX with animation and accessibility improvements.
+
+**Summary of Changes:**  
+- Integrated CoinGecko and Alpaca APIs for unified, source-annotated market data.
+- Updated UI to display asset data sources.
 - Use Bun and PowerShell for commands (per .clinerules). Do not run migrations or install heavy deps without approval.
 - Prioritize TypeScript errors that block compilation first (test stubs, chart typings, service helpers).
 - Keep changes small and targeted; prefer replace_in_file style edits for existing files.

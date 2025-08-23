@@ -1,4 +1,6 @@
 # TASKS — Backtest & Performance Dashboard
+- [x] Scaffold BotArmyGrid: responsive grid, search, loading/error/empty states, runtime-safe bot display.
+- [ ] Next: Add filter/sort controls, bulk actions, and pagination/virtualized list to BotArmyGrid.
 
 Summary
 - Goal: finish Backtest features and deliver a robust Performance & Analytics dashboard, resolve TypeScript compilation errors, and prepare the codebase for tests and persistence decisions.
@@ -44,4 +46,3 @@ Roadmap / Checklist
 - Updated UI to display asset data sources.
 - Use Bun and PowerShell for commands (per .clinerules). Do not run migrations or install heavy deps without approval.
 - Prioritize TypeScript errors that block compilation first (test stubs, chart typings, service helpers).
-- Keep changes small and targeted; prefer replace_in_file style edits for existing files.

@@ -25,7 +25,7 @@ export async function fetchCoinGeckoPrices(
   )}&vs_currencies=${encodeURIComponent(vsCurrency)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`CoinGecko API error: ${res.statusText}`);
-  return await res.json();
+  return await res.json() as CoinGeckoPriceResult;
 }
 
 /**

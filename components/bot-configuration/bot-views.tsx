@@ -13,7 +13,27 @@ import type { ComponentType } from "react";
 
 type MaybeBot = Partial<ClientBot> & Record<string, any>;
 
-export function SimpleView({ bot }: { bot: MaybeBot }) {
+export function SimpleView({
+  bot,
+  marketData,
+  marketLoading,
+  marketError,
+}: {
+  bot: MaybeBot;
+  marketData?: Record<string, { price: number; source: string }>;
+  marketLoading?: boolean;
+  marketError?: any;
+}) {
+  // Example: Compute live portfolio value if marketData is available
+  let portfolioValue = 0;
+  if (marketData && Array.isArray(bot.assets)) {
+    for (const asset of bot.assets) {
+      const holding = bot.allocation?.[asset] ?? 0;
+      const price = marketData[asset]?.price ?? 0;
+      portfolioValue += holding * price;
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -29,9 +49,19 @@ export function SimpleView({ bot }: { bot: MaybeBot }) {
             </Badge>
           </div>
           <div className="flex justify-between">
+            <span>Portfolio Value</span>
+            <span>
+              {marketLoading
+                ? "Loading..."
+                : marketError
+                ? "Error"
+                : `$${portfolioValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+            </span>
+          </div>
+          <div className="flex justify-between">
             <span>P&L</span>
             <span className={bot.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-              {bot.pnl >= 0 ? '+' : ''}{bot.pnl.toFixed(2)}%
+              {bot.pnl >= 0 ? '+' : ''}{bot.pnl?.toFixed(2) ?? "0.00"}%
             </span>
           </div>
           <div className="flex justify-between">
@@ -44,7 +74,41 @@ export function SimpleView({ bot }: { bot: MaybeBot }) {
   )
 }
 
-export function AdvancedView({ bot }: { bot: MaybeBot }) {
+export function AdvancedView({
+  bot,
+  marketData,
+  marketLoading,
+  marketError,
+}: {
+  bot: MaybeBot;
+  marketData?: Record<string, { price: number; source: string }>;
+  marketLoading?: boolean;
+  marketError?: any;
+}) {
+  // Example: Compute allocation breakdown and show live prices
+  let allocationRows: React.ReactNode[] = [];
+  let totalValue = 0;
+  if (marketData && Array.isArray(bot.assets)) {
+    for (const asset of bot.assets) {
+      const holding = bot.allocation?.[asset] ?? 0;
+      const price = marketData[asset]?.price ?? 0;
+      const value = holding * price;
+      totalValue += value;
+      allocationRows.push(
+        <div key={asset} className="flex justify-between text-sm">
+          <span>{asset}</span>
+          <span>
+            {marketLoading
+              ? "Loading..."
+              : marketError
+              ? "Error"
+              : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${marketData[asset]?.source || "?"})`}
+          </span>
+        </div>
+      );
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -58,7 +122,7 @@ export function AdvancedView({ bot }: { bot: MaybeBot }) {
               {bot.status}
             </Badge>
             <p className="text-xs text-muted-foreground">
-              Running since {new Date(bot.startDate).toLocaleDateString()}
+              Running since {bot.startDate ? new Date(bot.startDate).toLocaleDateString() : "—"}
             </p>
           </div>
         </div>
@@ -67,23 +131,35 @@ export function AdvancedView({ bot }: { bot: MaybeBot }) {
         <div className="grid grid-cols-3 gap-4">
           <MetricCard
             label="Win Rate"
-            value={`${(bot.metrics.winRate * 100).toFixed(1)}%`}
+            value={bot.metrics?.winRate !== undefined ? `${(bot.metrics.winRate * 100).toFixed(1)}%` : "—"}
             icon={Activity}
-            trend={bot.metrics.winRate > 0.5 ? 'up' : 'down'}
+            trend={bot.metrics?.winRate > 0.5 ? 'up' : 'down'}
           />
           <MetricCard
             label="Profit Factor"
-            value={bot.metrics.profitFactor.toFixed(2)}
+            value={bot.metrics?.profitFactor !== undefined ? bot.metrics.profitFactor.toFixed(2) : "—"}
             icon={DollarSign}
-            trend={bot.metrics.profitFactor > 1 ? 'up' : 'down'}
+            trend={bot.metrics?.profitFactor > 1 ? 'up' : 'down'}
           />
           <MetricCard
             label="Active Trades"
-            value={bot.metrics.activeTrades}
+            value={bot.metrics?.activeTrades ?? "—"}
             icon={LineChart}
           />
         </div>
-
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Total Value</span>
+            <span>
+              {marketLoading
+                ? "Loading..."
+                : marketError
+                ? "Error"
+                : `$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+            </span>
+          </div>
+          <div className="space-y-1">{allocationRows}</div>
+        </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Capital Usage</span>
@@ -96,7 +172,34 @@ export function AdvancedView({ bot }: { bot: MaybeBot }) {
   )
 }
 
-export function ExpertView({ bot }: { bot: MaybeBot }) {
+export function ExpertView({
+  bot,
+  marketData,
+  marketLoading,
+  marketError,
+}: {
+  bot: MaybeBot;
+  marketData?: Record<string, { price: number; source: string }>;
+  marketLoading?: boolean;
+  marketError?: any;
+}) {
+  // Example: Show live asset prices in metrics
+  let assetMetrics: React.ReactNode[] = [];
+  if (marketData && Array.isArray(bot.assets)) {
+    for (const asset of bot.assets) {
+      const price = marketData[asset]?.price ?? 0;
+      assetMetrics.push(
+        <MetricCard
+          key={asset}
+          label={`Price: ${asset}`}
+          value={marketLoading ? "Loading..." : marketError ? "Error" : `$${price.toLocaleString(undefined, { maximumFractionDigits: 4 })}`}
+          icon={DollarSign}
+          trend="neutral"
+        />
+      );
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -125,28 +228,29 @@ export function ExpertView({ bot }: { bot: MaybeBot }) {
             <div className="grid grid-cols-2 gap-4">
               <MetricCard
                 label="CAGR"
-                value={`${bot.metrics.cagr.toFixed(2)}%`}
+                value={bot.metrics?.cagr !== undefined ? `${bot.metrics.cagr.toFixed(2)}%` : "—"}
                 icon={TrendingUp}
-                trend={bot.metrics.cagr > 0 ? 'up' : 'down'}
+                trend={bot.metrics?.cagr > 0 ? 'up' : 'down'}
               />
               <MetricCard
                 label="Max Drawdown"
-                value={`${bot.metrics.maxDrawdown.toFixed(2)}%`}
+                value={bot.metrics?.maxDrawdown !== undefined ? `${bot.metrics.maxDrawdown.toFixed(2)}%` : "—"}
                 icon={TrendingDown}
                 trend="down"
               />
               <MetricCard
                 label="Sharpe Ratio"
-                value={bot.metrics.sharpeRatio.toFixed(2)}
+                value={bot.metrics?.sharpeRatio !== undefined ? bot.metrics.sharpeRatio.toFixed(2) : "—"}
                 icon={Activity}
-                trend={bot.metrics.sharpeRatio > 1 ? 'up' : 'down'}
+                trend={bot.metrics?.sharpeRatio > 1 ? 'up' : 'down'}
               />
               <MetricCard
                 label="Risk Score"
-                value={`${bot.riskScore}/100`}
+                value={bot.riskScore !== undefined ? `${bot.riskScore}/100` : "—"}
                 icon={Shield}
                 trend={bot.riskScore < 50 ? 'up' : 'down'}
               />
+              {assetMetrics}
             </div>
           </TabsContent>
 
@@ -156,15 +260,15 @@ export function ExpertView({ bot }: { bot: MaybeBot }) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex justify-between text-sm">
                   <span>Capital at Risk</span>
-                  <span>{bot.riskMetrics.capitalAtRisk}%</span>
+                  <span>{bot.riskMetrics?.capitalAtRisk ?? "—"}%</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Leverage Used</span>
-                  <span>{bot.riskMetrics.leverageUsed}x</span>
+                  <span>{bot.riskMetrics?.leverageUsed ?? "—"}x</span>
                 </div>
               </div>
               <Progress 
-                value={bot.riskMetrics.capitalAtRisk} 
+                value={bot.riskMetrics?.capitalAtRisk ?? 0} 
                 className="h-2"
               />
             </div>

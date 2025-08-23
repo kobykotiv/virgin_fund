@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { marketDataCache } from '@/services/market-data-cache';
-import { authMiddleware, AuthRequest } from '@/middleware/authMiddleware';
+import { authMiddleware } from '@/middleware/authMiddleware';
 
 export async function GET(req: NextRequest) {
   // Apply authentication
-  const authResponse = await authMiddleware(req as AuthRequest);
+  const authResponse = await authMiddleware(req);
   if (authResponse) return authResponse;
   
   try {
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   // Apply authentication
-  const authResponse = await authMiddleware(req as AuthRequest);
+  const authResponse = await authMiddleware(req);
   if (authResponse) return authResponse;
   
   try {

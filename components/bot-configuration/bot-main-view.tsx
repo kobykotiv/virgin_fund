@@ -6,7 +6,13 @@ import { BotActivationWizard } from "./activation"
 import type { Bot as ClientBot } from "@/types/bot"
 type MaybeBot = Partial<ClientBot> & Record<string, any>;
 
+import { useMarketData } from "@/hooks/useMarketData"
+
 export function BotMainView({ bot, onAction }: { bot: MaybeBot; onAction: (action: string) => void }) {
+  // Fetch live prices for bot assets
+  const assetSymbols = Array.isArray(bot.assets) ? bot.assets : [];
+  const { data: marketData, loading: marketLoading, error: marketError } = useMarketData(assetSymbols);
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -42,9 +48,9 @@ export function BotMainView({ bot, onAction }: { bot: MaybeBot; onAction: (actio
 
           <TabsContent value="overview">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <SimpleView bot={bot} />
-              <AdvancedView bot={bot} />
-              <ExpertView bot={bot} />
+              <SimpleView bot={bot} marketData={marketData} marketLoading={marketLoading} marketError={marketError} />
+              <AdvancedView bot={bot} marketData={marketData} marketLoading={marketLoading} marketError={marketError} />
+              <ExpertView bot={bot} marketData={marketData} marketLoading={marketLoading} marketError={marketError} />
             </div>
           </TabsContent>
 

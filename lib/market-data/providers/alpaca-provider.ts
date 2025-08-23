@@ -8,6 +8,29 @@ interface AlpacaConfig {
   baseUrl?: string;
 }
 
+/**
+ * Fetches latest prices for a list of symbols from Alpaca.
+ * Returns a mapping from symbol to price.
+ */
+export async function getAlpacaPrices(symbols: string[], vsCurrency: string = "usd"): Promise<Record<string, number>> {
+  // Only USD supported for now
+  if (vsCurrency.toLowerCase() !== "usd") throw new Error("Alpaca only supports USD pricing");
+  const keyId = process.env.ALPACA_API_KEY_ID || "";
+  const secretKey = process.env.ALPACA_API_SECRET_KEY || "";
+  if (!keyId || !secretKey) throw new Error("Missing Alpaca API credentials");
+  const provider = new AlpacaProvider({ keyId, secretKey, paper: true });
+  const result: Record<string, number> = {};
+  for (const symbol of symbols) {
+    try {
+      const quote = await provider.getQuote(symbol);
+      result[symbol] = quote.price;
+    } catch (e) {
+      // skip symbol on error
+    }
+  }
+  return result;
+}
+
 export class AlpacaProvider implements MarketDataProvider {
   private client: Alpaca;
   name = 'alpaca';

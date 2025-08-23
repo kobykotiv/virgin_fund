@@ -4,44 +4,35 @@ import { cookies } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
 
-export interface AuthRequest extends NextRequest {
-  user?: {
-    id: string;
-    username: string;
-    email: string;
-  };
+// Auth result type for downstream usage
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
 }
 
-export async function authMiddleware(req: AuthRequest): Promise<NextResponse | null> {
-  // Get token from cookie or authorization header
+// Next.js middleware cannot mutate the request object; return user info or error response
+export async function authMiddleware(req: NextRequest): Promise<NextResponse | { user: AuthUser } | null> {
+  // Await cookies() for compatibility with async API
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value || 
+  // Use the correct session cookie name (vf_session)
+  const token =
+    cookieStore.get('vf_session')?.value ||
     req.headers.get('Authorization')?.replace('Bearer ', '');
-  
+
   if (!token) {
     return NextResponse.json(
       { error: 'Authentication required' },
       { status: 401 }
     );
   }
-  
+
   try {
     // Verify token
-    const decoded = verify(token, JWT_SECRET) as {
-      id: string;
-      username: string;
-      email: string;
-    };
-    
-    // Add user info to request
-    req.user = {
-      id: decoded.id,
-      username: decoded.username,
-      email: decoded.email
-    };
-    
-    // Continue to the route handler
-    return null;
+    const decoded = verify(token, JWT_SECRET) as AuthUser;
+
+    // Instead of mutating req, return user info for downstream usage
+    return { user: decoded };
   } catch (error) {
     console.error('Auth error:', error);
     return NextResponse.json(

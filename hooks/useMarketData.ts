@@ -43,7 +43,8 @@ export function useMarketData<T = any>(
             return
           }
 
-          const res = await fetch(`/api/alpaca/market?symbols=${encodeURIComponent(symbols.join(","))}`)
+          // Use new merged market-data endpoint
+          const res = await fetch(`/api/market-data?symbols=${encodeURIComponent(symbols.join(","))}`)
           if (!res.ok) throw new Error(res.statusText)
           const json = await res.json()
           if (!canceled) setData(json?.data as T)

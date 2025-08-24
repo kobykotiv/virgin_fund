@@ -11,7 +11,7 @@ import useMarketData from "@/hooks/useMarketData"
 export function BotMainView({ bot, onAction }: { bot: MaybeBot; onAction: (action: string) => void }) {
   // Fetch live prices for bot assets
   const assetSymbols = Array.isArray(bot.assets) ? bot.assets : [];
-  const { data: marketData, loading: marketLoading, error: marketError } = useMarketData(assetSymbols);
+  const { data: marketData, isLoading: marketLoading, error: marketError } = useMarketData(assetSymbols) as any;
 
   return (
     <Card className="w-full">

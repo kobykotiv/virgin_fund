@@ -56,6 +56,10 @@ export interface Bot {
   performance?: BotPerformance
   allocation?: number // Capital allocation for the bot (for demo mode)
 
+  // Capital fields used across UI and creation flows
+  capital?: number
+  allocatedCapital?: number
+
   // UI/analytics: current profit and loss for this bot (optional, transient)
   currentPnL?: number
 
@@ -69,6 +73,8 @@ export interface Bot {
   gridConfig?: GridConfig
   dcaConfig?: DCAConfig
   basketConfig?: BasketConfig
+  // Arbitrary metadata bag used by various UI flows
+  metadata?: Record<string, any>
 }
 
 // Summary of Changes:

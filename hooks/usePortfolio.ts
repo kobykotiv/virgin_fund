@@ -72,7 +72,7 @@ function toSummary(portfolio: any): PortfolioSummary {
   const valueUsd = portfolio.currentValue ?? portfolio.baseValue ?? portfolio.value ?? 0;
 
   const dailyChangePct = portfolio.dailyChangePct ?? portfolio.daily_change_pct ?? 0;
-  const pnlUsd = portfolio.pnlUsd ?? portfolio.pnl ?? (valueUsd - (portfolio.costBasisRaw ?? 0)) ?? 0;
+  const pnlUsd = portfolio.pnlUsd ?? portfolio.pnl ?? (valueUsd - (portfolio.costBasisRaw ?? 0));
 
   return {
     id: portfolio.id,

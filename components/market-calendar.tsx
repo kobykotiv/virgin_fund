@@ -18,27 +18,28 @@ export function MarketCalendar({ days = 30 }: { days?: number }) {
   const startDate = new Date().toISOString().split('T')[0];
   const endDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   
-  const { data, loading, error } = useMarketData<CalendarDay[]>('calendar', {
-    start: startDate,
-    end: endDate,
-  });
+  const res = useMarketData();
+  const dataRaw = res.data as unknown;
+  const data = Array.isArray(dataRaw) ? (dataRaw as CalendarDay[]) : null;
+  const isLoading = (res as any).isLoading ?? (res as any).loading ?? false;
+  const error = res.error as Error | null;
   
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <span>Market Calendar</span>
-          {loading && <Skeleton className="h-4 w-[100px]" />}
+          {isLoading && <Skeleton className="h-4 w-[100px]" />}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {error && (
+  {error && (
           <div className="p-4 border border-red-300 bg-red-50 text-red-800 rounded-md">
             Failed to load market calendar: {error.message}
           </div>
         )}
         
-        {loading && !data && (
+  {isLoading && !data && (
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex justify-between">
@@ -49,7 +50,7 @@ export function MarketCalendar({ days = 30 }: { days?: number }) {
           </div>
         )}
         
-        {data && (
+  {data && (
           <div className="space-y-2">
             {data.map((day) => (
               <div key={day.date} className="flex justify-between items-center py-2 border-b">

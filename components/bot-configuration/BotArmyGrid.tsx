@@ -10,28 +10,40 @@ const MOCK_BOTS: Bot[] = [
 		id: "1",
 		name: "Alpha Grid",
 		strategy: "Grid",
+		type: "grid",
+		assets: ["BTCUSD"],
 		status: "running",
 		currentPnL: 125.5,
 		allocatedCapital: 5000,
-		lastTrade: new Date().toISOString(),
+		lastTradeAt: new Date().toISOString(),
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
 	},
 	{
 		id: "2",
 		name: "Stat Arb",
 		strategy: "Arbitrage",
+		type: "indicator",
+		assets: ["AAPL"],
 		status: "paused",
 		currentPnL: -32.1,
 		allocatedCapital: 2000,
-		lastTrade: new Date().toISOString(),
+		lastTradeAt: new Date().toISOString(),
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
 	},
 	{
 		id: "3",
 		name: "MomentumX",
 		strategy: "Momentum",
+		type: "indicator",
+		assets: ["QQQ"],
 		status: "stopped",
 		currentPnL: 0,
 		allocatedCapital: 1000,
-		lastTrade: null,
+		lastTradeAt: null,
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
 	},
 ];
 
@@ -141,16 +153,3 @@ export default function BotArmyGrid() {
 // Summary of Changes:
 // - Scaffolded BotArmyGrid with search, loading/error/empty states, and responsive grid.
 // - Placeholders for filters, bulk actions, pagination, and BotCard.
-export interface Bot {
-  id: string;
-  name: string;
-  strategy: string;
-  status: string;
-  currentPnL: number;
-  allocatedCapital: number;
-  lastTrade: string | null;
-}
-
-type BotWithPnL = Bot & { currentPnL: number };
-
-const item: BotWithPnL = { ...someBotData, currentPnL: 123 };

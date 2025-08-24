@@ -27,7 +27,7 @@ type ServerBot = {
 import { SimpleBotConfig, ComplexBotConfig } from "@/components/bot-configuration"
 import { useState } from "react"
 import { BotForm } from "@/components/bot-form"
-import { useBots, useCreateBot, useUpdateBot, useDeleteBot } from "@/hooks/useBots"
+import useBots, { useCreateBot, useUpdateBot, useDeleteBot } from "@/hooks/useBots"
 import { SimpleBotOverview, AdvancedBotOverview, ExpertBotOverview } from "./bot-configuration/bot-overview"
 import { BotMainView } from "./bot-configuration/bot-main-view"
 import useServerRealtime from "@/hooks/useServerRealtime"

@@ -80,7 +80,7 @@ function useUser() {
   return user;
 }
 
-import { useBots, useCreateBot, useUpdateBot, useDeleteBot } from "@/hooks/useBots";
+import useBots, { useCreateBot, useUpdateBot, useDeleteBot } from "@/hooks/useBots";
 
 /* ------------------------------- UI ----------------------------------- */
 
@@ -179,7 +179,7 @@ const BotsView: React.FC<{ userId: string | null }> = ({ userId }) => {
     if (!userId) return;
     if (editing) {
       // useUpdateBot expects { id, ...fields } per hooks/useBots.ts
-      updateBot.mutate({ id: editing.id, ...form });
+  updateBot.mutate({ id: editing.id, patch: form });
     } else {
       const payload = {
         name: form.name,
@@ -197,7 +197,7 @@ const BotsView: React.FC<{ userId: string | null }> = ({ userId }) => {
     const toggleStatus = (bot: any) => {
     const newStatus = bot.status === "Running" ? "Paused" : "Running";
     // updateBot expects { id, ...fields }
-    updateBot.mutate({ id: bot.id, status: newStatus });
+  updateBot.mutate({ id: bot.id, patch: { status: newStatus } });
   };
 
     const remove = (id: any) => {

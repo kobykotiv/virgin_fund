@@ -1,4 +1,5 @@
 // Dashboard landing page for Trading Bot Social Platform
+"use-client"
 
 export default function DashboardPage() {
   return (

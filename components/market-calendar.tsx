@@ -1,6 +1,6 @@
 "use client"
 
-import { useMarketData } from '@/hooks/useMarketData';
+import useMarketData from '@/hooks/useMarketData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';

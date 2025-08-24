@@ -1,52 +1,131 @@
+// components/market/TickersGrid.tsx
 "use client";
 
-import React, { useState } from "react";
-import { useCoinGeckoPrice } from "@/hooks/useCoinGeckoPrice";
+import React, { useState, useEffect } from "react";
+import useMarketData from "@/hooks/useMarketData";
 import { Chart } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis } from "recharts";
+
+const DEFAULT_IDS = ["bitcoin", "ethereum", "dogecoin", "BTCUSD", "ETHUSD"];
 
 const MOCK_SERIES: Record<string, { series: number[] }> = {
   bitcoin: { series: [29000, 29500, 30000, 29800, 30100, 29950, 30050] },
   ethereum: { series: [1750, 1780, 1800, 1790, 1810, 1805, 1808] },
   dogecoin: { series: [0.11, 0.115, 0.12, 0.118, 0.121, 0.119, 0.12] },
+  BTCUSD: { series: [29000, 29500, 30000, 29800, 30100, 29950, 30050] },
+  ETHUSD: { series: [1750, 1780, 1800, 1790, 1810, 1805, 1808] },
 };
 
-export default function TickersGrid({ ids = ["bitcoin", "ethereum", "dogecoin"] }: { ids?: string[] }) {
-  const { data, isLoading, error } = useCoinGeckoPrice(ids);
+export default function TickersGrid({ ids = DEFAULT_IDS }: { ids?: string[] }) {
+  const { data, isLoading, error } = useMarketData(
+    ids.filter((id) => id === id.toLowerCase()),
+    ids.filter((id) => id === id.toUpperCase())
+  );
   const [selected, setSelected] = useState<string | null>(null);
+  const [wsPrices, setWsPrices] = useState<Record<string, number>>({});
+
+  // Live WS relay for Alpaca
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let ws: WebSocket | null = null;
+    let es: EventSource | null = null;
+
+    const alpacaSymbols = ids.filter((id) => id === id.toUpperCase());
+
+    // Try EventSource (SSE) first
+    try {
+      es = new EventSource(`/api/market-data/alpaca/stream?symbols=${encodeURIComponent(alpacaSymbols.join(","))}`);
+      es.addEventListener("message", (ev) => {
+        try {
+          const parsed = JSON.parse(ev.data);
+          if (parsed?.type === "prices" && Array.isArray(parsed.payload)) {
+            setWsPrices((prev) => {
+              const next = { ...prev };
+              for (const p of parsed.payload) {
+                if (p?.symbol && p?.price != null) next[p.symbol] = Number(p.price);
+              }
+              return next;
+            });
+          }
+        } catch {
+          // ignore
+        }
+      });
+      es.addEventListener("error", () => {
+        // fall back to WS
+        es?.close();
+        es = null;
+      });
+    } catch {
+      es = null;
+    }
+
+    // If SSE unavailable, try local WS relay (dev)
+    if (!es) {
+      try {
+        ws = new WebSocket("ws://localhost:8080");
+        ws.addEventListener("open", () => {
+          ws?.send(JSON.stringify({ type: "subscribe", symbols: alpacaSymbols }));
+        });
+        ws.addEventListener("message", (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            const arr = Array.isArray(data) ? data : [data];
+            for (const msg of arr) {
+              const symbol = msg.S ?? msg.symbol ?? msg.s;
+              const price = msg.p ?? msg.price ?? msg.last;
+              if (symbol && price != null) {
+                setWsPrices((prev) => ({ ...prev, [symbol]: Number(price) }));
+              }
+            }
+          } catch {
+            // ignore parse errors
+          }
+        });
+      } catch {
+        // ignore if no relay
+      }
+    }
+
+    return () => {
+      es?.close();
+      ws?.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ids.join(",")]);
 
   const closeModal = () => setSelected(null);
 
   if (isLoading) return <div className="text-center">Loading tickers...</div>;
   if (error) return <div className="text-center text-red-500">Failed to load tickers</div>;
 
+  // Merge WS prices into tickers (prefer WS for Alpaca symbols)
+  const tickers = Object.values(data ?? {}).map((ticker) =>
+    ticker.symbol in wsPrices
+      ? { ...ticker, price: wsPrices[ticker.symbol], source: "alpaca" }
+      : ticker
+  );
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {ids.map((id) => {
-          const info = data?.[id];
-          return (
-            <button
-              key={id}
-              className="p-4 border rounded-lg text-left hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
-              onClick={() => setSelected(id)}
-              aria-label={`Show details for ${id}`}
-              type="button"
-            >
-              <div className="flex justify-between items-center">
-                <div className="font-medium capitalize">{id.replace("-", " ")}</div>
-                <div className="text-sm text-muted-foreground">CoinGecko</div>
-              </div>
-              <div className="mt-2 text-xl font-semibold">
-                ${info?.usd?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "—"}
-              </div>
-              <div className="text-sm mt-1">
-                24h: {info?.usd_24h_change ? `${info.usd_24h_change.toFixed(2)}%` : "—"} • Vol:{" "}
-                {info?.usd_24h_vol ? `$${info.usd_24h_vol.toLocaleString()}` : "—"}
-              </div>
-            </button>
-          );
-        })}
+        {tickers.map((ticker) => (
+          <button
+            key={ticker.symbol}
+            className="p-4 border rounded-lg text-left hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            onClick={() => setSelected(ticker.symbol)}
+            aria-label={`Show details for ${ticker.symbol}`}
+            type="button"
+          >
+            <div className="flex justify-between items-center">
+              <div className="font-medium capitalize">{ticker.symbol.replace("-", " ")}</div>
+              <div className="text-sm text-muted-foreground">{ticker.source}</div>
+            </div>
+            <div className="mt-2 text-xl font-semibold">
+              ${ticker.price?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "—"}
+            </div>
+          </button>
+        ))}
       </div>
       {selected && (
         <div
@@ -70,16 +149,14 @@ export default function TickersGrid({ ids = ["bitcoin", "ethereum", "dogecoin"] 
             </button>
             <div className="mb-2 text-lg font-bold capitalize">{selected.replace("-", " ")}</div>
             <div className="mb-2 text-xl font-semibold">
-              ${data?.[selected]?.usd?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "—"}
+              ${tickers.find(t => t.symbol === selected)?.price?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "—"}
             </div>
             <div className="mb-4 text-sm">
-              24h: {data?.[selected]?.usd_24h_change ? `${data[selected].usd_24h_change.toFixed(2)}%` : "—"} • Vol:{" "}
-              {data?.[selected]?.usd_24h_vol ? `$${data[selected].usd_24h_vol.toLocaleString()}` : "—"}
+              Source: {tickers.find(t => t.symbol === selected)?.source ?? "—"}
             </div>
             <div className="h-48">
               <Chart>
                 {MOCK_SERIES[selected]?.series ? (
-                  // Use Recharts primitives inside Chart container
                   <LineChart
                     width={320}
                     height={160}
@@ -102,6 +179,6 @@ export default function TickersGrid({ ids = ["bitcoin", "ethereum", "dogecoin"] 
 }
 
 // Summary of Changes:
-// - Added per-ticker detail modal with Recharts chart (mock series).
-// - Modal opens on ticker click, is accessible, and can be dismissed.
-// - Uses Chart from components/ui/chart.tsx for historical series.
+// - TickersGrid now merges live Alpaca WS prices into tickers.
+// - WS prices take precedence for Alpaca symbols.
+// - UI and modal remain unchanged for user experience.

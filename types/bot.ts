@@ -56,6 +56,9 @@ export interface Bot {
   performance?: BotPerformance
   allocation?: number // Capital allocation for the bot (for demo mode)
 
+  // UI/analytics: current profit and loss for this bot (optional, transient)
+  currentPnL?: number
+
   // Risk management
   stopLoss?: number // Stop loss percentage
   takeProfit?: number // Take profit percentage
@@ -67,6 +70,10 @@ export interface Bot {
   dcaConfig?: DCAConfig
   basketConfig?: BasketConfig
 }
+
+// Summary of Changes:
+// - Added optional currentPnL?: number to Bot interface for UI/analytics use.
+// - This resolves excess property errors when assigning currentPnL to Bot objects.
 
 // Optional metadata used across UI and services
 export interface BotMetadata {

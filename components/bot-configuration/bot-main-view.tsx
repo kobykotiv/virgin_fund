@@ -6,7 +6,7 @@ import { BotActivationWizard } from "./activation"
 import type { Bot as ClientBot } from "@/types/bot"
 type MaybeBot = Partial<ClientBot> & Record<string, any>;
 
-import { useMarketData } from "@/hooks/useMarketData"
+import useMarketData from "@/hooks/useMarketData"
 
 export function BotMainView({ bot, onAction }: { bot: MaybeBot; onAction: (action: string) => void }) {
   // Fetch live prices for bot assets

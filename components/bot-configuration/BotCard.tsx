@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Bot } from "types/bot";
+import type { Bot } from "@/types/api";
 import { useStartBot, usePauseBot, useStopBot, useUpdateBot } from "hooks/useBots";
 
 export function BotCard({ bot }: { bot: Bot }) {

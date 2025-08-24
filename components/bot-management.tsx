@@ -26,8 +26,9 @@ type ServerBot = {
 
 import { SimpleBotConfig, ComplexBotConfig } from "@/components/bot-configuration"
 import { useState } from "react"
-import { BotForm } from "@/components/bot-form"
+import BotForm from "@/components/bot-configuration/BotForm"
 import useBots, { useCreateBot, useUpdateBot, useDeleteBot } from "@/hooks/useBots"
+import type { CreateBotPayload, UpdateBotPayload } from '@/types/api'
 import { SimpleBotOverview, AdvancedBotOverview, ExpertBotOverview } from "./bot-configuration/bot-overview"
 import { BotMainView } from "./bot-configuration/bot-main-view"
 import useServerRealtime from "@/hooks/useServerRealtime"
@@ -181,10 +182,11 @@ export function BotManagement() {
           variant: "destructive",
         })
       } else if (action === "start" || action === "stop") {
-        await updateBot.mutateAsync({
-          id: botId,
-          ...(action === "start" ? { status: "active" } : { status: "paused" }),
-        } as any);
+          const updatePayload: UpdateBotPayload = {
+            id: botId,
+            ...(action === "start" ? { status: "active" } : { status: "paused" }),
+          }
+          await updateBot.mutateAsync(updatePayload);
         toast({
           title: action === "start" ? "Bot started" : "Bot paused",
           description: `Bot ${action === "start" ? "is now running" : "has been paused"}.`,
@@ -223,89 +225,35 @@ export function BotManagement() {
       </div>
 
       <BotGrid bots={bots ?? []} onAction={handleAction} />
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div
-            key="create-modal"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.98, y: 8 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.98, y: 8 }}
-              transition={{ duration: 0.18 }}
-              className="bg-background rounded-lg w-full max-w-3xl shadow-lg"
-            >
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Create Bot</h2>
-                  <button className="text-muted-foreground" onClick={() => setShowCreateModal(false)} aria-label="Close">
-                    ✕
-                  </button>
-                </div>
-                <BotForm
-                  initialBot={null}
-                  onCancel={() => setShowCreateModal(false)}
-                  onSubmit={async (botData) => {
-                    try {
-                      await createBot.mutateAsync(botData as any)
-                      toast({ title: "Bot created", description: "Your bot was created successfully." })
-                      setShowCreateModal(false)
-                      try { router.refresh() } catch (e) {}
-                    } catch (e) {
-                      toast({ title: "Failed to create bot", description: e instanceof Error ? e.message : "Failed to create bot", variant: "destructive" })
-                    }
-                  }}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
 
-        {selectedBotForEdit && (
-          <motion.div
-            key="edit-modal"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.98, y: 8 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.98, y: 8 }}
-              transition={{ duration: 0.18 }}
-              className="bg-background rounded-lg w-full max-w-3xl shadow-lg"
-            >
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Edit Bot</h2>
-                  <button className="text-muted-foreground" onClick={() => setSelectedBotForEdit(null)} aria-label="Close">
-                    ✕
-                  </button>
-                </div>
-                <BotForm
-                  initialBot={mapServerBot(selectedBotForEdit)}
-                  onCancel={() => setSelectedBotForEdit(null)}
-                  onSubmit={async (botData) => {
-                    try {
-                      await updateBot.mutateAsync({ id: selectedBotForEdit!.id, ...botData } as any)
-                      toast({ title: "Bot updated", description: "Your bot changes were saved." })
-                      setSelectedBotForEdit(null)
-                      try { router.refresh() } catch (e) {}
-                    } catch (e) {
-                      toast({ title: "Failed to update bot", description: e instanceof Error ? e.message : "Failed to update bot", variant: "destructive" })
-                    }
-                  }}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Dialog-based create/edit bot forms (shadcn Dialog) */}
+      <BotForm
+        open={showCreateModal}
+        onOpenChange={(open) => setShowCreateModal(open)}
+        initial={null}
+        mode="create"
+  onSubmit={async (payload) => await createBot.mutateAsync(payload as CreateBotPayload)}
+        onSuccess={() => {
+          toast({ title: "Bot created", description: "Your bot was created successfully." })
+          try { router.refresh() } catch (e) {}
+        }}
+      />
+
+      <BotForm
+        open={Boolean(selectedBotForEdit)}
+        onOpenChange={(open) => { if (!open) setSelectedBotForEdit(null) }}
+        initial={selectedBotForEdit ? mapServerBot(selectedBotForEdit) : undefined}
+        mode="edit"
+        onSubmit={async (payload) => {
+          if (!selectedBotForEdit) throw new Error("No bot selected for edit")
+          const upd: UpdateBotPayload = { id: selectedBotForEdit.id, ...payload }
+          return await updateBot.mutateAsync(upd)
+        }}
+        onSuccess={() => {
+          toast({ title: "Bot updated", description: "Your bot changes were saved." })
+          try { router.refresh() } catch (e) {}
+        }}
+      />
     </div>
   );
 }

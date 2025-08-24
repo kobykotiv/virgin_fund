@@ -1,64 +1,78 @@
-import { NextResponse } from 'next/server'
-import { MarketDataService } from '@/services/market-data'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextResponse, NextRequest } from "next/server";
+import { getAlpacaCredentialsForUser, getUserFromRequest } from "@/lib/alpacaServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-// Get orders
-export async function GET(request: Request) {
+const DEFAULT_BASE = process.env.ALPACA_BASE_URL || "https://paper-api.alpaca.markets";
+
+export async function POST(req: NextRequest) {
+  const userId = await getUserFromRequest(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const creds = await getAlpacaCredentialsForUser(userId);
+  if (!creds) return NextResponse.json({ error: "No Alpaca credentials" }, { status: 404 });
+
+  let body: any;
   try {
-    const session = await getServerSession()
-    
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    
-    const { apiKey, secretKey, isPaper } = session.user as any
-    
-    if (!apiKey || !secretKey) {
-      return NextResponse.json({ error: 'API credentials not configured' }, { status: 400 })
-    }
-    
-    const url = new URL(request.url)
-    const status = url.searchParams.get('status') || 'open'
-    
-    const marketDataService = new MarketDataService(apiKey, secretKey, isPaper)
-    const orders = await marketDataService.getOrders(status)
-    
-    return NextResponse.json(orders)
-  } catch (error: any) {
-    console.error('Error fetching orders:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    body = await req.json();
+  } catch (e) {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-}
 
-// Place order
-export async function POST(request: Request) {
+  // minimal validation
+  const { symbol, qty, side, type = "market", time_in_force = "gtc", limit_price, client_order_id } = body;
+  if (!symbol || !qty || !side) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+
+  const base = (creds.meta?.base_url as string) ?? DEFAULT_BASE;
   try {
-    const session = await getServerSession()
-    
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const res = await fetch(`${base}/v2/orders`, {
+      method: "POST",
+      headers: {
+        "APCA-API-KEY-ID": creds.key,
+        "APCA-API-SECRET-KEY": creds.secret,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        symbol,
+        qty,
+        side,
+        type,
+        time_in_force,
+        limit_price,
+        client_order_id,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      return NextResponse.json({ error: "Alpaca order failed", details: json }, { status: res.status });
     }
-    
-    const { apiKey, secretKey, isPaper } = session.user as any
-    
-    if (!apiKey || !secretKey) {
-      return NextResponse.json({ error: 'API credentials not configured' }, { status: 400 })
+
+    // Persist order logs to DB (best-effort; do not fail the request if persistence fails)
+    try {
+      const supabase = getSupabaseAdmin();
+      // Insert a minimal order record. Adjust column names to match your schema if necessary.
+      await supabase.from("order_records").insert([
+        {
+          alpaca_order_id: (json as any)?.id ?? (json as any)?.client_order_id ?? null,
+          user_id: userId,
+          type: (json as any)?.type ?? type,
+          side: (json as any)?.side ?? side,
+          qty: (json as any)?.qty ?? (json as any)?.filled_qty ?? qty,
+          filled_qty: (json as any)?.filled_qty ?? 0,
+          price: (json as any)?.filled_avg_price ?? (json as any)?.price ?? null,
+          status: (json as any)?.status ?? "unknown",
+          meta: json,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    } catch (e) {
+      // non-fatal: log and continue
+      // eslint-disable-next-line no-console
+      console.warn("Failed to persist Alpaca order record", e);
     }
-    
-    const orderParams = await request.json()
-    
-    // Validate required fields
-    if (!orderParams.symbol || !orderParams.qty || !orderParams.side || !orderParams.type || !orderParams.time_in_force) {
-      return NextResponse.json({ error: 'Missing required order parameters' }, { status: 400 })
-    }
-    
-    const marketDataService = new MarketDataService(apiKey, secretKey, isPaper)
-    const order = await marketDataService.placeOrder(orderParams)
-    
-    return NextResponse.json(order)
-  } catch (error: any) {
-    console.error('Error placing order:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+
+    return NextResponse.json(json);
+  } catch (err) {
+    return NextResponse.json({ error: "Proxy failed", details: String(err) }, { status: 502 });
   }
 }

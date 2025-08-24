@@ -3,52 +3,67 @@
 import React, { useMemo, useState } from "react";
 import BotCard from "./BotCard";
 import useBots from "@/hooks/useBots";
-import { Bot } from "@/types/bot";
+import type { Bot } from "@/types/api";
+import BotForm from "@/components/bot-configuration/BotForm";
+import { useCreateBot } from "@/hooks/useBots";
+import type { CreateBotPayload } from '@/types/api'
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 const MOCK_BOTS: Bot[] = [
 	{
 		id: "1",
 		name: "Alpha Grid",
-		strategy: "Grid",
-		type: "grid",
+	type: "grid" as any,
+	strategy: "grid",
 		assets: ["BTCUSD"],
-		status: "running",
+		status: "active",
 		currentPnL: 125.5,
-		allocatedCapital: 5000,
+		allocation: 5000,
 		lastTradeAt: new Date().toISOString(),
 		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	currency: 'USD',
+	ownerId: 'system',
 	},
 	{
 		id: "2",
 		name: "Stat Arb",
-		strategy: "Arbitrage",
-		type: "indicator",
+	type: "indicator" as any,
+	strategy: "indicator",
 		assets: ["AAPL"],
 		status: "paused",
 		currentPnL: -32.1,
-		allocatedCapital: 2000,
+		allocation: 2000,
 		lastTradeAt: new Date().toISOString(),
 		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	currency: 'USD',
+	ownerId: 'system',
 	},
 	{
 		id: "3",
 		name: "MomentumX",
-		strategy: "Momentum",
-		type: "indicator",
+	type: "indicator" as any,
+	strategy: "indicator",
 		assets: ["QQQ"],
 		status: "stopped",
 		currentPnL: 0,
-		allocatedCapital: 1000,
-		lastTradeAt: null,
+		allocation: 1000,
+		lastTradeAt: undefined as any,
 		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	currency: 'USD',
+	ownerId: 'system',
 	},
 ];
 
 export default function BotArmyGrid() {
 	const { data: bots, isLoading, error } = useBots();
+	const create = useCreateBot();
+	const { toast } = useToast();
+	const router = useRouter();
+	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [search, setSearch] = useState("");
 	const [statusFilter, setStatusFilter] = useState<"all" | "running" | "paused" | "stopped">("all");
 	const [page, setPage] = useState(1);
@@ -75,6 +90,7 @@ export default function BotArmyGrid() {
 	const pageItems = filteredBots.slice((page - 1) * perPage, page * perPage);
 
 	return (
+		<>
 		<div className="w-full">
 			<div className="flex flex-wrap gap-2 mb-4 items-center">
 				<input
@@ -98,7 +114,7 @@ export default function BotArmyGrid() {
 				<div className="ml-auto flex items-center gap-2">
 					<button className="btn btn-sm">Bulk Start</button>
 					<button className="btn btn-sm">Bulk Stop</button>
-					<button className="btn btn-outline btn-sm">Create Bot</button>
+					<button className="btn btn-outline btn-sm" onClick={() => setShowCreateModal(true)}>Create Bot</button>
 				</div>
 			</div>
 
@@ -115,7 +131,7 @@ export default function BotArmyGrid() {
 			{!isLoading && !error && filteredBots.length === 0 && (
 				<div className="text-center py-12 text-muted-foreground">
 					<div className="mb-4">No bots found.</div>
-					<button className="btn">Create your first bot</button>
+					<button className="btn" onClick={() => setShowCreateModal(true)}>Create your first bot</button>
 				</div>
 			)}
 
@@ -146,7 +162,30 @@ export default function BotArmyGrid() {
 					</button>
 				</div>
 			</div>
-		</div>
+	</div>
+
+	{/* Dialog-based BotForm for creating a new bot */}
+	<BotForm
+			open={showCreateModal}
+			onOpenChange={(open) => setShowCreateModal(open)}
+			initial={null}
+			mode="create"
+			onSubmit={async (bot) => {
+				const payload: CreateBotPayload = {
+					name: bot.name ?? 'New Bot',
+					strategy: bot.strategy ?? 'default',
+					capital: bot.capital ?? 10000,
+					parameters: bot,
+				}
+				await create.mutateAsync(payload)
+			}}
+			onSuccess={() => {
+				toast({ title: 'Bot created' });
+				try { router.refresh() } catch (e) {}
+				setShowCreateModal(false);
+			}}
+		/>
+		</>
 	);
 }
 

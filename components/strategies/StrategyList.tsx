@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import StrategyCard from "@/components/strategies/StrategyCard"
 import { useStrategies, useCreateStrategy, useUpdateStrategy, useDeleteStrategy } from "@/hooks/useStrategies"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
@@ -31,6 +32,7 @@ export default function StrategyList({ onImport }: { onImport?: (s: StrategyShap
   const update = useUpdateStrategy()
   const remove = useDeleteStrategy()
   const { toast } = useToast()
+  const router = useRouter()
 
   // Local loading flags (avoid relying on mutation .isLoading typing inconsistencies)
   const [creatingLoading, setCreatingLoading] = useState(false)
@@ -105,9 +107,14 @@ export default function StrategyList({ onImport }: { onImport?: (s: StrategyShap
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Strategies</h3>
         <div>
-          <Button className="text-sm px-3 py-1" onClick={() => setCreating((c) => !c)}>
-            {creating ? "Cancel" : "Create Strategy"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button className="text-sm px-3 py-1" onClick={() => setCreating((c) => !c)}>
+              {creating ? "Cancel" : "Create Strategy"}
+            </Button>
+            <Button className="text-sm px-3 py-1" onClick={() => router.push("/strategies/dca/new")}>
+              New DCA
+            </Button>
+          </div>
         </div>
       </div>
 

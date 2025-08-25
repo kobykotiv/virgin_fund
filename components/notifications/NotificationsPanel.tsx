@@ -5,7 +5,8 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { Button } from '@/components/ui/button'
 
 export default function NotificationsPanel() {
-  const { items } = useNotifications()
+  const query = useNotifications()
+  const items = query.data ?? []
 
   return (
     <div className="p-3 bg-card rounded shadow max-h-80 overflow-auto">
@@ -14,8 +15,8 @@ export default function NotificationsPanel() {
         <Button variant="ghost" size="sm" onClick={() => { /* TODO: mark all read */ }}>Mark all read</Button>
       </div>
       <ul className="space-y-2 text-sm">
-        {items.length === 0 && <li className="text-muted-foreground">No notifications</li>}
-        {items.map((n: any) => (
+  {items.length === 0 && <li className="text-muted-foreground">No notifications</li>}
+  {items.map((n: any) => (
           <li key={n.id} className="p-2 border rounded">
             <div className="font-medium">{n.title ?? 'Alert'}</div>
             <div className="text-xs text-muted-foreground">{n.message}</div>

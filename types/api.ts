@@ -2,17 +2,17 @@ export interface Bot {
   id: string;
   name: string;
   // allow a few known strategy strings but be permissive to avoid frequent breakage
-  strategy: 'dca' | 'grid' | 'indicator' | 'portfolio' | 'basket' | string;
+  strategy?: 'dca' | 'grid' | 'indicator' | 'portfolio' | 'basket' | string;
   // primary traded assets (symbols)
   assets: string[];
   // portfolio allocation or default allocation per-asset (decimal e.g., 0.25)
-  allocation: number;
-  currency: 'USD' | 'EUR' | 'BTC' | 'ETH' | string;
+  allocation?: number;
+  currency?: 'USD' | 'EUR' | 'BTC' | 'ETH' | string;
   // permissive status so UI can map different casings/labels
   status: 'running' | 'paused' | 'stopped' | string;
   scheduleCron?: string;
   createdAt: string;
-  ownerId: string;
+  ownerId?: string;
   initialBalance?: number;
   // optional convenience fields used in various UI components
   capital?: number;
@@ -53,12 +53,19 @@ export interface UpdateBotPayload extends Partial<Bot> {
 }
 
 export interface Trade {
-  id: string;
+  id?: string;
   botId?: string;
   symbol: string;
-  qty: number;
+  // qty/quantity may be present under different names in various modules
+  qty?: number;
+  // some places use `quantity` instead of `qty`
+  quantity?: number;
   price: number;
-  side: 'buy' | 'sell';
+  // optionally store computed value (qty * price)
+  value?: number;
+  side?: 'buy' | 'sell';
+  // legacy places use `action` (buy/sell) — accept both
+  action?: 'buy' | 'sell';
   // both timestamp and datetime are accepted in various places
   timestamp?: string;
   datetime?: string | number;
@@ -66,9 +73,20 @@ export interface Trade {
 }
 
 export interface BacktestResult {
-  equity: Array<{ ts: number; value: number }>;
+  equity?: Array<{ ts: number; value: number }>;
   trades: Trade[];
-  metrics: { sharpe: number; maxDrawdown: number; winRate: number };
+  // metric block is optional; older code also exposes top-level ROI/winRate/maxDrawdown
+  metrics?: { sharpe: number; maxDrawdown: number; winRate: number };
+  initialCapital?: number;
+  // finalCapital is used in parts of the codebase
+  finalCapital?: number;
+  // ROI convenience metric used by older code
+  roi?: number;
+  // older code used `equityCurve` as an alias for equity
+  equityCurve?: Array<{ date?: string; ts?: number; value: number }>;
+  // convenience top-level metrics
+  winRate?: number;
+  maxDrawdown?: number;
 }
 
 // Additional types used across the codebase
@@ -104,6 +122,17 @@ export interface PerformanceSummary {
   totalTrades: number
   winRate: number
   currentValue?: number
+  // convenience absolute P&L used in demo data and UI
+  totalPnL?: number
+  // timestamp when the summary was last computed
+  lastUpdated?: string
+}
+
+// allow optional description on Bot where used by some components
+declare module './api' {
+  interface Bot {
+    description?: string
+  }
 }
 
 export type BotStatus = 'running' | 'paused' | 'stopped' | string

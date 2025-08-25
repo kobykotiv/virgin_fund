@@ -15,7 +15,7 @@ export const NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: Home, requiresAuth: true },
   { id: 'signals', label: 'Signals', href: '/signals', icon: Zap, requiresAuth: true },
   { id: 'pipelines', label: 'Pipelines', href: '/bots/pipeline', icon: Repeat, requiresAuth: true },
-  { id: 'bots', label: 'Bots', href: '/bots', icon: Robot, requiresAuth: true },
+  { id: 'bots', label: 'Bots', href: '/bots', icon: Bot, requiresAuth: true },
   {
     id: 'analysis',
     label: 'Analysis',

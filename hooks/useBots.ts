@@ -30,8 +30,11 @@ export function useCreateBot() {
 export function useUpdateBot() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Bot> }) => {
-      const res = await fetch(`/api/bots/${id}`, { method: 'PATCH', body: JSON.stringify(patch), headers: { 'Content-Type': 'application/json' } })
+    // Accept both { id, patch } and UpdateBotPayload-like objects with id + fields
+    mutationFn: async (payload: any) => {
+      const { id, patch, ...rest } = payload
+      const body = patch ?? rest
+      const res = await fetch(`/api/bots/${id}`, { method: 'PATCH', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } })
       return res.json()
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bots'] }),

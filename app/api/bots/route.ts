@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Bot } from '@/types/api'
+import { randomName } from '@/lib/utils/names'
 
 // Keep a single, small in-memory list for dev/demo. Replace with database logic in prod.
 const botsStore: Bot[] = []
-
-function randomName() {
-  const adjectives = ['silent', 'red', 'quick', 'clever', 'brave', 'wise', 'neon', 'iron', 'lucky', 'calm', 'bold', 'silver', 'golden']
-  const nouns = ['falcon', 'otter', 'tiger', 'raccoon', 'puppy', 'whale', 'rocket', 'vector', 'quasar', 'monolith', 'harbor', 'bridge', 'forge']
-  const a = adjectives[Math.floor(Math.random() * adjectives.length)]
-  const b = nouns[Math.floor(Math.random() * nouns.length)]
-  const num = Math.floor(Math.random() * 9999)
-  return `${a}-${b}-${num}`
-}
 
 export async function GET() {
   return NextResponse.json({ data: botsStore })

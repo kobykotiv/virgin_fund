@@ -27,6 +27,7 @@ type ServerBot = {
 import { SimpleBotConfig, ComplexBotConfig } from "@/components/bot-configuration"
 import { useState } from "react"
 import BotForm from "@/components/bot-configuration/BotForm"
+import BotWizard from "@/components/bot-configuration/BotWizard"
 import useBots, { useCreateBot, useUpdateBot, useDeleteBot } from "@/hooks/useBots"
 import type { CreateBotPayload, UpdateBotPayload } from '@/types/api'
 import { SimpleBotOverview, AdvancedBotOverview, ExpertBotOverview } from "./bot-configuration/bot-overview"
@@ -227,13 +228,11 @@ export function BotManagement() {
       <BotGrid bots={bots ?? []} onAction={handleAction} />
 
       {/* Dialog-based create/edit bot forms (shadcn Dialog) */}
-      <BotForm
+      <BotWizard
         open={showCreateModal}
         onOpenChange={(open) => setShowCreateModal(open)}
-        initial={null}
-        mode="create"
-  onSubmit={async (payload) => await createBot.mutateAsync(payload as CreateBotPayload)}
-        onSuccess={() => {
+        onCreate={async (payload) => {
+          await createBot.mutateAsync(payload as CreateBotPayload)
           toast({ title: "Bot created", description: "Your bot was created successfully." })
           try { router.refresh() } catch (e) {}
         }}

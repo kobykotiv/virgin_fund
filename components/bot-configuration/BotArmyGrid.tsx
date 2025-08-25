@@ -9,6 +9,7 @@ import { useCreateBot } from "@/hooks/useBots";
 import type { CreateBotPayload } from '@/types/api'
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import { randomName } from '@/lib/utils/names'
 
 const MOCK_BOTS: Bot[] = [
 	{
@@ -172,7 +173,7 @@ export default function BotArmyGrid() {
 			mode="create"
 			onSubmit={async (bot) => {
 				const payload: CreateBotPayload = {
-					name: bot.name ?? 'New Bot',
+					name: bot.name ?? randomName(),
 					strategy: bot.strategy ?? 'default',
 					capital: bot.capital ?? 10000,
 					parameters: bot,

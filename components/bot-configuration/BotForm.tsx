@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateBot, useUpdateBot } from "@/hooks/useBots";
 import type { Bot } from "@/types/bot";
 import type { CreateBotPayload, UpdateBotPayload } from '@/types/api'
+import { randomName } from '@/lib/utils/names'
 
 interface BotFormProps {
   open: boolean;
@@ -79,6 +80,13 @@ export default function BotForm({ open, onOpenChange, initial, mode = "create", 
     }
   }, []);
 
+  // initialize random name when opening create modal
+  useEffect(() => {
+    if (open && mode === 'create' && !initial?.name) {
+      setName(randomName())
+    }
+  }, [open, mode, initial])
+
   function saveCacheToStorage() {
     try {
       const obj: Record<string, { ts: number; data: any[] }> = {};
@@ -114,7 +122,7 @@ export default function BotForm({ open, onOpenChange, initial, mode = "create", 
   }
 
   function resetForm() {
-    setName(initial?.name ?? "");
+  setName(initial?.name ?? (mode === 'create' ? randomName() : ""));
     setStrategy(initial?.strategy ?? "");
     setAssets((initial?.assets ?? []).join(","));
     setCapital(
@@ -153,8 +161,8 @@ export default function BotForm({ open, onOpenChange, initial, mode = "create", 
 
     // Fallback: internal mutations (keeps backward compatibility)
     if (mode === "edit" && initial?.id) {
-      const upd: UpdateBotPayload = { id: initial.id, ...payload } as UpdateBotPayload;
-      const res = await updateBot.mutateAsync(upd);
+      const patch = payload as Partial<any>;
+      const res = await updateBot.mutateAsync({ id: initial.id, patch });
       onSuccess?.(res);
     } else {
       const createPayload: CreateBotPayload = payload as CreateBotPayload;

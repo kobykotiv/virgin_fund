@@ -6,6 +6,7 @@ import { toast } from '@/components/ui/use-toast'
 import { useCreateBot } from '@/hooks/useBots'
 import type { CreateBotPayload } from '@/types/api'
 import { useRouter } from 'next/navigation'
+import { randomName } from '@/lib/utils/names'
 
 const TEMPLATES = [
 	{
@@ -101,7 +102,7 @@ export default function CreateBotPage() {
 						mode="create"
 												onSubmit={async (bot) => {
 														const payload: CreateBotPayload = {
-															name: bot.name ?? selectedTemplate?.name ?? 'New Bot',
+															name: bot.name ?? selectedTemplate?.name ?? randomName(),
 															strategy: bot.strategy ?? selectedTemplate?.prefill?.strategy ?? 'default',
 															capital: bot.capital ?? 10000,
 															parameters: bot,

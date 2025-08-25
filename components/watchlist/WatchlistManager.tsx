@@ -35,6 +35,14 @@ export default function WatchlistManager() {
     setAlertPriceByList(prev => ({ ...prev, [listId]: '' }));
   };
 
+  const [checkRunning, setCheckRunning] = useState(false)
+  const runChecksNow = async () => {
+    setCheckRunning(true)
+    try {
+      await fetch('/api/alerts/check', { method: 'POST' })
+    } finally { setCheckRunning(false) }
+  }
+
   return (
     <div className="p-4 bg-card rounded">
       <h3 className="text-lg font-semibold">Watchlists</h3>

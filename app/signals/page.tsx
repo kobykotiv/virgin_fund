@@ -1,9 +1,8 @@
+"use client"
+
 import dynamic from "next/dynamic"
 import SignalBuilder from "@/components/signals/SignalBuilder"
 import { useSignals } from "@/hooks/useSignals"
-import { useState } from "react"
-
-export const metadata = { title: "Signals" }
 
 export default function SignalsPage() {
   const { list, create, update, remove } = useSignals()

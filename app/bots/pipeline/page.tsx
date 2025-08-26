@@ -4,8 +4,6 @@ import { useState } from "react"
 import SignalBuilder from "@/components/signals/SignalBuilder"
 import PipelineEditor from "@/components/bots/PipelineEditor"
 
-export const metadata = { title: "Pipelines" }
-
 export default function PipelinePage() {
   const [signals, setSignals] = useState<any[]>([])
   const [pipelines, setPipelines] = useState<any[]>([])

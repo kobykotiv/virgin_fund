@@ -4,9 +4,10 @@ CREATE TABLE IF NOT EXISTS signals (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
   name text NOT NULL,
-  description text DEFAULT '',
-  config jsonb DEFAULT '{}'::jsonb,
-  is_public boolean DEFAULT false,
+  ticker text DEFAULT '',
+  condition text DEFAULT '',
+  params jsonb DEFAULT '{}'::jsonb,
+  enabled boolean DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE

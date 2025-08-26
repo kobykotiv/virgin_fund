@@ -1,102 +1,23 @@
 import { beforeAll, describe, it, expect, vi } from "vitest";
-import * as keysService from "../../services/keys-service";
+import { makeSupabaseAdminMock } from "../helpers/mockSupabase"
+
+// Create the mock before importing the service under test so vitest can hoist it
+vi.mock("../../lib/supabaseAdmin", () => {
+  const client = makeSupabaseAdminMock()
+  return { default: client, supabaseAdmin: client, getSupabaseAdmin: () => client }
+})
+
+let keysService: typeof import("../../services/keys-service");
 
 // Provide deterministic encryption key for tests (32 bytes base64)
 beforeAll(() => {
   process.env.KEY_ENCRYPTION_KEY = Buffer.from(new Array(32).fill(2)).toString("base64");
-});
-
-/**
- * Mock supabaseAdmin with a tiny in-memory adapter that implements the
- * chainable API used by services/keys-service.ts for the `api_keys` table.
- */
-vi.mock("../../lib/supabaseAdmin", () => {
-  const store = new Map<string, any>();
-
-  function makeBuilder(table: string) {
-    const context: any = { table, op: null, payload: null, filters: [] };
-
-    const builder: any = {
-      insert(rows: any[]) {
-        context.op = "insert";
-        context.payload = rows[0];
-        return builder;
-      },
-      select(_cols?: any) {
-        context.op = context.op || "select";
-        return builder;
-      },
-      update(changes: any) {
-        context.op = "update";
-        context.payload = changes;
-        return builder;
-      },
-      eq(col: string, val: any) {
-        context.filters.push({ col, val });
-        return builder;
-      },
-      order() {
-        return builder;
-      },
-      limit() {
-        return builder;
-      },
-      maybeSingle() {
-        return builder.single(true);
-      },
-      single(isMaybe?: boolean) {
-        return new Promise((res) => {
-          // handle insert
-          if (context.op === "insert") {
-            const id = Math.random().toString(36).slice(2, 10);
-            const row = { id, ...context.payload, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-            store.set(id, row);
-            res({ data: row, error: null });
-            return;
-          }
-
-          // handle select with filters
-          const all = Array.from(store.values());
-          let results = all;
-          for (const f of context.filters) {
-            results = results.filter((r) => {
-              // support nested JSON comparisons for convenience
-              return r[f.col] === f.val;
-            });
-          }
-
-          if (context.op === "update") {
-            // update matching rows by filters (expect eq id)
-            const matched = results;
-            if (matched.length === 0) {
-              res({ data: null, error: { message: "Not found" } });
-              return;
-            }
-            const updatedRow = { ...matched[0], ...context.payload, updated_at: new Date().toISOString() };
-            store.set(updatedRow.id, updatedRow);
-            res({ data: updatedRow, error: null });
-            return;
-          }
-
-          // default select/single
-          if (results.length === 0) return res({ data: null, error: { message: "Not found" } });
-          res({ data: results[0], error: null });
-        });
-      },
-      // Support .maybeSingle() pattern with .select().limit(1).maybeSingle()
-      // and support chained .select(...).eq(...).order(...)
-    };
-
-    return builder;
-  }
-
-  return {
-    default: {
-      from(table: string) {
-        return makeBuilder(table);
-      },
-    },
-  };
+  // Some crypto helpers expect SESSION_ENCRYPTION_KEY
+  process.env.SESSION_ENCRYPTION_KEY = process.env.KEY_ENCRYPTION_KEY
+  // import service after mocks
+  return import("../../services/keys-service").then((m) => {
+    keysService = m as typeof keysService
+  })
 });
 
 describe("services/keys-service (integration-style, in-memory supabase mock)", () => {

@@ -6,9 +6,16 @@ export default {
   // default; this file now only provides a safe fallback for tools that load
   // the TypeScript config directly.
   test: {
-    include: ['__tests__/components/**/*.test.{ts,tsx}'],
+    include: ['__tests__/components/**/*.test.{ts,tsx}', '__tests__/api/**/*.test.{ts,tsx}'],
     globals: true,
     environment: 'jsdom',
     threads: false,
+  },
+  // Ensure vite resolves the same `@/` path mapping used by tsconfig/next
+  resolve: {
+    alias: [
+      { find: '@/', replacement: `${__dirname.replace(/\\/g, '/')}/` },
+      { find: '@', replacement: `${__dirname.replace(/\\/g, '/')}` },
+    ],
   },
 }

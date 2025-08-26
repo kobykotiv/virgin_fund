@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import SignalBuilder from "@/components/signals/SignalBuilder"
-import PipelineEditor from "@/components/bots/PipelineEditor"
+import PipelineEditor, { Pipeline as PipelineType } from "@/components/bots/PipelineEditor"
+import { usePipelines } from "@/hooks/usePipelines"
 
 export default function PipelinePage() {
   const [signals, setSignals] = useState<any[]>([])
-  const [pipelines, setPipelines] = useState<any[]>([])
+  const { list, create, update, remove } = usePipelines()
+  const pipelines = (list.data || []) as PipelineType[]
 
   return (
     <main className="container mx-auto py-8">
@@ -25,12 +27,12 @@ export default function PipelinePage() {
         </div>
 
         <div className="lg:col-span-2">
-          <PipelineEditor availableSignals={signals} onSave={(p) => setPipelines((x) => [p, ...x])} />
+          <PipelineEditor availableSignals={signals} onSave={(p: PipelineType) => create.mutate({ name: p.name, signalIds: p.signalIds })} />
           <div className="mt-4">
             <h2 className="font-semibold mb-2">My pipelines</h2>
             <div className="space-y-2">
               {pipelines.map(p => (
-                <div key={p.id} className="border p-2 rounded">{p.name} • {p.signalIds.length} signals</div>
+                <div key={p.id} className="border p-2 rounded">{p.name} • {p.signal_ids?.length ?? p.signalIds?.length} signals</div>
               ))}
             </div>
           </div>

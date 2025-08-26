@@ -1,0 +1,73 @@
+name: Deploy Supabase Functions
+name: Deploy Supabase Functions
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  deploy-functions:
+    name: Deploy deliver-notifications function
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'primer' }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 'latest'
+
+      - name: TypeScript check for function
+        run: |
+          echo "Running TypeScript check for deliver-notifications function"
+          npx tsc --noEmit supabase/functions/deliver-notifications/index.ts
+
+      - name: Configure supabase access
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase login --access-token "$SUPABASE_ACCESS_TOKEN"
+
+      - name: Apply function secrets
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EMAIL_PROVIDER_API_KEY: ${{ secrets.EMAIL_PROVIDER_API_KEY }}
+        run: |
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY" > ./supabase/functions/deliver-notifications/.env.ci
+          echo "EMAIL_PROVIDER_API_KEY=$EMAIL_PROVIDER_API_KEY" >> ./supabase/functions/deliver-notifications/.env.ci
+          supabase secrets set --env-file ./supabase/functions/deliver-notifications/.env.ci --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy deliver-notifications function
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy deliver-notifications --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Smoke test deployed function
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          URL="https://${{ secrets.SUPABASE_PROJECT_REF }}.functions.supabase.co/deliver-notifications"
+          echo "Invoking $URL"
+          HTTP_STATUS=$(curl -s -o /tmp/ci_fn_resp.txt -w "%{http_code}" -X POST "$URL" -H "Authorization: Bearer $SERVICE_ROLE_KEY" -H "Content-Type: application/json" -d '{"smoke":true}')
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "Smoke test success: $HTTP_STATUS"
+            cat /tmp/ci_fn_resp.txt
+          else
+            echo "Smoke test failed: $HTTP_STATUS"
+            cat /tmp/ci_fn_resp.txt
+            exit 1
+          fi

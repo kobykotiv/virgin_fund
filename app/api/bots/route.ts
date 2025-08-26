@@ -1,34 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type { Bot } from '@/types/api'
-import { randomName } from '@/lib/utils/names'
+import { parse } from 'cookie'
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { verifySessionToken } from '@/lib/session'
 
-// Keep a single, small in-memory list for dev/demo. Replace with database logic in prod.
-const botsStore: Bot[] = []
+export async function GET(req: NextRequest) {
+  try {
+    const cookies = parse(req.headers.get('cookie') || '')
+    const session = await verifySessionToken(cookies['vf_session'] || '')
+    if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const userId = (session as any).user_id
+    const supabase = getSupabaseAdmin()
 
-export async function GET() {
-  return NextResponse.json({ data: botsStore })
+    const { data, error } = await supabase.from('bots').select('*').eq('owner_id', userId).order('created_at', { ascending: false })
+    if (error) {
+      console.error('bots GET db error', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ data: data || [] })
+  } catch (err) {
+    console.error('bots GET error', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const name = body.name || randomName()
-    const bot: Bot = {
-      id: body.id || 'bot_' + Math.random().toString(36).slice(2),
-      name,
+    const cookies = parse(req.headers.get('cookie') || '')
+    const session = await verifySessionToken(cookies['vf_session'] || '')
+    if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const userId = (session as any).user_id
+    const supabase = getSupabaseAdmin()
+
+    const body = (await req.json().catch(() => ({} as any))) as any
+    const payload = {
+      owner_id: userId,
+      name: body.name || null,
       strategy: body.strategy || 'dca',
       assets: body.assets || [],
-      allocation: typeof body.allocation === 'number' ? body.allocation : Number(body.allocation || 0),
+      allocation: body.allocation ?? null,
       currency: body.currency || 'USD',
       status: body.status || 'paused',
-      scheduleCron: body.scheduleCron,
-      createdAt: new Date().toISOString(),
-      ownerId: body.ownerId || 'dev',
-      initialBalance: typeof body.initialBalance === 'number' ? body.initialBalance : undefined,
+      schedule_cron: body.scheduleCron || null,
+      initial_balance: body.initialBalance ?? null,
     }
-    botsStore.push(bot)
-    return NextResponse.json({ data: bot }, { status: 201 })
-  } catch (e) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+
+    const { data: inserted, error } = await supabase.from('bots').insert([payload]).select().limit(1).maybeSingle()
+    if (error) {
+      console.error('bots insert failed', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ data: inserted })
+  } catch (err) {
+    console.error('bots POST error', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

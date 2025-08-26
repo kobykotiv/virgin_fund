@@ -32,7 +32,7 @@ export default function PipelinePage() {
             <h2 className="font-semibold mb-2">My pipelines</h2>
             <div className="space-y-2">
               {pipelines.map(p => (
-                <div key={p.id} className="border p-2 rounded">{p.name} • {p.signal_ids?.length ?? p.signalIds?.length} signals</div>
+                <div key={p.id} className="border p-2 rounded">{p.name} • {p.signalIds?.length ?? 0} signals</div>
               ))}
             </div>
           </div>

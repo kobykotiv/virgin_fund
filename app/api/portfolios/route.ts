@@ -18,47 +18,42 @@ function parseCookie(header: string | null) {
 
 export async function GET(req: NextRequest) {
   try {
-    const cookieHeader = req.headers.get('cookie')
-    const cookies = parseCookie(cookieHeader)
-    const sessionToken = cookies['vf_session'] || cookies['SESSION'] || null
-    const session = await verifySessionToken(sessionToken as string)
+    const cookies = parseCookie(req.headers.get('cookie'))
+    const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
     const userId = (session as any).user_id
     const supabase = getSupabaseAdmin()
 
-    const { data, error } = await supabase.from('strategies').select('*').or(`user_id.eq.${userId},is_public.eq.true`).order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('portfolios').select('*').eq('owner_id', userId).order('created_at', { ascending: false })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ strategies: data || [] })
+    return NextResponse.json({ portfolios: data ?? [] })
   } catch (err) {
-    console.error('strategies GET error', err)
+    console.error('portfolios GET error', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieHeader = req.headers.get('cookie')
-    const cookies = parseCookie(cookieHeader)
-    const sessionToken = cookies['vf_session'] || cookies['SESSION'] || null
-    const session = await verifySessionToken(sessionToken as string)
+    const cookies = parseCookie(req.headers.get('cookie'))
+    const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
     const userId = (session as any).user_id
     const supabase = getSupabaseAdmin()
 
     const body = (await req.json().catch(() => ({} as any))) as any
-    const name = typeof body.name === 'string' && body.name.trim() ? body.name.trim() : 'Unnamed Strategy'
-    const description = typeof body.description === 'string' ? body.description.trim() : ''
-    const parameters = body.parameters ?? {}
-    const is_public = Boolean(body.is_public ?? false)
+    const payload = {
+      owner_id: userId,
+      name: body.name || 'New Portfolio',
+      currency: body.currency || 'USD',
+      balance: body.balance ?? 0,
+    }
 
-    const payload = { user_id: userId, name, description, parameters, is_public }
-    const { data: inserted, error } = await supabase.from('strategies').insert([payload]).select().limit(1).maybeSingle()
+    const { data: inserted, error } = await supabase.from('portfolios').insert([payload]).select().limit(1).maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ strategy: inserted })
+    return NextResponse.json({ portfolio: inserted })
   } catch (err) {
-    console.error('strategies POST error', err)
+    console.error('portfolios POST error', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

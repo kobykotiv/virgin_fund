@@ -4,7 +4,7 @@
 
 import React, { useState } from "react";
 import type { Bot } from "@/types/api";
-import { useStartBot, usePauseBot, useStopBot, useUpdateBot } from "hooks/useBots";
+import { useStartBot, usePauseBot, useStopBot, useUpdateBot } from "@/hooks/useBots";
 
 export function BotCard({ bot }: { bot: Bot }) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);

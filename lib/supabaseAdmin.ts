@@ -19,3 +19,6 @@ export const supabaseAdmin: SupabaseClient = createClient(SUPABASE_URL, SUPABASE
 export function getSupabaseAdmin(): SupabaseClient {
   return supabaseAdmin;
 }
+
+// Default export for tests that mock the module using `default`.
+export default supabaseAdmin;

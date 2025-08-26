@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { useWatchlists, useCreateWatchlist, useCreateAlert } from "@/hooks/useWatchlists";
+import { useWatchlists, useCreateWatchlist, useCreateAlert, useDeleteWatchlist } from "@/hooks/useWatchlists";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 export default function WatchlistManager() {
   const { data: lists, isLoading } = useWatchlists();
   const create = useCreateWatchlist();
   const createAlert = useCreateAlert();
+  const del = useDeleteWatchlist();
   const [name, setName] = useState("");
   const [symbolByList, setSymbolByList] = useState<Record<string, string>>({});
   const [alertPriceByList, setAlertPriceByList] = useState<Record<string, string>>({});
@@ -71,6 +73,25 @@ export default function WatchlistManager() {
                 </div>
                 <div className="mt-3 text-sm">
                   {Array.isArray(l.items) && l.items.slice(0,8).map((s:string)=> <span key={s} className="inline-block mr-2 px-2 py-1 bg-muted/10 rounded">{s}</span>)}
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <AlertDialog open={false} onOpenChange={() => {}}>
+                    <AlertDialogTrigger asChild>
+                      <button className="btn btn-sm btn-ghost text-red-600">Delete</button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete watchlist?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will remove the watchlist and its symbol list. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => del.mutateAsync(l.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </li>
             ))}

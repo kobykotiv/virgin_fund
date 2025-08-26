@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { useAlerts, useCreateAlert } from "@/hooks/useWatchlists";
+import { useAlerts, useCreateAlert, useUpdateAlert, useDeleteAlert } from "@/hooks/useWatchlists";
 
 export default function AlertsPanel() {
   const { data: alerts, isLoading } = useAlerts();
   const create = useCreateAlert();
+  const update = useUpdateAlert();
+  const remove = useDeleteAlert();
   const [payload, setPayload] = useState("");
 
   const handleCreate = async () => {
@@ -28,7 +30,16 @@ export default function AlertsPanel() {
         {isLoading ? <div>Loading...</div> : (
           <ul>
             {alerts?.map((a: any) => (
-              <li key={a.id} className="py-2 border-b">{a.method} - {JSON.stringify(a.condition)}</li>
+              <li key={a.id} className="py-2 border-b flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{a.name ?? a.id}</div>
+                  <div className="text-sm text-muted">{a.method} - {JSON.stringify(a.condition)}</div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn btn-ghost btn-sm" onClick={() => update.mutateAsync({ id: a.id, changes: { is_active: !a.is_active } })}>{a.is_active ? 'Disable' : 'Enable'}</button>
+                  <button className="btn btn-ghost btn-sm text-red-600" onClick={() => remove.mutateAsync(a.id)}>Delete</button>
+                </div>
+              </li>
             ))}
           </ul>
         )}

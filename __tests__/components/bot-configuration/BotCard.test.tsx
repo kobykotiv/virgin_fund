@@ -1,12 +1,14 @@
 // __tests__/components/bot-configuration/BotCard.test.tsx
 
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent, act } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import renderWithProviders from "../../helpers/renderWithProviders";
 import { vi } from "vitest";
 import { BotCard } from "../../../components/bot-configuration/BotCard";
 
-// Mock hooks
-vi.mock("hooks/useBots", () => ({
+// Mock hooks (match the aliased import used in components)
+vi.mock("@/hooks/useBots", () => ({
   useStartBot: () => ({ mutateAsync: vi.fn().mockResolvedValue({}) }),
   usePauseBot: () => ({ mutateAsync: vi.fn().mockResolvedValue({}) }),
   useStopBot: () => ({ mutateAsync: vi.fn().mockResolvedValue({}) }),
@@ -33,7 +35,8 @@ const bot = {
 
 describe("BotCard", () => {
   it("renders bot info and actions", () => {
-    render(<BotCard bot={bot} />);
+  // Use helper that wraps with QueryClientProvider
+  renderWithProviders(<BotCard bot={bot} />);
     expect(screen.getByText("Test Bot")).toBeInTheDocument();
     expect(screen.getByText("grid")).toBeInTheDocument();
     expect(screen.getByText(/\+123\.45/)).toBeInTheDocument();
@@ -46,11 +49,13 @@ describe("BotCard", () => {
   });
 
   it("calls start, pause, stop, and clone actions", async () => {
-    render(<BotCard bot={bot} />);
-    fireEvent.click(screen.getByText("Start"));
-    fireEvent.click(screen.getByText("Pause"));
-    fireEvent.click(screen.getByText("Stop"));
-    fireEvent.click(screen.getByText("Clone"));
+  renderWithProviders(<BotCard bot={bot} />);
+    act(() => {
+      fireEvent.click(screen.getByText("Start"));
+      fireEvent.click(screen.getByText("Pause"));
+      fireEvent.click(screen.getByText("Stop"));
+      fireEvent.click(screen.getByText("Clone"));
+    });
     // No assertion on mutation calls since hooks are mocked, but ensures no crash
   });
 });

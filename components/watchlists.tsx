@@ -9,6 +9,7 @@ import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, X, RefreshCw, PlusCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useWatchlists, useWatchlist, useCreateWatchlist, useAddSymbol } from '@/hooks/useWatchlists';
 
 interface Watchlist {
   id: string;
@@ -24,51 +25,19 @@ interface SymbolData {
 }
 
 export function Watchlists() {
-  const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
-  const [activeWatchlist, setActiveWatchlist] = useState<Watchlist | null>(null);
+  const { data: watchlists = [], isLoading, error } = useWatchlists();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const { data: activeWatchlist } = useWatchlist(activeId ?? undefined);
   const [symbolsData, setSymbolsData] = useState<Record<string, SymbolData>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [newWatchlistName, setNewWatchlistName] = useState('');
   const [newSymbol, setNewSymbol] = useState('');
+  const createWatchlistMutation = useCreateWatchlist();
+  const addSymbolMutation = useAddSymbol(activeId ?? undefined);
 
   useEffect(() => {
-    fetchWatchlists();
-  }, []);
-
-  useEffect(() => {
-    if (activeWatchlist) {
-      fetchSymbolsData(activeWatchlist.symbols);
-    }
-  }, [activeWatchlist]);
-
-  async function fetchWatchlists() {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/market/watchlists');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch watchlists');
-      }
-      
-      setWatchlists(result.data);
-      if (result.data.length > 0) {
-        setActiveWatchlist(result.data[0]);
-      }
-    } catch (err) {
-      console.error('Error fetching watchlists:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }
+    if (!activeId && watchlists.length > 0) setActiveId(watchlists[0].id);
+  }, [watchlists, activeId]);
 
   async function fetchSymbolsData(symbols: string[]) {
     try {
@@ -90,64 +59,36 @@ export function Watchlists() {
       console.error('Error fetching symbols data:', err);
     }
   }
-
   async function createWatchlist() {
     if (!newWatchlistName) return;
-    
     try {
-      const response = await fetch('/api/market/watchlists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newWatchlistName,
-          symbols: []
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create watchlist');
-      }
-      
-      // Refresh watchlists
-      fetchWatchlists();
+      await createWatchlistMutation.mutateAsync({ name: newWatchlistName, items: [] });
       setIsCreating(false);
       setNewWatchlistName('');
-    } catch (err) {
-      console.error('Error creating watchlist:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+    } catch (e) {
+      console.error(e);
     }
   }
 
-  function addSymbol() {
-    if (!newSymbol || !activeWatchlist) return;
-    
-    // In a real app, you would call the API to add a symbol to the watchlist
-    // For this mockup, we'll just update the local state
-    const symbol = newSymbol.toUpperCase();
-    if (activeWatchlist.symbols.includes(symbol)) {
-      setNewSymbol('');
-      return;
+  useEffect(() => {
+    if (activeWatchlist?.symbols && activeWatchlist.symbols.length > 0) {
+      fetchSymbolsData(activeWatchlist.symbols);
+    } else {
+      setSymbolsData({});
     }
-    
-    const updatedWatchlist = {
-      ...activeWatchlist,
-      symbols: [...activeWatchlist.symbols, symbol]
-    };
-    
-    setActiveWatchlist(updatedWatchlist);
-    setWatchlists(watchlists.map(w => 
-      w.id === updatedWatchlist.id ? updatedWatchlist : w
-    ));
-    
-    // Fetch data for the new symbol
-    fetchSymbolsData([symbol]);
-    setNewSymbol('');
+  }, [activeWatchlist?.symbols]);
+
+  async function addSymbol() {
+    if (!newSymbol || !activeWatchlist) return;
+    const symbol = newSymbol.toUpperCase();
+    try {
+      await addSymbolMutation.mutateAsync(symbol);
+      // fetch price for the symbol locally
+      fetchSymbolsData([symbol]);
+      setNewSymbol('');
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   return (
@@ -162,11 +103,11 @@ export function Watchlists() {
         </div>
       </CardHeader>
       <CardContent>
-        {loading && watchlists.length === 0 ? (
+    {isLoading && watchlists.length === 0 ? (
           <Skeleton className="h-[300px] w-full" />
         ) : error ? (
           <div className="p-4 border border-red-300 bg-red-50 text-red-800 rounded-md">
-            Error: {error}
+      Error: {error instanceof Error ? error.message : String(error)}
           </div>
         ) : (
           <>
@@ -187,14 +128,14 @@ export function Watchlists() {
             
             <div className="flex flex-wrap gap-2 mb-4">
               {watchlists.map((watchlist) => (
-                <Badge
-                  key={watchlist.id}
-                  className={`${badgeVariants({ variant: activeWatchlist?.id === watchlist.id ? "default" : "outline" })} cursor-pointer`}
-                  onClick={() => setActiveWatchlist(watchlist)}
-                >
-                  {watchlist.name}
-                </Badge>
-              ))}
+                  <Badge
+                    key={watchlist.id}
+                    className={`${badgeVariants({ variant: activeWatchlist?.id === watchlist.id ? "default" : "outline" })} cursor-pointer`}
+                    onClick={() => setActiveId(watchlist.id)}
+                  >
+                    {watchlist.name}
+                  </Badge>
+                ))}
             </div>
             
             {activeWatchlist && (

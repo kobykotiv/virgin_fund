@@ -40,18 +40,25 @@ async function deleteSignal(id: string) {
 export function useSignals() {
   const qc = useQueryClient()
 
-  const list = useQuery(['signals'], fetchSignals, { staleTime: 1000 * 60 })
-
-  const create = useMutation(createSignal, {
-    onSuccess: (data) => qc.setQueryData(['signals'], (old: any) => [data, ...(old || [])]),
+  const list = useQuery({
+    queryKey: ['signals'],
+    queryFn: fetchSignals,
+    staleTime: 1000 * 60
   })
 
-  const update = useMutation(({ id, payload }: { id: string; payload: Partial<Signal> }) => updateSignal(id, payload), {
-    onSuccess: (data) => qc.setQueryData(['signals'], (old: any) => (old || []).map((s: any) => (s.id === data.id ? data : s))),
+  const create = useMutation({
+    mutationFn: createSignal,
+    onSuccess: (data) => qc.setQueryData(['signals'], (old: Signal[]) => [data, ...(old || [])]),
   })
 
-  const remove = useMutation((id: string) => deleteSignal(id), {
-    onSuccess: (_data, id) => qc.setQueryData(['signals'], (old: any) => (old || []).filter((s: any) => s.id !== id)),
+  const update = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<Signal> }) => updateSignal(id, payload),
+    onSuccess: (data) => qc.setQueryData(['signals'], (old: Signal[]) => (old || []).map((s: Signal) => (s.id === data.id ? data : s))),
+  })
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteSignal(id),
+    onSuccess: (_data, id) => qc.setQueryData(['signals'], (old: Signal[]) => (old || []).filter((s: Signal) => s.id !== id)),
   })
 
   return { list, create, update, remove }

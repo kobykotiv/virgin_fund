@@ -12,7 +12,7 @@ export type Signal = {
   condition: string
 }
 
-export default function SignalBuilder({ onCreate }: { onCreate?: (s: Signal) => void }) {
+export default function SignalBuilder({ onCreate }: { onCreate?: (s: Omit<Signal, 'id'>) => void }) {
   const [name, setName] = useState("")
   const [ticker, setTicker] = useState("")
   const [condition, setCondition] = useState("")
@@ -20,12 +20,12 @@ export default function SignalBuilder({ onCreate }: { onCreate?: (s: Signal) => 
 
   function handleCreate() {
     if (!name || !ticker) return
-    const s: Signal = { id: crypto.randomUUID(), name, ticker: ticker.toUpperCase(), condition }
+    const signalData = { name, ticker: ticker.toUpperCase(), condition }
     // Try server create if hook available, otherwise call callback
     if (create && typeof create.mutate === 'function') {
-      create.mutate({ name: s.name, ticker: s.ticker, condition: s.condition })
+      create.mutate(signalData)
     } else {
-      onCreate?.(s)
+      onCreate?.(signalData)
     }
     setName("")
     setTicker("")

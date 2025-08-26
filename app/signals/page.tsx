@@ -8,12 +8,17 @@ export const metadata = { title: "Signals" }
 export default function SignalsPage() {
   const { list, create, update, remove } = useSignals()
   const signals = list.data || []
+  
+  const handleCreateSignal = (s: { name: string; ticker: string; condition: string }) => {
+    create.mutate({ name: s.name, ticker: s.ticker, condition: s.condition })
+  }
+  
   return (
     <main className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4">Signals</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="col-span-1">
-          <SignalBuilder onCreate={(s) => create.mutate({ name: s.name, ticker: s.ticker, condition: s.condition })} />
+          <SignalBuilder onCreate={handleCreateSignal} />
         </div>
         <div className="col-span-2">
           <h2 className="text-lg font-semibold mb-2">My signals</h2>
@@ -21,7 +26,7 @@ export default function SignalsPage() {
             {signals.length === 0 ? (
               <div className="text-sm text-muted-foreground">No signals yet</div>
             ) : (
-              signals.map((s: any) => (
+              signals.map((s) => (
                 <div key={s.id} className="border p-2 rounded mb-2 flex justify-between items-center">
                   <div>
                     <div className="font-medium">{s.name}</div>

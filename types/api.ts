@@ -128,6 +128,18 @@ export interface PerformanceSummary {
   lastUpdated?: string
 }
 
+export interface Signal {
+  id: string
+  userId?: string
+  name: string
+  ticker: string
+  condition: string
+  params?: Record<string, any>
+  enabled?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
 // allow optional description on Bot where used by some components
 declare module './api' {
   interface Bot {

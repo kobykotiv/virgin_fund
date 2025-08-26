@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useSignals } from "@/hooks/useSignals"
 
 export type Signal = {
   id: string
@@ -15,11 +16,17 @@ export default function SignalBuilder({ onCreate }: { onCreate?: (s: Signal) => 
   const [name, setName] = useState("")
   const [ticker, setTicker] = useState("")
   const [condition, setCondition] = useState("")
+  const { create } = useSignals()
 
   function handleCreate() {
     if (!name || !ticker) return
     const s: Signal = { id: crypto.randomUUID(), name, ticker: ticker.toUpperCase(), condition }
-    onCreate?.(s)
+    // Try server create if hook available, otherwise call callback
+    if (create && typeof create.mutate === 'function') {
+      create.mutate({ name: s.name, ticker: s.ticker, condition: s.condition })
+    } else {
+      onCreate?.(s)
+    }
     setName("")
     setTicker("")
     setCondition("")

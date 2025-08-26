@@ -123,32 +123,24 @@ export async function fetchBots(): Promise<Bot[]> {
     })
   }
 
-  // In a real app, this would be a fetch call to your API
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(mockBots), 500)
-  })
+  const res = await fetch('/api/bots')
+  if (!res.ok) throw new Error('Failed to fetch bots')
+  const payload = await res.json()
+  return payload?.data || []
 }
 
 export async function createBot(botData: Partial<Bot>): Promise<Bot> {
-  // In a real app, this would be a POST request to your API
-  return new Promise((resolve) => {
+  if (isDemoMode()) {
     const now = new Date().toISOString()
-
-    const newBot: Bot = {
+    return {
       id: Math.random().toString(36).substring(2, 9),
-      name: botData.name || "New Bot",
-      type: botData.type || "indicator",
-      status: "paused",
-      assets: botData.assets || ["AAPL"],
+      name: botData.name || 'New Bot',
+      type: botData.type || 'indicator',
+      status: 'paused',
+      assets: botData.assets || ['AAPL'],
       createdAt: now,
       updatedAt: now,
-      performance: {
-        totalPnL: 0,
-        pnlPercentage: 0,
-        totalTrades: 0,
-        winRate: 0,
-        lastUpdated: now,
-      },
+      performance: { totalPnL: 0, pnlPercentage: 0, totalTrades: 0, winRate: 0, lastUpdated: now },
       stopLoss: botData.stopLoss,
       takeProfit: botData.takeProfit,
       maxDrawdown: botData.maxDrawdown,
@@ -156,74 +148,54 @@ export async function createBot(botData: Partial<Bot>): Promise<Bot> {
       gridConfig: botData.gridConfig,
       dcaConfig: botData.dcaConfig,
       basketConfig: botData.basketConfig,
-    }
+      allocation: 500000,
+    } as Bot
+  }
 
-    // If in demo mode, add allocation
-    if (isDemoMode()) {
-      newBot.allocation = 500000 // Default $500K allocation for new bots in demo mode
-    }
-
-    setTimeout(() => resolve(newBot), 500)
+  const res = await fetch('/api/bots', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(botData),
   })
+  if (!res.ok) throw new Error('Failed to create bot')
+  const payload = await res.json()
+  return payload?.data || payload
 }
 
 export async function updateBot(bot: Bot): Promise<Bot> {
-  // In a real app, this would be a PUT request to your API
-  return new Promise((resolve) => {
-    const updatedBot = {
-      ...bot,
-      updatedAt: new Date().toISOString(),
-    }
-    setTimeout(() => resolve(updatedBot), 500)
+  if (isDemoMode()) {
+    return { ...bot, updatedAt: new Date().toISOString() }
+  }
+
+  const res = await fetch(`/api/bots/${bot.id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bot),
   })
+  if (!res.ok) throw new Error('Failed to update bot')
+  const payload = await res.json()
+  return payload?.data || payload
 }
 
 export async function deleteBot(botId: string): Promise<void> {
-  // In a real app, this would be a DELETE request to your API
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), 500)
-  })
+  if (isDemoMode()) return
+  const res = await fetch(`/api/bots/${botId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Failed to delete bot')
 }
 
 // Update the toggleBotStatus function to properly handle the case when a bot is not found
 export async function toggleBotStatus(botId: string, newStatus: BotStatus): Promise<Bot> {
-  // In a real app, this would be a PATCH request to your API
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // Find the bot in our mock data
-      const botIndex = mockBots.findIndex((b) => b.id === botId)
+  if (isDemoMode()) {
+    const bot = mockBots.find((b) => b.id === botId)
+    if (!bot) throw new Error('Bot not found')
+    return { ...bot, status: newStatus, updatedAt: new Date().toISOString() }
+  }
 
-      if (botIndex === -1) {
-        // If bot is not found in mockBots, create a new copy of mockBots for the search
-        // This is needed because in our demo, the mockBots array is separate from the state in the React component
-        const bot = mockBots.find((b) => b.id === botId)
-        if (!bot) {
-          reject(new Error("Bot not found"))
-          return
-        }
-
-        const updatedBot = {
-          ...bot,
-          status: newStatus,
-          updatedAt: new Date().toISOString(),
-        }
-
-        resolve(updatedBot)
-      } else {
-        // If bot is found in mockBots, update it
-        const updatedBot = {
-          ...mockBots[botIndex],
-          status: newStatus,
-          updatedAt: new Date().toISOString(),
-        }
-
-        // Update the mock data
-        mockBots[botIndex] = updatedBot
-
-        resolve(updatedBot)
-      }
-    }, 500)
-  })
+  const action = newStatus === 'running' ? 'start' : 'stop'
+  const res = await fetch(`/api/bots/${botId}/${action}`, { method: 'POST' })
+  if (!res.ok) throw new Error(`Failed to ${action} bot`)
+  const payload = await res.json()
+  return payload?.data || payload
 }
 
 // Enhance the fetchMarketData function to provide more realistic data

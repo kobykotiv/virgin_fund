@@ -1,9 +1,9 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { screen, waitFor, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 
 import BotForm from '@/components/bot-configuration/BotForm'
+import renderWithProviders from '../../helpers/renderWithProviders'
 
 describe('BotForm modal', () => {
   afterEach(() => vi.resetAllMocks())
@@ -13,24 +13,18 @@ describe('BotForm modal', () => {
     const mockOnSuccess = vi.fn()
     const mockOnOpenChange = vi.fn()
 
-    render(
+  renderWithProviders(
       <BotForm open={true} onOpenChange={mockOnOpenChange} onSubmit={mockOnSubmit} onSuccess={mockOnSuccess} />
     )
 
-  // userEvent.setup() has different overloads across versions; cast to any to satisfy TS in tests
-  const user = (userEvent as any).setup()
-
-    const nameInput = screen.getByLabelText(/Name/i)
-    await user.type(nameInput, 'Test Bot')
-
-    const assetsInput = screen.getByLabelText(/Assets/i)
-    await user.type(assetsInput, 'BTCUSD')
-
-    const capitalInput = screen.getByLabelText(/Capital/i)
-    await user.type(capitalInput, '1000')
-
-    const submitBtn = screen.getByRole('button', { name: /Create Bot/i })
-    await user.click(submitBtn)
+  const nameInput = screen.getByLabelText(/Name/i) as HTMLInputElement
+  fireEvent.change(nameInput, { target: { value: 'Test Bot' } })
+  const assetsInput = screen.getByLabelText(/Assets/i) as HTMLInputElement
+  fireEvent.change(assetsInput, { target: { value: 'BTCUSD' } })
+  const capitalInput = screen.getByLabelText(/Capital/i) as HTMLInputElement
+  fireEvent.change(capitalInput, { target: { value: '1000' } })
+  const submitBtn = screen.getByRole('button', { name: /Create Bot/i })
+  fireEvent.click(submitBtn)
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledTimes(1)

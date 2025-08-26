@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import BotCard from "./BotCard";
 import useBots from "@/hooks/useBots";
 import type { Bot } from "@/types/api";
 import BotForm from "@/components/bot-configuration/BotForm";
-import { useCreateBot } from "@/hooks/useBots";
+import { useCreateBot, useStartBot, usePauseBot, useStopBot } from "@/hooks/useBots";
 import type { CreateBotPayload } from '@/types/api'
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
@@ -62,6 +62,9 @@ const MOCK_BOTS: Bot[] = [
 export default function BotArmyGrid() {
 	const { data: bots, isLoading, error } = useBots();
 	const create = useCreateBot();
+	const startBot = useStartBot();
+	const pauseBot = usePauseBot();
+	const stopBot = useStopBot();
 	const { toast } = useToast();
 	const router = useRouter();
 	const [showCreateModal, setShowCreateModal] = useState(false);
@@ -69,6 +72,17 @@ export default function BotArmyGrid() {
 	const [statusFilter, setStatusFilter] = useState<"all" | "running" | "paused" | "stopped">("all");
 	const [page, setPage] = useState(1);
 	const perPage = 12;
+	const [selected, setSelected] = useState<Record<string, boolean>>({});
+	const [sort, setSort] = useState<string>('created-desc');
+
+	const toggleSelect = useCallback((id: string) => {
+		setSelected(s => ({ ...s, [id]: !s[id] }));
+	}, []);
+
+	const clearSelection = useCallback(() => setSelected({}), []);
+
+	const anySelected = useMemo(() => Object.values(selected).some(Boolean), [selected]);
+	const selectedIds = useMemo(() => Object.entries(selected).filter(([,v]) => v).map(([k]) => k), [selected]);
 
 	const items: Bot[] = useMemo(() => {
 		const source = bots ?? MOCK_BOTS;
@@ -76,7 +90,7 @@ export default function BotArmyGrid() {
 	}, [bots]);
 
 	const filteredBots: Bot[] = useMemo(() => {
-		return (items ?? []).filter((bot) => {
+		let list = (items ?? []).filter((bot) => {
 			if (statusFilter !== "all" && bot.status !== statusFilter) return false;
 			const q = search.trim().toLowerCase();
 			if (!q) return true;
@@ -84,11 +98,40 @@ export default function BotArmyGrid() {
 				(bot.strategy ?? bot.type ?? "").toLowerCase().includes(q) ||
 				(bot.id ?? "").toLowerCase().includes(q);
 		});
-	}, [items, search, statusFilter]);
+		// Sorting
+		const [field, dir] = sort.split('-');
+		list = [...list].sort((a, b) => {
+			const mult = dir === 'desc' ? -1 : 1;
+			const av: any = field === 'name' ? (a.name||'')
+				: field === 'pnl' ? (a.currentPnL ?? 0)
+				: field === 'allocation' ? (a.allocation ?? 0)
+				: field === 'created' ? (new Date(a.createdAt).getTime())
+				: (a.name||'');
+			const bv: any = field === 'name' ? (b.name||'')
+				: field === 'pnl' ? (b.currentPnL ?? 0)
+				: field === 'allocation' ? (b.allocation ?? 0)
+				: field === 'created' ? (new Date(b.createdAt).getTime())
+				: (b.name||'');
+			if (av < bv) return -1*mult;
+			if (av > bv) return 1*mult;
+			return 0;
+		});
+		return list;
+	}, [items, search, statusFilter, sort]);
 
 	const total = filteredBots.length;
 	const pages = Math.max(1, Math.ceil(total / perPage));
 	const pageItems = filteredBots.slice((page - 1) * perPage, page * perPage);
+
+	const bulkAction = useCallback(async (action: 'start'|'pause'|'stop') => {
+		const targets = selectedIds;
+		if (!targets.length) return;
+		const ops = targets.map(id => action==='start' ? startBot.mutateAsync(id)
+			: action==='pause' ? pauseBot.mutateAsync(id)
+			: stopBot.mutateAsync(id));
+		await Promise.allSettled(ops);
+		clearSelection();
+	}, [selectedIds, startBot, pauseBot, stopBot, clearSelection]);
 
 	return (
 		<>
@@ -103,6 +146,21 @@ export default function BotArmyGrid() {
 
 				<select
 					className="select select-sm"
+					value={sort}
+					onChange={(e) => setSort(e.target.value)}
+				>
+					<option value="created-desc">Newest</option>
+					<option value="created-asc">Oldest</option>
+					<option value="name-asc">Name A→Z</option>
+					<option value="name-desc">Name Z→A</option>
+					<option value="pnl-desc">PnL High→Low</option>
+					<option value="pnl-asc">PnL Low→High</option>
+					<option value="allocation-desc">Allocation High→Low</option>
+					<option value="allocation-asc">Allocation Low→High</option>
+				</select>
+
+				<select
+					className="select select-sm"
 					value={statusFilter}
 					onChange={(e) => { setStatusFilter(e.target.value as any); setPage(1); }}
 				>
@@ -113,8 +171,11 @@ export default function BotArmyGrid() {
 				</select>
 
 				<div className="ml-auto flex items-center gap-2">
-					<button className="btn btn-sm">Bulk Start</button>
-					<button className="btn btn-sm">Bulk Stop</button>
+					{anySelected && <span className="text-xs text-muted-foreground mr-2">{selectedIds.length} selected</span>}
+					<button className="btn btn-sm" disabled={!anySelected} onClick={() => bulkAction('start')}>Bulk Start</button>
+					<button className="btn btn-sm" disabled={!anySelected} onClick={() => bulkAction('pause')}>Bulk Pause</button>
+					<button className="btn btn-sm" disabled={!anySelected} onClick={() => bulkAction('stop')}>Bulk Stop</button>
+					{anySelected && <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Clear</button>}
 					<button className="btn btn-outline btn-sm" onClick={() => setShowCreateModal(true)}>Create Bot</button>
 				</div>
 			</div>
@@ -138,7 +199,18 @@ export default function BotArmyGrid() {
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 				{pageItems.map((bot) => (
-					<BotCard key={bot.id ?? bot.name} bot={bot} />
+					<div key={bot.id ?? bot.name} className="relative group">
+						<label className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 cursor-pointer">
+							<input
+								aria-label={`Select bot ${bot.name}`}
+								type="checkbox"
+								className="checkbox checkbox-xs"
+								checked={!!selected[bot.id]}
+								onChange={() => toggleSelect(bot.id)}
+							/>
+						</label>
+						<BotCard bot={bot} />
+					</div>
 				))}
 			</div>
 

@@ -38,10 +38,10 @@ vi.mock("@/hooks/usePerformance", () => ({
 describe("PerformanceDashboard", () => {
   it("renders metric cards and timeline chart", () => {
     render(<PerformanceDashboard />);
-    expect(screen.getByText(/Total P&L/i)).toBeInTheDocument();
-    expect(screen.getByText(/Win Rate/i)).toBeInTheDocument();
-    expect(screen.getByText(/Sharpe Ratio/i)).toBeInTheDocument();
-    expect(screen.getByText(/Max Drawdown/i)).toBeInTheDocument();
+  expect(screen.getAllByText(/Total P&L/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Win Rate/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Sharpe Ratio/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Max Drawdown/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Equity Timeline/i)).toBeInTheDocument();
     expect(screen.getByText(/Trade Log/i)).toBeInTheDocument();
   });

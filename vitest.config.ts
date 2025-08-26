@@ -10,6 +10,9 @@ export default {
     globals: true,
     environment: 'jsdom',
     threads: false,
+  // Ensure our global shims (React global, ResizeObserver, next/navigation mock, env defaults)
+  // are applied before any test files execute.
+  setupFiles: ['./vitest.setup.ts'],
   },
   // Ensure vite resolves the same `@/` path mapping used by tsconfig/next
   resolve: {

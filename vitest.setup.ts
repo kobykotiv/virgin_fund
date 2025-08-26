@@ -26,15 +26,31 @@ class VitestResizeObserver {
 // Mock next/navigation's useRouter to avoid App Router mounting issues in tests.
 // Tests may override this mock with vi.mock(...) if they need different behavior.
 import { vi } from 'vitest'
-vi.mock('next/navigation', () => {
-  return {
-    useRouter: () => ({
-      push: vi.fn(),
-      replace: vi.fn(),
-      refresh: vi.fn(),
-    }),
-  }
-})
+// Only apply the mock once (Vitest may evaluate setup multiple times in watch mode)
+if (!(globalThis as any).__NEXT_NAV_MOCKED__) {
+  (globalThis as any).__NEXT_NAV_MOCKED__ = true
+  vi.mock('next/navigation', () => {
+    return {
+      useRouter: () => ({
+        push: vi.fn(),
+        replace: vi.fn(),
+        refresh: vi.fn(),
+      }),
+    }
+  })
+}
+
+// Provide default env var fallbacks so API/auth tests don't 500 when optional env not defined.
+const envDefaults: Record<string,string> = {
+  NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-test-key',
+  SUPABASE_URL: 'http://localhost:54321',
+  SUPABASE_SERVICE_ROLE_KEY: 'service-role-test-key',
+  SESSION_ENCRYPTION_KEY: '0123456789abcdef0123456789abcdef',
+}
+for (const [k,v] of Object.entries(envDefaults)) {
+  if (!process.env[k]) process.env[k] = v
+}
 
 // Helper to render components with common providers (React Query).
 export function renderWithProviders(ui: any, options?: any) {
@@ -50,3 +66,4 @@ export function renderWithProviders(ui: any, options?: any) {
 ;(globalThis as any).renderWithProviders = renderWithProviders
 
 // Optional: export nothing by default; file is executed for side-effects.
+export {}

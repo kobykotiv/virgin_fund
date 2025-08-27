@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken } from "@/lib/session";
 import { runBacktest } from "@/lib/backtest/engine";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
  * POST /api/backtest
@@ -75,6 +76,24 @@ export async function POST(req: NextRequest) {
     };
 
     const result = await runBacktest(params as any);
+
+    // Persist the backtest run for the user (lightweight record)
+    try {
+      const supabase = getSupabaseAdmin();
+      const payload = {
+        user_id: (session as any).user_id ?? null,
+        title: `${params.symbol} backtest ${new Date().toISOString()}`,
+        description: `Backtest run via UI`,
+        parameters: params,
+        results: result,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as any;
+      await supabase.from('backtests').insert(payload);
+    } catch (e) {
+      // persist failures shouldn't block returning results
+      console.warn('backtest persistence failed', e);
+    }
 
     return NextResponse.json({ result });
   } catch (err) {

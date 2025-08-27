@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -18,7 +18,7 @@ const formSchema = z.object({
 export function AlpacaKeyForm() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [isConfigured, setIsConfigured] = useState(AlpacaClient.hasValidConfig())
+  const [isConfigured, setIsConfigured] = useState(false)
 
   const form = useForm<AlpacaConfig>({
     resolver: zodResolver(formSchema),
@@ -29,16 +29,33 @@ export function AlpacaKeyForm() {
     },
   })
 
+  // load configured state from server
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/alpaca/keys')
+        if (!mounted) return
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.configured) setIsConfigured(true)
+        }
+      } catch (e) {}
+    })()
+    return () => { mounted = false }
+  }, [])
+
   const onSubmit = async (data: AlpacaConfig) => {
     setIsLoading(true)
     try {
-      const isValid = await AlpacaClient.testConnection(data)
-      if (!isValid) {
-        throw new Error("Invalid API credentials")
-      }
+  // Validate keys by attempting account endpoint via AlpacaClient
+  const isValid = await AlpacaClient.testConnection(data)
+  if (!isValid) throw new Error('Invalid API credentials')
 
-      AlpacaClient.saveConfig(data)
-      setIsConfigured(true)
+  // Persist keys server-side for this user
+  const res = await fetch('/api/alpaca/keys', { method: 'POST', body: JSON.stringify({ apiKey: data.apiKey, secretKey: data.secretKey, isPaper: data.isPaper }), headers: { 'Content-Type': 'application/json' } })
+  if (!res.ok) throw new Error('Failed to save keys on server')
+  setIsConfigured(true)
       toast({
         title: "Success",
         description: "API keys configured successfully",
@@ -91,10 +108,10 @@ export function AlpacaKeyForm() {
         {isLoading ? "Testing Connection..." : "Save API Keys"}
       </Button>
 
-      {isConfigured && (
-        <p className="text-sm text-green-600">
-          ✓ API keys configured
-        </p>
+      {isConfigured ? (
+        <p className="text-sm text-green-600">✓ API keys configured</p>
+      ) : (
+        <p className="text-sm text-muted-foreground">Keys are stored server-side for your account.</p>
       )}
     </form>
   )

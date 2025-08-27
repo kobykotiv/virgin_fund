@@ -1,3 +1,20 @@
+"use client";
+import useSWR from 'swr';
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+export function useBots({ page = 1, pageSize = 20, q, status, strategy }:
+  {page?: number; pageSize?: number; q?: string; status?: string; strategy?: string}) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (status) params.set('status', status);
+  if (strategy) params.set('strategy', strategy);
+  params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+  const key = '/api/bots?' + params.toString();
+  const { data, error, isLoading } = useSWR(key, fetcher);
+  return { data, error, isLoading };
+}
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Bot } from '@/types/api'
 

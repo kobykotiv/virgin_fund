@@ -1,172 +1,409 @@
 {
-  "openapi": "3.0.3",
-  "info": {
-    "title": "Virgin Fund API",
-    "version": "1.0.0",
-    "description": "Core API for managing trading bots, watchlists and running backtests. This file is generated from the repo routes and is intended for developer integration and client generation."
-  },
-  "servers": [
-    { "url": "http://localhost:3000", "description": "Local development" }
-  ],
-  "components": {
-    "securitySchemes": {
-      "ServiceBearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
-      "AlpacaApiKey": { "type": "apiKey", "in": "header", "name": "APCA-API-KEY-ID" }
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Virgin Fund API",
+        "version": "1.0.0",
+        "description": "Expanded API for bots, marketplace, alerts, integrations and backtests."
     },
-    "schemas": {
-      "Bot": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string", "example": "b_01F3ABCD" },
-          "owner_id": { "type": "string", "nullable": true },
-          "name": { "type": "string", "example": "Demo DCA BTC Monthly" },
-          "strategy": { "type": "string", "example": "dca" },
-          "assets": { "type": "array", "items": { "type": "string" }, "example": ["BTCUSD"] },
-          "allocation": { "type": ["array","null"], "items": { "type": "number" } },
-          "currency": { "type": "string", "example": "USD" },
-          "status": { "type": "string", "enum": ["running","paused","stopped"], "example": "paused" },
-          "initial_balance": { "type": "number", "example": 1000 },
-          "schedule_cron": { "type": ["string","null"], "example": null },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
+    "servers": [
+        {
+            "url": "http://localhost:3000",
+            "description": "Local"
         }
-      },
-      "BotCreateRequest": {
-        "type": "object",
-        "required": ["name","strategy"],
-        "properties": {
-          "name": { "type": "string" },
-          "strategy": { "type": "string" },
-          "assets": { "type": "array", "items": { "type": "string" } },
-          "initialBalance": { "type": "number" },
-          "currency": { "type": "string" }
+    ],
+    "components": {
+        "securitySchemes": {
+            "ServiceBearer": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
+        "schemas": {
+            "Bot": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "owner_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "strategy": {
+                        "type": "string"
+                    },
+                    "composite": {
+                        "type": "boolean",
+                        "description": "true if bot is composite (chains strategies)"
+                    },
+                    "assets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "allocation": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "number"
+                        }
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "paper",
+                            "live"
+                        ]
+                    },
+                    "template_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "metadata": {
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "Strategy": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "config": {
+                        "type": "object"
+                    }
+                }
+            },
+            "MarketplaceListing": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "author_id": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "bot_template": {
+                        "$ref": "#/components/schemas/Bot"
+                    },
+                    "price_usd": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "anonymized_performance": {
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "CompositeBot": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "chain": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "Alert": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "owner_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "conditions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AlertCondition"
+                        }
+                    },
+                    "delivery": {
+                        "type": "object",
+                        "properties": {
+                            "email": {
+                                "type": "boolean"
+                            },
+                            "webhook": {
+                                "type": "boolean"
+                            },
+                            "in_app": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "AlertCondition": {
+                "type": "object",
+                "properties": {
+                    "metric": {
+                        "type": "string",
+                        "example": "price"
+                    },
+                    "operator": {
+                        "type": "string",
+                        "enum": [
+                            ">",
+                            "<",
+                            ">=",
+                            "<=",
+                            "==",
+                            "AND",
+                            "OR"
+                        ]
+                    },
+                    "value": {
+                        "type": [
+                            "number",
+                            "string",
+                            "object"
+                        ]
+                    },
+                    "window": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "Watchlist": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "owner_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "symbols": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "BacktestRequest": {
+                "type": "object",
+                "properties": {
+                    "symbol": {
+                        "type": "string"
+                    },
+                    "start": {
+                        "type": "string"
+                    },
+                    "end": {
+                        "type": "string"
+                    },
+                    "initialCapital": {
+                        "type": "number"
+                    }
+                }
+            },
+            "BacktestResult": {
+                "type": "object"
+            },
+            "BacktestRecord": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "results": {
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "OrderRecord": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "bot_id": {
+                        "type": "string"
+                    },
+                    "side": {
+                        "type": "string"
+                    },
+                    "qty": {
+                        "type": "number"
+                    },
+                    "price": {
+                        "type": "number"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "BrokerAccount": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    }
+                }
+            },
+            "WebhookSubscription": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "SubscriptionPlan": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "monthly_usd": {
+                        "type": "number"
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                }
+            }
         }
-      },
-      "BacktestRequest": {
-        "type": "object",
-        "required": ["symbol","start","end","initialCapital","dcaAmount"],
-        "properties": {
-          "symbol": { "type": "string", "example": "AAPL" },
-          "start": { "type": "string", "format": "date-time", "example": "2024-01-01T00:00:00.000Z" },
-          "end": { "type": "string", "format": "date-time", "example": "2024-06-01T00:00:00.000Z" },
-          "initialCapital": { "type": "number", "example": 10000 },
-          "dcaAmount": { "type": "number", "example": 250 },
-          "frequency": { "type": "string", "enum": ["daily","weekly","monthly","manual"], "example": "weekly" },
-          "slippagePct": { "type": "number", "example": 0.05 },
-          "commission": { "type": "number", "example": 1.0 }
+    },
+    "security": [
+        {
+            "ServiceBearer": []
         }
-      },
-      "BacktestResult": {
-        "type": "object",
-        "properties": {
-          "timeseries": { "type": "array", "items": { "type": "object" } },
-          "trades": { "type": "array", "items": { "type": "object" } },
-          "summary": { "type": "object" }
+    ],
+        "paths": {
+            "/api/marketplace": {
+                "get": {
+                    "summary": "List marketplace listings",
+                    "responses": {
+                        "200": {
+                            "description": "OK",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "array",
+                                        "items": { "$ref": "#/components/schemas/MarketplaceListing" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "post": {
+                    "summary": "Publish a listing",
+                    "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MarketplaceListing" } } } },
+                    "responses": { "201": { "description": "Created" } }
+                }
+            },
+            "/api/marketplace/{id}/copy": {
+                "post": {
+                    "summary": "Copy a listing into user's templates",
+                    "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+                    "responses": { "201": { "description": "Copied", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Bot" } } } } }
+                }
+            },
+            "/api/bots/{id}/clone": {
+                "post": { "summary": "Clone a bot", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "201": { "description": "Cloned", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Bot" } } } } }
+            },
+            "/api/bots/{id}/mode": {
+                "post": { "summary": "Switch bot mode (paper/live)", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "mode": { "type": "string", "enum": ["paper", "live"] } } } } } }, "responses": { "200": { "description": "Mode updated" } } }
+            },
+            "/api/rebalancer/run": { "post": { "summary": "Run auto-rebalancer across bots/portfolio", "responses": { "200": { "description": "Rebalance executed" } } } },
+            "/api/alerts": { "get": { "summary": "List alerts", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Alert" } } } } } }, "post": { "summary": "Create alert", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Alert" } } } }, "responses": { "201": { "description": "Created" } } } },
+            "/api/alerts/{id}/trigger": { "post": { "summary": "Trigger an alert manually (for testing)", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Triggered" } } } },
+            "/api/feed/news": { "get": { "summary": "News & sentiment feed filtered by watchlist symbols", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } } } } },
+            "/api/integrations/brokers": { "get": { "summary": "List connected broker accounts", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BrokerAccount" } } } } } }, "post": { "summary": "Connect a new broker account (OAuth/API keys)", "requestBody": { "required": true }, "responses": { "201": { "description": "Connected" } } } },
+            "/api/webhooks": { "get": { "summary": "List webhooks", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookSubscription" } } } } } }, "post": { "summary": "Register webhook", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookSubscription" } } } }, "responses": { "201": { "description": "Registered" } } } },
+            "/api/subscriptions": { "get": { "summary": "List subscription plans", "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/SubscriptionPlan" } } } } } } },
+            "/api/portfolio/export": { "post": { "summary": "Export portfolio/trades CSV or push to Google Sheets", "responses": { "200": { "description": "Export job created" } } } }
         }
-      },
-      "BacktestRecord": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "user_id": { "type": "string" },
-          "title": { "type": "string" },
-          "parameters": { "type": "object" },
-          "results": { "type": "object" },
-          "created_at": { "type": "string", "format": "date-time" }
-        }
-      },
-      "Watchlist": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "owner_id": { "type": "string", "nullable": true },
-          "name": { "type": "string" },
-          "symbols": { "type": "array", "items": { "type": "string" } },
-          "created_at": { "type": "string", "format": "date-time" }
-        }
-      },
-      "OrderRecord": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "bot_id": { "type": "string" },
-          "alpaca_order_id": { "type": "string" },
-          "side": { "type": "string", "example": "buy" },
-          "qty": { "type": "number" },
-          "price": { "type": "number" },
-          "status": { "type": "string" },
-          "created_at": { "type": "string", "format": "date-time" }
-        }
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "properties": { "error": { "type": "string" } }
-      }
     }
-  },
-  "security": [ { "ServiceBearer": [] } ],
-  "paths": {
-    "/api/bots": {
-      "get": {
-        "summary": "List bots for authenticated user",
-        "responses": {
-          "200": {
-            "description": "Array of Bot objects",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Bot" } } } } } }
-          },
-          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
-      },
-      "post": {
-        "summary": "Create a new bot",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BotCreateRequest" } } } },
-        "responses": {
-          "201": { "description": "Created", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Bot" } } } } } },
-          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
-      }
-    },
-    "/api/bots/{id}": {
-      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
-      "get": {
-        "summary": "Get a bot by id",
-        "responses": { "200": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Bot" } } } }, "404": { "description": "Not found" } }
-      },
-      "patch": { "summary": "Update a bot", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Bot" } } } }, "responses": { "200": { "description": "Updated" } } },
-      "delete": { "summary": "Delete a bot", "responses": { "204": { "description": "Deleted" } } }
-    },
-    "/api/bots/{id}/start": {
-      "post": { "summary": "Start a bot", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "started" } } }
-    },
-    "/api/bots/{id}/pause": { "post": { "summary": "Pause a bot", "responses": { "200": { "description": "paused" } } } },
-    "/api/bots/{id}/stop": { "post": { "summary": "Stop a bot", "responses": { "200": { "description": "stopped" } } } },
-    "/api/backtest": {
-      "post": {
-        "summary": "Run a backtest",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BacktestRequest" } } } },
-        "responses": {
-          "200": { "description": "Backtest result", "content": { "application/json": { "schema": { "type": "object", "properties": { "result": { "$ref": "#/components/schemas/BacktestResult" } } } } } },
-          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
-      }
-    },
-    "/api/backtests/{id}": {
-      "get": {
-        "summary": "Get backtest by id",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "Backtest record", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BacktestResult" } } } } }
-      }
-    },
-    "/api/watchlists": {
-      "get": {
-        "summary": "List watchlists for user",
-        "responses": { "200": { "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Watchlist" } } } } } } } }
-      },
-      "post": { "summary": "Create watchlist", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" }, "symbols": { "type": "array", "items": { "type": "string" } } } } } } , "responses": { "201": { "description": "created" } } }
-    },
-    "/api/orders": {
-      "get": { "summary": "List recent orders (admin)", "responses": { "200": { "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/OrderRecord" } } } } } }
-    }
-  }
-}
+}}}}}}

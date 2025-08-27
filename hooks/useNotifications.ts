@@ -1,85 +1,121 @@
-"use client";
-
-import { useEffect } from "react";
+// hooks/useNotifications.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import supabase from "@/lib/supabaseClient";
 
+export interface Notification {
+  id: string;
+  alert_id: string;
+  message: string;
+  type: string;
+  delivery_method: 'in_app' | 'email' | 'webhook';
+  read: boolean;
+  created_at: string;
+}
+
 export function useNotifications() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["notifications"],
-    queryFn: async () => {
-      try {
-        const u = await supabase.auth.getUser();
-        const user = (u as any)?.data?.user ?? null;
-        if (!user) return [] as any[];
-
-        const { data, error } = await supabase
-          .from("notifications")
-          .select("id, alert_id, payload, read, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        return data ?? [];
-      } catch (e) {
-        console.warn("useNotifications fetch error", e);
-        return [] as any[];
-      }
+    queryKey: ['notifications'],
+    queryFn: async (): Promise<Notification[]> => {
+      const res = await fetch('/api/notifications');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to fetch notifications');
+      return data.notifications;
     },
     staleTime: 10_000,
   });
 
-  // mark read mutation
-  const markRead = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
-      if (error) throw error;
-      return true;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
-  });
-
-  // realtime subscription to notifications for current user
+  // Supabase realtime subscription for notifications
   useEffect(() => {
-    let mounted = true;
-    let channel: any = null;
-
-    (async () => {
-      const u = await supabase.auth.getUser();
-      const user = (u as any)?.data?.user ?? null;
-      if (!user) return;
-
-      try {
-        channel = supabase
-          .channel(`public:realtime:user=${user.id}`)
-          .on(
-            "postgres_changes",
-            { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-            (payload: any) => {
-              // Invalidate to re-fetch latest notifications
-              try {
-                qc.invalidateQueries({ queryKey: ["notifications"] });
-              } catch (e) {
-                // ignore
-              }
-            }
-          )
-          .subscribe();
-      } catch (e) {
-        // ignore subscribe errors
-      }
-    })();
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications'
+      }, () => {
+        // Invalidate and refetch notifications when new ones are added
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      })
+      .subscribe();
 
     return () => {
-      mounted = false;
-      try {
-        if (channel) channel.unsubscribe();
-      } catch (e) {
-        // ignore
-      }
+      supabase.removeChannel(channel);
     };
-  }, [qc]);
+  }, [queryClient]);
 
-  return { ...query, markRead };
+  // Provide a markRead mutation on the returned object for backward compatibility
+  const markRead = useMarkNotificationAsRead();
+
+  // Also expose create mutation for convenience
+  const create = useCreateNotification();
+
+  // Return the query result plus helper mutations expected by UI components
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return Object.assign(query, { markRead, create } as any);
+}
+
+export function useCreateNotification() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (notificationData: {
+      alert_id: string;
+      message: string;
+      type?: string;
+      delivery_method?: 'in_app' | 'email' | 'webhook';
+    }): Promise<Notification> => {
+      const res = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationData),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to create notification');
+      return data.notification;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useMarkNotificationAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<Notification> => {
+      const res = await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, read: true }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to update notification');
+      return data.notification;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useUnreadNotificationsCount() {
+  return useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: async (): Promise<number> => {
+      const res = await fetch('/api/notifications');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to fetch notifications');
+      return data.notifications.filter((n: Notification) => !n.read).length;
+    },
+    staleTime: 10_000,
+  });
 }

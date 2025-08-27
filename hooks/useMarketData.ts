@@ -1,87 +1,102 @@
-// hooks/useMarketData.ts
-import { useQuery } from "@tanstack/react-query";
+"use client"
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 
-export type MarketSource = "coingecko" | "alpaca";
+export type MarketSource = 'coingecko' | 'alpaca'
 export interface MarketTicker {
-  symbol: string;
-  price: number;
-  source: MarketSource;
-  series?: number[];
+  symbol: string
+  price: number
+  source: MarketSource
+  series?: number[]
 }
 
-const COINGECKO_IDS = ["bitcoin", "ethereum", "dogecoin"];
-const ALPACA_SYMBOLS = ["BTCUSD", "ETHUSD"];
+interface UseMarketDataOptions {
+  realtime?: boolean
+  streamEndpoint?: string
+}
 
-async function fetchCoinGecko(ids: string[]): Promise<Record<string, MarketTicker>> {
+async function fetchCoinGecko(symbols: string[]) {
   try {
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(",")}&vs_currencies=usd`
-    );
-    const data = await res.json();
-    return Object.fromEntries(
-      ids.map((id) => [
-        id,
-        {
-          symbol: id,
-          price: data[id]?.usd ?? 0,
-          source: "coingecko" as MarketSource,
-        },
-      ])
-    );
+    const res = await fetch(`/api/coingecko/prices?symbols=${encodeURIComponent(symbols.join(','))}`)
+    if (!res.ok) return {}
+    const json = await res.json()
+    const prices = json?.prices || json || {}
+    return Object.fromEntries(Object.entries(prices).map(([k, v]: any) => [k, { symbol: k, price: v?.price ?? v, source: 'coingecko' as MarketSource }]))
   } catch {
-    return {};
+    return {}
   }
 }
 
-async function fetchAlpaca(symbols: string[]): Promise<Record<string, MarketTicker>> {
+async function fetchAlpaca(symbols: string[]) {
   try {
-    // Replace with your Alpaca endpoint or relay as needed
-    const res = await fetch(`/api/market-data/alpaca?symbols=${symbols.join(",")}`);
-    const data = await res.json();
-    return Object.fromEntries(
-      symbols.map((s) => [
-        s,
-        {
-          symbol: s,
-          price: data[s]?.price ?? 0,
-          source: "alpaca" as MarketSource,
-        },
-      ])
-    );
+    const res = await fetch(`/api/alpaca/prices?symbols=${encodeURIComponent(symbols.join(','))}`)
+    if (!res.ok) return {}
+    const json = await res.json()
+    const prices = json?.prices || json || {}
+    return Object.fromEntries(Object.entries(prices).map(([k, v]: any) => [k, { symbol: k, price: v?.price ?? v, source: 'alpaca' as MarketSource }]))
   } catch {
-    return {};
+    return {}
   }
 }
 
 export default function useMarketData(
-  coingeckoIds: string[] = COINGECKO_IDS,
-  alpacaSymbols: string[] = ALPACA_SYMBOLS
+  coingeckoSymbols: string[] = [],
+  alpacaSymbols: string[] = [],
+  options: UseMarketDataOptions = {}
 ) {
-  return useQuery({
-    queryKey: ["market-data", coingeckoIds, alpacaSymbols],
+  const qc = useQueryClient()
+  const queryKey = ['market-data', coingeckoSymbols.slice().sort().join(','), alpacaSymbols.slice().sort().join(',')]
+
+  const query = useQuery({
+    queryKey,
     queryFn: async () => {
-      const [cg, alp] = await Promise.all([
-        fetchCoinGecko(coingeckoIds),
-        fetchAlpaca(alpacaSymbols),
-      ]);
-      // Merge, prefer Alpaca for overlapping symbols
-      const merged: Record<string, MarketTicker> = { ...cg, ...alp };
-      // Fallback mock data if empty
+      const [cg, alp] = await Promise.all([fetchCoinGecko(coingeckoSymbols || []), fetchAlpaca(alpacaSymbols || [])])
+      const merged: Record<string, MarketTicker> = { ...cg, ...alp }
       if (Object.keys(merged).length === 0) {
+        // fallback demo data
         return {
-          bitcoin: { symbol: "bitcoin", price: 30000, source: "coingecko" },
-          ethereum: { symbol: "ethereum", price: 1800, source: "coingecko" },
-          dogecoin: { symbol: "dogecoin", price: 0.12, source: "coingecko" },
-        };
+          BTC: { symbol: 'BTC', price: 30000, source: 'coingecko' },
+          ETH: { symbol: 'ETH', price: 1800, source: 'coingecko' },
+          AAPL: { symbol: 'AAPL', price: 150, source: 'alpaca' },
+        }
       }
-      return merged;
+      return merged
     },
     staleTime: 10_000,
-  });
+    refetchInterval: options.realtime ? 5_000 : false,
+  })
+
+  const startedRef = useRef(false)
+  useEffect(() => {
+    if (!options.realtime || startedRef.current) return
+    const all = [...(coingeckoSymbols || []), ...(alpacaSymbols || [])]
+    if (!all.length) return
+    startedRef.current = true
+    const endpoint = options.streamEndpoint || '/api/market-data/stream'
+    const es = new EventSource(`${endpoint}?symbols=${encodeURIComponent(all.join(','))}`)
+    es.onmessage = (ev) => {
+      try {
+        const payload = JSON.parse(ev.data)
+        if (payload?.type === 'quote' && payload.symbol && typeof payload.price === 'number') {
+          qc.setQueryData<Record<string, MarketTicker>>(queryKey, (prev = {} as any) => ({
+            ...prev,
+            [payload.symbol]: { symbol: payload.symbol, price: payload.price, source: (payload.source || prev[payload.symbol]?.source || 'alpaca') as MarketSource },
+          }))
+        }
+      } catch {}
+    }
+    es.onerror = () => { try { es.close() } catch {} }
+    return () => { try { es.close() } catch {} }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.realtime, options.streamEndpoint, coingeckoSymbols.join(','), alpacaSymbols.join(',')])
+
+  return {
+    data: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  }
 }
 
-// Summary of Changes:
-// - Added useMarketData hook to fetch and normalize CoinGecko and Alpaca prices.
-// - Annotates each ticker with its source.
-// - Provides fallback mock data if APIs fail.
-// - Ready for use in TickersGrid and other market data UIs.
+// allow both default and named imports
+export { useMarketData }

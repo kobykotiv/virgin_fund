@@ -1,176 +1,146 @@
-"use client";
-
-import { useEffect } from 'react';
+// hooks/useWatchlists.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import supabase from "@/lib/supabaseClient";
+import { useAlerts, useCreateAlert, useUpdateAlert, useDeleteAlert } from './useAlerts'
 
-export function useWatchlists() {
-  const qc = useQueryClient();
-  const q = useQuery({
-    queryKey: ["watchlists"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("watchlists").select("id, name, items, created_at").order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return data ?? [];
-    },
-  });
-
-  useEffect(() => {
-    // only enable realtime when explicitly toggled to avoid noisy connections in test/dev environments
-    const enabled = process?.env?.NEXT_PUBLIC_ENABLE_REALTIME === '1' || process?.env?.NEXT_PUBLIC_ENABLE_REALTIME === 'true';
-    if (!enabled) return;
-
-    let channel: any = null;
-    try {
-      channel = supabase
-        .channel(`realtime:watchlists`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'watchlists' }, (payload: any) => {
-          try { qc.invalidateQueries({ queryKey: ["watchlists"] }); } catch (e) { console.warn('realtime invalidate failed', e); }
-        })
-        .subscribe();
-    } catch (e) {
-      console.warn('watchlists realtime subscribe failed', e);
-    }
-
-    return () => {
-      try {
-        if (channel) {
-          // prefer removeChannel when available
-          if ((supabase as any).removeChannel) (supabase as any).removeChannel(channel);
-          else channel.unsubscribe();
-        }
-      } catch (e) {
-        // best-effort cleanup
-      }
-    };
-  }, [qc]);
-
-  return q;
+export interface Watchlist {
+  id: string;
+  name: string;
+  items: string[];
+  provider: 'alpaca' | 'coingecko';
+  created_at: string;
+  updated_at?: string;
 }
 
-export function useWatchlist(id?: string) {
+export interface CreateWatchlistData {
+  name: string;
+  items: string[];
+  provider?: 'alpaca' | 'coingecko';
+}
+
+export interface UpdateWatchlistData {
+  id: string;
+  name?: string;
+  items?: string[];
+  changes?: Partial<{
+    items: string[]
+    name: string
+  }>;
+  provider?: 'alpaca' | 'coingecko';
+}
+
+export function useWatchlists() {
   return useQuery({
-    queryKey: ["watchlist", id],
-    queryFn: async () => {
-      if (!id) return null;
-      const { data, error } = await supabase.from("watchlists").select("*").eq("id", id).maybeSingle();
-      if (error) throw new Error(error.message);
-      return data ?? null;
+    queryKey: ['watchlists'],
+    queryFn: async (): Promise<Watchlist[]> => {
+      const res = await fetch('/api/watchlists');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to fetch watchlists');
+      return data.watchlists;
     },
-    enabled: !!id,
+    staleTime: 30_000,
   });
 }
 
 export function useCreateWatchlist() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: { name: string; items: string[] }) => {
-      const { data, error } = await supabase.from("watchlists").insert([payload]).select().maybeSingle();
-      if (error) throw new Error(error.message);
-      return data;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["watchlists"] }),
-  });
-}
+  const queryClient = useQueryClient();
 
-export function useCreateAlert() {
-  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: any) => {
-      const { data, error } = await supabase.from("alerts").insert([payload]).select().maybeSingle();
-      if (error) throw new Error(error.message);
-      return data;
+    mutationFn: async (watchlistData: CreateWatchlistData): Promise<Watchlist> => {
+      const res = await fetch('/api/watchlists', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(watchlistData),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to create watchlist');
+      return data.watchlist;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
-  });
-}
-
-export function useUpdateAlert() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, changes }: { id: string; changes: Record<string, any> }) => {
-      const { data, error } = await supabase.from('alerts').update(changes).eq('id', id).select().maybeSingle();
-      if (error) throw new Error(error.message);
-      return data;
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlists'] });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
-  });
-}
-
-export function useDeleteAlert() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('alerts').delete().eq('id', id);
-      if (error) throw new Error(error.message);
-      return true;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["alerts"] }),
-  });
-}
-
-export function useAddSymbol(watchlistId?: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (symbol: string) => {
-      if (!watchlistId) throw new Error('watchlist id required');
-      const res = await fetch(`/api/watchlists/${watchlistId}/add`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ symbol }) });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Failed to add symbol: ${txt}`);
-      }
-      return true;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["watchlists"] })
   });
 }
 
 export function useUpdateWatchlist() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ id, changes }: { id: string; changes: Record<string, any> }) => {
-      const { data, error } = await supabase.from('watchlists').update(changes).eq('id', id).select().maybeSingle();
-      if (error) throw new Error(error.message);
-      return data;
+    mutationFn: async (watchlistData: UpdateWatchlistData): Promise<Watchlist> => {
+      const res = await fetch('/api/watchlists', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(watchlistData),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to update watchlist');
+      return data.watchlist;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["watchlists"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlists'] });
+    },
   });
 }
 
 export function useDeleteWatchlist() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('watchlists').delete().eq('id', id);
-      if (error) throw new Error(error.message);
-      return true;
+    mutationFn: async (id: string): Promise<void> => {
+      const res = await fetch(`/api/watchlists?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed to delete watchlist');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["watchlists"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlists'] });
+    },
   });
 }
 
-export function useAlerts() {
-  const qc = useQueryClient();
-  const q = useQuery({
-    queryKey: ["alerts"],
+// Re-export alert hooks expected by some components for convenience.
+export { useAlerts, useCreateAlert, useUpdateAlert, useDeleteAlert };
+
+// Small helpers expected by UI components
+export function useWatchlist(id?: string) {
+  return useQuery({
+    queryKey: ['watchlist', id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("alerts").select("id, watchlist_id, condition, method, created_at").order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return data ?? [];
+      if (!id) return null
+      const res = await fetch(`/api/watchlists/${id}`)
+      if (!res.ok) throw new Error('Failed to fetch watchlist')
+      const data = await res.json()
+      return data.watchlist ?? data
     },
-  });
+    enabled: !!id,
+  })
+}
 
-  useEffect(() => {
-    try {
-      const channel = supabase.channel('realtime-alerts')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => qc.invalidateQueries({ queryKey: ["alerts"] }))
-        .subscribe();
-
-      return () => { try { supabase.removeChannel(channel); } catch (e) { /* ignore */ } };
-    } catch (e) {
-      return () => undefined;
-    }
-  }, [qc]);
-
-  return q;
+export function useAddSymbol(watchlistId?: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { id?: string; symbol: string } | string) => {
+      let id: string | undefined
+      let symbol: string
+      if (typeof payload === 'string') {
+        id = watchlistId
+        symbol = payload
+      } else {
+        id = payload.id || watchlistId
+        symbol = payload.symbol
+      }
+      if (!id) throw new Error('watchlist id required')
+      const res = await fetch(`/api/watchlists/${id}/add`, { method: 'POST', body: JSON.stringify({ symbol }), headers: { 'Content-Type': 'application/json' } })
+      if (!res.ok) throw new Error('Failed to add symbol')
+      return res.json()
+    },
+    onSuccess: (_, vars) => {
+      const maybeId = typeof vars === 'string' ? watchlistId : (vars as any)?.id || watchlistId
+      qc.invalidateQueries({ queryKey: ['watchlists', maybeId] })
+    },
+  })
 }

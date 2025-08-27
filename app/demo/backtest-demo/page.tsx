@@ -9,7 +9,7 @@ export default function Page() {
   useEffect(() => {
     async function fetchIt() {
       try {
-        const res = await fetch('/demo/backtest-demo')
+        const res = await fetch('/api/demo/backtest-demo')
         const json = await res.json()
         setResult(json)
       } finally { setLoading(false) }

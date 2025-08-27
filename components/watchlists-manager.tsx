@@ -331,7 +331,8 @@ export function WatchlistsManager() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {activeWatchlist.symbols.map((symbol) => (
+                        {/* Remove duplicates to prevent React key errors */}
+                        {Array.from(new Set(activeWatchlist.symbols)).map((symbol) => (
                           <TableRow key={symbol}>
                             <TableCell>{symbol}</TableCell>
                             {editMode && (

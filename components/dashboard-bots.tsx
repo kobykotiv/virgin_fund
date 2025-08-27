@@ -72,7 +72,7 @@ const strategyLabel: Record<BotStrategy, string> = {
 // Demo bots data
 const demoBots: Bot[] = [
   {
-    id: "demo-1",
+    id: "demo-tech-growth-bot",
     name: "Tech Growth Bot",
     strategy: "portfolio-top5",
     status: "running",
@@ -81,7 +81,7 @@ const demoBots: Bot[] = [
     updatedAt: new Date(Date.now() - 3600000).toISOString(),
   },
   {
-    id: "demo-2",
+    id: "demo-crypto-dca-master",
     name: "Crypto DCA Master",
     strategy: "portfolio-top10",
     status: "running",
@@ -90,7 +90,7 @@ const demoBots: Bot[] = [
     updatedAt: new Date(Date.now() - 7200000).toISOString(),
   },
   {
-    id: "demo-3",
+    id: "demo-stat-arb-pro",
     name: "Stat Arb Pro",
     strategy: "stat-arb",
     status: "paused",
@@ -99,7 +99,7 @@ const demoBots: Bot[] = [
     updatedAt: new Date(Date.now() - 1800000).toISOString(),
   },
   {
-    id: "demo-4",
+    id: "demo-grid-trader-elite",
     name: "Grid Trader Elite",
     strategy: "grid-x",
     status: "running",
@@ -108,7 +108,7 @@ const demoBots: Bot[] = [
     updatedAt: new Date(Date.now() - 900000).toISOString(),
   },
   {
-    id: "demo-5",
+    id: "demo-value-investor",
     name: "Value Investor",
     strategy: "indicator",
     status: "stopped",
@@ -117,7 +117,7 @@ const demoBots: Bot[] = [
     updatedAt: new Date(Date.now() - 14400000).toISOString(),
   },
   {
-    id: "demo-6",
+    id: "demo-triangular-arb",
     name: "Triangular Arb",
     strategy: "tri-arb",
     status: "running",
@@ -404,6 +404,11 @@ export default function DashboardBotsPage() {
   const filtered = useMemo(() => {
     // Combine user bots and demo bots
     let items = [...((data ?? []) as any as Bot[]), ...demoBots]
+    
+    // Remove duplicates based on ID to prevent React key errors
+    items = items.filter((bot, index, self) => 
+      index === self.findIndex(b => b.id === bot.id)
+    )
     
     if (status !== "all") items = items.filter((b) => b.status === status)
     if (strategy !== "all") items = items.filter((b) => b.strategy === strategy)
@@ -755,7 +760,8 @@ export function AllMarketsTickerView({ symbols }: { symbols: string[] }) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
-          {symbols.map((s) => (
+          {/* Remove duplicates to prevent React key errors */}
+          {[...new Set(symbols)].map((s) => (
             <RealtimeTickerChip key={s} symbol={s} />
           ))}
         </div>

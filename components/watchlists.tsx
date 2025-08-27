@@ -168,7 +168,8 @@ export function Watchlists() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {activeWatchlist.symbols.map((symbol) => {
+                      {/* Remove duplicates to prevent React key errors */}
+                      {Array.from(new Set(activeWatchlist.symbols)).map((symbol) => {
                         const data = symbolsData[symbol];
                         return (
                           <TableRow key={symbol}>

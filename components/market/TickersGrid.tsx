@@ -106,10 +106,15 @@ export default function TickersGrid({ ids = DEFAULT_IDS }: { ids?: string[] }) {
       : ticker
   );
 
+  // Remove duplicates based on symbol to prevent React key errors
+  const uniqueTickers = tickers.filter((ticker, index, self) => 
+    index === self.findIndex(t => t.symbol === ticker.symbol)
+  );
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {tickers.map((ticker) => (
+        {uniqueTickers.map((ticker) => (
           <button
             key={ticker.symbol}
             className="p-4 border rounded-lg text-left hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
@@ -182,3 +187,4 @@ export default function TickersGrid({ ids = DEFAULT_IDS }: { ids?: string[] }) {
 // - TickersGrid now merges live Alpaca WS prices into tickers.
 // - WS prices take precedence for Alpaca symbols.
 // - UI and modal remain unchanged for user experience.
+// - Added duplicate filtering to prevent React key errors in TickersGrid.

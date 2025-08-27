@@ -5,6 +5,8 @@ import * as indicators from "@/lib/indicators"
 import type { BacktestParams, TradeRecord, BacktestResult } from "@/types/backtest"
 export type { BacktestParams, TradeRecord, BacktestResult } from "@/types/backtest"
 
+import { evaluateRule } from "@/lib/ruleInterpreter"
+
 // Fetch historical market data (real or mock)
 async function getHistoricalData(
   symbols: string[],
@@ -277,6 +279,38 @@ async function simulateIndicatorStrategy(
           signal = "sell"
         }
         break
+    }
+
+    // If a user-defined rule is present, evaluate it and use it to override signals.
+    // Assumption: primary `rule` acts as a trigger - when true and we hold no position -> buy;
+    // when true and we hold a position -> sell. This keeps behavior deterministic and simple.
+    try {
+      if ((bot as any).rule) {
+        const ctx = {
+          price,
+          volume: prices[i].volume,
+          indicators,
+        }
+        const ruleTriggered = evaluateRule((bot as any).rule, ctx)
+
+        if (ruleTriggered) {
+          if (positions[symbol] === 0) {
+            signal = "buy"
+          } else if (positions[symbol] > 0) {
+            signal = "sell"
+          }
+        }
+      }
+    } catch (e) {
+      // Log a non-fatal warning when rule evaluation fails so developers can debug rule JSON
+      try {
+        // prefer structured message
+        console.warn(`[backtest] rule evaluation error for bot=${bot.id ?? 'unknown'} at ${prices[i].date}:`, e && (e as any).message ? (e as any).message : e)
+      } catch (e2) {
+        // fallback to a simple log
+        console.warn(`[backtest] rule evaluation error`)
+      }
+      // leave signal unchanged
     }
 
     // Execute trades based on signals

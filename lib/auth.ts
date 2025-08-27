@@ -1,3 +1,22 @@
+/**
+ * Simple auth helper for demo / edge function use.
+ * Reads broker API key from environment variables and provides a mocked fallback.
+ */
+export function getBrokerApiKey(): string {
+  // prefer server env var, but allow NEXT_PUBLIC for client-side demo wiring
+  return process.env.BROKER_API_KEY || process.env.NEXT_PUBLIC_BROKER_API_KEY || 'demo-broker-key-000';
+}
+
+export function requireBrokerApiKey(): string {
+  const k = getBrokerApiKey();
+  if (!k) throw new Error('Missing BROKER_API_KEY');
+  return k;
+}
+
+export const MOCK_BROKER_HEADERS = (apiKey?: string) => ({
+  'Authorization': `Bearer ${apiKey ?? getBrokerApiKey()}`,
+  'Content-Type': 'application/json',
+});
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 
 export async function getUserFromAuthHeader(req: any) {

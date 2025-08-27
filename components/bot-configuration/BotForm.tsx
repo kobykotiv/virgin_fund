@@ -12,6 +12,10 @@ import { useCreateBot, useUpdateBot } from "@/hooks/useBots";
 import type { Bot } from "@/types/bot";
 import type { CreateBotPayload, UpdateBotPayload } from '@/types/api'
 import { randomName } from '@/lib/utils/names'
+import StockAggregator from '@/components/stock-aggregator'
+import MarketPulse from '@/components/market-pulse'
+import { generateDemoMarketData } from '@/lib/demo-data'
+import RuleBuilder from '@/components/rule-builder'
 
 interface BotFormProps {
   open: boolean;
@@ -44,6 +48,10 @@ export default function BotForm({ open, onOpenChange, initial, mode = "create", 
       : ""
   );
   const [status, setStatus] = useState(initial?.status ?? "paused");
+  const [stopLoss, setStopLoss] = useState<number | undefined>((initial as any)?.stopLoss ?? 5)
+  const [takeProfit, setTakeProfit] = useState<number | undefined>((initial as any)?.takeProfit ?? 10)
+  const [indicatorConfig, setIndicatorConfig] = useState<any>((initial as any)?.indicatorConfig ?? { type: 'rsi', timeframe: '1day', entryThreshold: 30, exitThreshold: 70 })
+  const [rule, setRule] = useState<any>((initial as any)?.rule ?? undefined)
 
   const createBot = useCreateBot();
   const updateBot = useUpdateBot();
@@ -141,7 +149,11 @@ export default function BotForm({ open, onOpenChange, initial, mode = "create", 
       name,
       strategy,
       assets: assets.split(",").map((a) => a.trim()).filter(Boolean),
-      capital: Number(capital),
+  capital: Number(capital),
+  stopLoss,
+  takeProfit,
+  indicatorConfig: strategy === 'indicator' ? indicatorConfig : undefined,
+  rule,
       status,
     };
 
@@ -259,6 +271,18 @@ export default function BotForm({ open, onOpenChange, initial, mode = "create", 
     return () => window.removeEventListener('keydown', onKey);
   }, [showAssetSearch, suggestions, highlightIndex]);
 
+  // parsed assets and primary ticker selection
+  const [parsedAssets, setParsedAssets] = useState<string[]>(() => assets.split(',').map(s => s.trim()).filter(Boolean));
+  const [primaryTicker, setPrimaryTicker] = useState<string>(() => parsedAssets[0] ?? 'SPY');
+
+  useEffect(() => {
+    const arr = assets.split(',').map(s => s.trim()).filter(Boolean);
+    setParsedAssets(arr);
+    if (!arr.includes(primaryTicker)) {
+      setPrimaryTicker(arr[0] ?? 'SPY');
+    }
+  }, [assets]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -366,6 +390,88 @@ export default function BotForm({ open, onOpenChange, initial, mode = "create", 
               <SelectItem value="stopped">Stopped</SelectItem>
             </SelectContent>
           </Select>
+          {/* Primary ticker selector and contextual overlays to help pick strategies and see market pulse while configuring a bot */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium">Primary ticker</label>
+            <Select value={primaryTicker} onValueChange={(v) => setPrimaryTicker(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder={parsedAssets[0] ?? 'SPY'} />
+              </SelectTrigger>
+              <SelectContent>
+                {parsedAssets.length === 0 && <SelectItem value={'SPY'}>SPY</SelectItem>}
+                {parsedAssets.map((sym) => (
+                  <SelectItem key={sym} value={sym}>{sym}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(() => {
+                // connect overlays to mock live market data
+                const md = generateDemoMarketData();
+                const rec = md.find((r: any) => r.symbol === primaryTicker || r.symbol === primaryTicker.replace('-', ''));
+                const price = rec?.price ?? 0;
+                const changePct = rec?.change ?? 0;
+                const avgChange = md.reduce((acc, r) => acc + (r.change ?? 0), 0) / Math.max(md.length, 1);
+                return (
+                  <>
+                    <StockAggregator ticker={primaryTicker} price={price} changePct={changePct} />
+                    <MarketPulse indexName="Market Pulse" changePct={avgChange} />
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Risk & strategy config */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium">Stop Loss (%)</label>
+              <Input type="number" value={stopLoss ?? ''} onChange={(e) => setStopLoss(Number(e.target.value))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Take Profit (%)</label>
+              <Input type="number" value={takeProfit ?? ''} onChange={(e) => setTakeProfit(Number(e.target.value))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Primary Rule</label>
+              <div className="text-xs text-gray-500">Use the rule builder to create multi-condition triggers</div>
+            </div>
+          </div>
+
+          {strategy === 'indicator' && (
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Indicator Configuration</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div>
+                  <label className="text-xs">Type</label>
+                  <Select value={indicatorConfig.type} onValueChange={(v) => setIndicatorConfig({ ...indicatorConfig, type: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="rsi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rsi">RSI</SelectItem>
+                      <SelectItem value="macd">MACD</SelectItem>
+                      <SelectItem value="bollinger">Bollinger</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs">Entry Threshold</label>
+                  <Input type="number" value={indicatorConfig.entryThreshold} onChange={(e) => setIndicatorConfig({ ...indicatorConfig, entryThreshold: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="text-xs">Exit Threshold</label>
+                  <Input type="number" value={indicatorConfig.exitThreshold} onChange={(e) => setIndicatorConfig({ ...indicatorConfig, exitThreshold: Number(e.target.value) })} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-2">
+            <RuleBuilder value={rule} onChange={(g) => setRule(g)} />
+          </div>
+
           <DialogFooter>
             <Button
               type="submit"

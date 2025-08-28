@@ -11,6 +11,7 @@ type FormValues = { name?: string; email: string; password: string }
 export default function SignUpForm() {
   const router = useRouter()
   const { register, handleSubmit, setError } = useForm<FormValues>()
+  const { runAuthLifecycle } = require('@/hooks/useAuthLifecycle') as any
 
   async function onSubmit(values: FormValues) {
     try {
@@ -25,6 +26,9 @@ export default function SignUpForm() {
         throw new Error(body?.error ?? 'Registration failed')
       }
 
+      try {
+        await runAuthLifecycle()
+      } catch (e) {}
       router.push('/dashboard')
     } catch (err: any) {
       setError('email', { message: err?.message ?? 'Unexpected error' })

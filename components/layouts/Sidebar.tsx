@@ -1,35 +1,78 @@
-// Sidebar navigation for Trading Bot Social Platform
-// Uses shadcn/ui and Tailwind
+"use client";
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Menu, X, LayoutDashboard, Bot, PieChart, Calculator, FlaskConical, Hammer, PlayCircle } from 'lucide-react';
 
-import { Sidebar as ShadSidebar } from "@/components/ui/sidebar";
-import { Home, Users, PieChart, Eye, BarChart2 } from "lucide-react";
-import Link from "next/link";
+type Item = { label: string; href?: string; icon?: any; children?: Item[] };
 
-export function Sidebar() {
+const NAV: Item[] = [
+  { label: 'Overview', href: '/overview', icon: LayoutDashboard },
+  { label: 'Bots', href: '/bots', icon: Bot },
+  { label: 'Portfolio', href: '/portfolio', icon: PieChart },
+  { label: 'Backtest', href: '/backtest', icon: FlaskConical },
+  {
+    label: 'Calculators', icon: Calculator, children: [
+      { label: 'Financial', href: '/calculators/financial' },
+      { label: 'Trading', href: '/calculators/trading' },
+    ]
+  },
+  { label: 'Strategy Builder', href: '/strategies/builder', icon: Hammer },
+];
+
+export default function Sidebar() {
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const pathname = usePathname();
+
+  const toggle = () => setOpen(o => !o);
+  const toggleSection = (label: string) => setExpanded(e => ({ ...e, [label]: !e[label] }));
+
   return (
-    <aside className="w-64 bg-card border-r flex flex-col min-h-screen">
-      <div className="p-6 font-bold text-xl tracking-tight">Bot Army</div>
-      <nav className="flex-1 px-4 space-y-2">
-        <NavLink href="/" icon={<Home className="w-5 h-5" />}>Dashboard</NavLink>
-        <NavLink href="/bots" icon={<Users className="w-5 h-5" />}>Bots</NavLink>
-        <NavLink href="/portfolios" icon={<PieChart className="w-5 h-5" />}>Portfolios</NavLink>
-        <NavLink href="/watchlists" icon={<Eye className="w-5 h-5" />}>Watchlists</NavLink>
-        <NavLink href="/market" icon={<BarChart2 className="w-5 h-5" />}>Market Data</NavLink>
-      </nav>
-      <div className="p-4 text-xs text-muted-foreground">© 2025 Bot Army</div>
-    </aside>
-  );
+    <>
+      <button aria-label="Toggle navigation" onClick={toggle} className="lg:hidden fixed top-3 left-3 z-40 p-2 rounded-md bg-gray-800 text-white">
+        {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+  <aside aria-label="Primary" className={`fixed lg:static top-0 left-0 h-full w-64 bg-gray-950/95 backdrop-blur border-r border-gray-800 flex flex-col transform transition-transform duration-300 z-30 ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="h-16 flex items-center px-5 text-indigo-300 font-bold tracking-wide border-b border-gray-800">Bot Dashboard</div>
+  <nav className="flex-1 overflow-y-auto p-4 space-y-2" role="navigation">
+          {NAV.map(item => {
+            const active = item.href && pathname === item.href;
+            if (item.children) {
+              const isOpen = expanded[item.label];
+              return (
+                <div key={item.label}>
+                  <button onClick={() => toggleSection(item.label)} className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${isOpen ? 'bg-gray-800' : 'hover:bg-gray-800'} text-gray-300`}> 
+                    <span className="flex items-center gap-2">
+                      {item.icon ? <item.icon className="w-4 h-4 opacity-80" /> : null}
+                      {item.label}
+                    </span>
+                    <span className="text-xs">{isOpen ? '−' : '+'}</span>
+                  </button>
+                  <div className={`mt-1 ml-4 border-l border-gray-800 pl-3 space-y-1 overflow-hidden transition-[max-height] duration-300 ${isOpen ? 'max-h-64' : 'max-h-0'}`}>
+                    {item.children.map(c => {
+                      const childActive = c.href && pathname === c.href;
+                      return (
+                        <Link key={c.label} href={c.href!} className={`block px-2 py-1.5 rounded text-sm transition ${childActive ? 'bg-indigo-600/20 text-indigo-300 font-semibold' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`}>{c.label}</Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <Link key={item.label} href={item.href!} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition ${active ? 'bg-indigo-600/20 text-indigo-300 font-semibold' : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100'}`}> {item.icon ? <item.icon className="w-4 h-4 opacity-80" /> : null} <span>{item.label}</span></Link>
+            )
+          })}
+        </nav>
+  <div className="p-4 border-t border-gray-800">
+          <form action="/api/auth/logout" method="post">
+            <button type="submit" className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md py-2 text-sm font-medium">
+              <PlayCircle className="w-4 h-4 rotate-180" /> Log off
+            </button>
+          </form>
+        </div>
+      </aside>
+    </>
+  )
 }
-
-function NavLink({ href, icon, children }: { href: string; icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent transition-colors">
-      {icon}
-      <span>{children}</span>
-    </Link>
-  );
-}
-
-// Summary of Changes:
-// - Created Sidebar navigation with links for Dashboard, Bots, Portfolios, Watchlists, and Market Data.
-// - Uses shadcn/ui, Tailwind, and Lucide icons for a modern look.

@@ -25,12 +25,15 @@ export default function Overview({ user, portfolio, activeBots }: { user?: Overv
 
           <div className="mt-4 space-y-2">
             {p.allocation && Object.keys(p.allocation).length > 0 ? (
-              Object.entries(p.allocation).slice(0, 5).map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between">
-                  <div className="text-sm text-gray-300">{k}</div>
-                  <div className="text-sm text-gray-200">{v}%</div>
-                </div>
-              ))
+              Object.entries(p.allocation).slice(0, 5).map(([k, raw]) => {
+                const num = typeof raw === 'number' && isFinite(raw) ? raw : 0;
+                return (
+                  <div key={k} className="flex items-center justify-between">
+                    <div className="text-sm text-gray-300">{k}</div>
+                    <div className="text-sm text-gray-200">{num.toFixed(2)}%</div>
+                  </div>
+                )
+              })
             ) : (
               <div className="text-gray-400">No allocation data</div>
             )}

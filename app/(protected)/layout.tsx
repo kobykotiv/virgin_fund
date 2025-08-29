@@ -5,6 +5,7 @@ import { UserAccountNav } from "@/components/user-account-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 import { DashboardFooter } from "@/components/dashboard-footer"
 import { redirect } from "next/navigation"
+import { SessionProvider, useSession } from "@/lib/session-context"
 
 // Extract navigation items to server component
 const navigationItems = [
@@ -34,15 +35,15 @@ const navigationItems = [
   },
 ]
 
-interface ProtectedLayoutProps {
-  children: ReactNode
-}
+function ProtectedLayoutContent({ children }: { children: ReactNode }) {
+  const { user, isLoading } = useSession()
 
-export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
-  const isAuthenticated = true // This would be a real auth check
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
 
-  if (!isAuthenticated) {
-    redirect("/home")
+  if (!user) {
+    redirect("/login")
   }
 
   return (
@@ -76,6 +77,14 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
       <DashboardFooter />
     </div>
+  )
+}
+
+export default function ProtectedLayout({ children }: { children: ReactNode }) {
+  return (
+    <SessionProvider>
+      <ProtectedLayoutContent>{children}</ProtectedLayoutContent>
+    </SessionProvider>
   )
 }
 

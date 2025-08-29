@@ -48,7 +48,8 @@ export default function Navigation() {
               Log in
             </Link>
             <Link 
-              href="/dashboard/register" 
+              href="/dashboard/register" >
+              Sign up
             </Link>
           </div>
           

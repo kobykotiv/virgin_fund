@@ -27,8 +27,6 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
-    instrumentationHook: false,
-    reactRoot: true,
     scrollRestoration: true,
   },
   webpack: (config, { isServer }) => {

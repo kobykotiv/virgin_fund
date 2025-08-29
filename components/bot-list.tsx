@@ -4,7 +4,7 @@ import type { Bot } from "@/types/bot"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, Play, Pause, AlertTriangle, RefreshCw, DollarSign } from "lucide-react"
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   AlertDialog,
@@ -64,8 +64,8 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
 
   // Helper function to get status toggle icon
   const getStatusToggleIcon = (status: string) => {
-    if (status === "error") return <AlertTriangle className="h-4 w-4" />
-    return status === "active" ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />
+    if (status === "error") return "⚠️"
+    return status === "active" ? "⏸️" : "▶️"
   }
 
   // Helper function to get status toggle title
@@ -100,7 +100,7 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={isDemoMode ? 7 : 6} className="h-24 text-center">
-                  <RefreshCw className="h-5 w-5 animate-spin mx-auto" />
+                  <div className="animate-spin text-2xl mx-auto">🔄</div>
                   <p className="mt-2 text-sm text-muted-foreground">Loading bots...</p>
                 </TableCell>
               </TableRow>
@@ -153,7 +153,7 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
                     <TableCell>
                       {bot.allocation ? (
                         <div className="flex items-center">
-                          <DollarSign className="h-3.5 w-3.5 text-green-500 mr-1" />
+                          <span className="text-green-500 mr-1">💰</span>
                           <span>${bot.allocation.toLocaleString()}</span>
                         </div>
                       ) : (
@@ -177,7 +177,7 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
                       </Button>
 
                       <Button variant="outline" size="icon" onClick={() => onEdit(bot)} title="Edit Bot">
-                        <Edit className="h-4 w-4" />
+                        ✏️
                       </Button>
 
                       <AlertDialog open={botToDelete === bot.id} onOpenChange={(open) => !open && setBotToDelete(null)}>
@@ -188,7 +188,7 @@ export function BotList({ bots, onEdit, onDelete, onToggleStatus, isLoading = fa
                             onClick={() => setBotToDelete(bot.id)}
                             title="Delete Bot"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            🗑️
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

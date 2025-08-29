@@ -2,72 +2,109 @@
 applyTo: '**/*.{ts,tsx,js,jsx,md}'
 ---
 
-# Virgin Fund - Development Workflow
+# Virgin Fund - PaaS Development Workflow
 
-## Daily Development Cycle
+## Platform Development Lifecycle
 
-### Morning Setup
-1. **Pull Latest Changes**
+### Platform Planning Phase
+1. **User Story Mapping**
+   - Define trader workflows and user journeys
+   - Identify platform capabilities and limitations
+   - Plan feature rollout and user adoption strategy
+
+2. **Technical Architecture Review**
+   - Assess Supabase schema requirements
+   - Plan real-time subscription patterns
+   - Design caching and performance strategies
+   - Review Alpaca integration requirements
+
+3. **Platform Readiness Check**
+   ```bash
+   # Verify Supabase connection
+   npx supabase status
+   
+   # Check migrations status
+   npx supabase migration list
+   
+   # Test platform APIs
+   bun run test:api
+   ```
+
+### Daily Platform Development Cycle
+
+#### Morning Platform Setup
+1. **Sync Platform State**
    ```bash
    git pull origin main
-   bun install  # Ensure dependencies are up to date
+   bun install
+   npx supabase db reset  # Reset to latest schema
    ```
 
-2. **Check Project Status**
+2. **Platform Health Check**
    ```bash
-   bun run build  # Verify build works
-   bun dev        # Start development server
+   bun run build        # Verify platform builds
+   bun run test:unit    # Run unit tests
+   bun run test:e2e     # Run end-to-end platform tests
+   bun dev             # Start platform development server
    ```
 
-3. **Review Current Tasks**
-   - Check project board/issues
-   - Review recent commits
-   - Check for any blocking issues
+3. **Review Platform Metrics**
+   - Check Supabase dashboard for performance
+   - Review error logs and user feedback
+   - Monitor real-time subscription health
+   - Assess platform uptime and reliability
 
-### Development Process
+### Platform Development Process
 
-#### 1. Feature Development
+#### 1. Feature Platform Development
 ```bash
-# Create feature branch
-git checkout -b feature/your-feature-name
+# Create platform feature branch
+git checkout -b platform/feature-name
 
-# Make changes following coding standards
-# Test changes locally
-bun run build
-bun dev
+# Develop with platform patterns
+# - Implement real-time subscriptions
+# - Add comprehensive error handling
+# - Test with Supabase local development
+bun run dev:platform
 
-# Commit with descriptive message
-git add .
-git commit -m "feat: add feature description"
+# Platform quality checks
+bun run test:platform
+bun run lint:platform
+bun run build:platform
+
+# Deploy to staging
+bun run deploy:staging
 ```
 
-#### 2. Code Quality Checks
-- [ ] TypeScript compilation passes
-- [ ] ESLint passes
-- [ ] Build succeeds
-- [ ] Tests pass (if applicable)
-- [ ] Code follows project conventions
+#### 2. Platform Quality Assurance
+- [ ] **Real-time Testing**: Verify Supabase subscriptions work
+- [ ] **Performance Testing**: Check platform responsiveness
+- [ ] **Security Testing**: Validate RLS policies and authentication
+- [ ] **Scalability Testing**: Test with simulated user load
+- [ ] **Cross-browser Testing**: Ensure platform works across devices
+- [ ] **Offline Testing**: Verify offline functionality
 
-#### 3. Testing Strategy
+#### 3. Platform Testing Strategy
 ```typescript
-// Unit tests for utilities
-describe('calculateCompoundInterest', () => {
-  it('should calculate correctly', () => {
-    // Test implementation
+// Platform integration tests
+describe('Trading Platform', () => {
+  it('should handle real-time price updates', async () => {
+    // Test Supabase real-time subscriptions
+  })
+  
+  it('should execute trades through Alpaca', async () => {
+    // Test external API integration
+  })
+  
+  it('should maintain data consistency', async () => {
+    // Test database transactions
   })
 })
 
-// Component tests
-describe('SavingsCalculator', () => {
-  it('should render form', () => {
-    // Test implementation
-  })
-})
-
-// Integration tests
-describe('API Routes', () => {
-  it('should handle valid requests', () => {
-    // Test implementation
+// End-to-end platform tests
+describe('User Trading Workflow', () => {
+  it('should complete full trading cycle', async () => {
+    // Login → Select Strategy → Execute Trade → View Results
   })
 })
 ```

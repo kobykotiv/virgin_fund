@@ -5,73 +5,110 @@ applyTo: '**/*.{ts,tsx,js,jsx}'
 # Virgin Fund - AI Coding Guidelines
 
 ## Project Overview
-Virgin Fund is a comprehensive finance and trading web application built with Next.js 15, TypeScript, and TailwindCSS. It provides trading bot management, backtesting tools, financial calculators, portfolio tracking, and Alpaca Markets integration.
+Virgin Fund is a **Platform as a Service (PaaS)** for algorithmic trading and portfolio management. Built with Next.js 15, TypeScript, and TailwindCSS, it provides a comprehensive trading platform where users can deploy, monitor, and optimize trading strategies through an intuitive web interface powered by Supabase as the backend infrastructure.
+
+## PaaS Architecture Principles
+
+### Frontend-First Design
+- **Primary Product**: The web application is the core product experience
+- **User-Centric**: All features designed around trader workflows and user experience
+- **Real-time Updates**: Live data synchronization between frontend and Supabase
+- **Progressive Enhancement**: Core functionality works offline, enhanced features when connected
+
+### Backend as a Service (Supabase)
+- **Database**: PostgreSQL with real-time subscriptions and RLS policies
+- **Authentication**: Built-in user management with social logins
+- **API Layer**: RESTful APIs with automatic OpenAPI documentation
+- **Real-time**: WebSocket connections for live trading data
+- **Edge Functions**: Serverless functions for complex computations
+
+### Service Integration Layer
+- **Alpaca Markets**: Live trading execution and market data
+- **External APIs**: Financial data providers, news feeds, analytics
+- **Caching Strategy**: Redis/memory cache for market data, Supabase for user data
+- **Background Jobs**: Automated strategy execution and portfolio rebalancing
 
 ## Core Architecture
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
+- **Framework**: Next.js 15 with App Router (PaaS frontend)
+- **Language**: TypeScript (type-safe PaaS development)
 - **Styling**: TailwindCSS with shadcn/ui components
-- **Database**: Supabase
-- **State Management**: React hooks + Context API
-- **API Integration**: Alpaca Markets, TradingView
+- **Database**: Supabase (BaaS infrastructure)
+- **State Management**: React hooks + Context API + Supabase real-time
+- **API Integration**: Alpaca Markets, TradingView, financial data providers
 
 ## File Structure Standards
 
-### Component Organization
+### PaaS Frontend Organization
 ```
 components/
 ├── ui/                    # Reusable UI components (shadcn/ui)
-├── landing/              # Landing page components
-├── dashboard/            # Dashboard-specific components
-├── [feature]/            # Feature-specific components
-└── layout/               # Layout components
+├── platform/             # Core platform components (dashboard, navigation)
+├── trading/              # Trading-specific components (bots, strategies, orders)
+├── analytics/            # Analytics and reporting components
+├── onboarding/           # User onboarding and setup flows
+└── layout/               # Layout components and providers
 ```
 
-### Page Structure
+### PaaS Page Structure
 ```
 app/
-├── (public)/             # Public routes
-├── (protected)/          # Protected routes (auth required)
-├── api/                  # API routes
-├── dashboard/            # Dashboard pages
-└── [feature]/            # Feature pages
+├── (platform)/           # Main platform routes (dashboard, trading)
+├── (public)/             # Public marketing pages
+├── api/                  # Platform APIs (Supabase integration)
+├── auth/                 # Authentication flows
+├── onboarding/           # User setup and configuration
+└── [feature]/            # Feature-specific routes
 ```
 
-### Utility Organization
+### Backend Service Organization
 ```
 lib/
-├── utils/                # General utilities
-├── services/             # External service integrations
-├── hooks/                # Custom React hooks
-├── types/                # TypeScript type definitions
-└── constants/            # Application constants
+├── supabase/             # Supabase client and utilities
+├── services/             # External service integrations (Alpaca, etc.)
+├── platform/             # Core platform business logic
+├── trading/              # Trading engine and strategy logic
+├── analytics/            # Analytics and reporting utilities
+└── utils/                # General utilities
 ```
 
-## Coding Standards
+### Supabase Integration Patterns
+```
+supabase/
+├── migrations/           # Database schema migrations
+├── functions/            # Edge functions for complex operations
+├── policies/             # Row Level Security policies
+└── triggers/             # Database triggers and functions
+```
 
-### TypeScript
-- Use strict type checking
-- Define interfaces for all data structures
-- Use union types for API responses
-- Implement proper error types
+## PaaS Coding Standards
 
-### React Components
-- Use functional components with hooks
-- Add "use client" directive for client components
-- Implement proper loading and error states
-- Use TypeScript for all props
+### Platform-First Development
+- **User Experience Priority**: Every feature must enhance the trader's experience
+- **Scalable Architecture**: Design for thousands of concurrent users
+- **Real-time Updates**: Implement live data synchronization patterns
+- **Offline Resilience**: Core functionality works without constant connectivity
+- **Progressive Enhancement**: Basic features work, advanced features enhance
 
-### API Routes
-- Use NextResponse for consistent responses
-- Implement proper error handling
-- Validate input data
-- Use middleware for authentication
+### Supabase Integration Standards
+- **Real-time Subscriptions**: Use Supabase real-time for live updates
+- **Row Level Security**: Implement proper RLS policies for multi-tenant data
+- **Optimistic Updates**: Update UI immediately, sync with backend
+- **Error Boundaries**: Handle network failures gracefully
+- **Caching Strategy**: Cache user data in Supabase, market data in memory/Redis
 
-### Database Operations
-- Use Supabase client for database operations
-- Implement proper error handling
-- Use transactions for complex operations
-- Validate data before insertion
+### TypeScript Standards
+- **Strict Type Safety**: Enable strict mode for all platform code
+- **Platform Types**: Define comprehensive types for trading domain
+- **API Contracts**: Type all API responses and requests
+- **Error Types**: Implement proper error handling with typed errors
+- **Generic Patterns**: Use generics for reusable platform components
+
+### React Component Patterns
+- **Platform Components**: Build reusable components for trading workflows
+- **Real-time Hooks**: Custom hooks for Supabase subscriptions
+- **Loading States**: Implement skeleton loading for better UX
+- **Error Recovery**: Components should handle and recover from errors
+- **Accessibility**: WCAG compliant for professional trading platform
 
 ## Development Workflow
 

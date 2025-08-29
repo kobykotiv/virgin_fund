@@ -2,72 +2,85 @@
 applyTo: '**/*.{ts,tsx,js,jsx,json,md}'
 ---
 
-# Virgin Fund - Troubleshooting Guide
+# Virgin Fund - PaaS Troubleshooting Guide
 
-## Build Errors
+## Platform Health Monitoring
 
-### Parallel Pages Conflict
-**Error**: "You cannot have two parallel pages that resolve to the same path"
-**Solution**:
-1. Check for duplicate page files in different route groups
-2. Rename conflicting routes (e.g., `/bots` → `/my-bots`)
-3. Ensure route groups don't create URL conflicts
+### Platform Status Checks
+```bash
+# Check overall platform health
+curl https://api.virginfund.com/health
 
-### Missing Module Errors
-**Common Missing Modules**:
-- `@/lib/auth` - Create authentication configuration
-- `@/lib/supabaseAdmin` - Create Supabase admin client
-- `@/lib/session` - Create session utilities
-- `@/components/client-nav` - Replace with existing nav component
+# Check Supabase connection
+npx supabase status
 
-**Solution**: Create missing modules with proper exports
+# Check Alpaca API connectivity
+curl https://api.alpaca.markets/v2/account
 
-### ImageResponse Import Error
-**Error**: "ImageResponse moved from 'next/server' to 'next/og'"
-**Solution**:
-```typescript
-// Change this:
-import { ImageResponse } from 'next/server'
-// To this:
-import { ImageResponse } from 'next/og'
+# Check Redis cache health
+redis-cli ping
 ```
 
-### SSR in Server Components
-**Error**: "ssr: false is not allowed with next/dynamic in Server Components"
-**Solution**:
-1. Remove `ssr: false` from dynamic imports in server components
-2. Or move the component to a client component
-3. Or use regular imports instead of dynamic
+### Real-time Monitoring
+- **Supabase Dashboard**: Database performance and connection health
+- **Vercel Dashboard**: Frontend deployment and performance metrics
+- **Alpaca Dashboard**: API rate limits and trading status
+- **Redis Dashboard**: Cache hit rates and memory usage
 
-### Client Component Hook Usage
-**Error**: "useState only works in client components"
-**Solution**: Add `"use client"` directive at top of file
+## Platform Build Errors
 
-## Runtime Errors
+### Supabase Schema Conflicts
+**Error**: "Migration conflicts detected"
+**Platform Solution**:
+1. Check current migration status: `npx supabase migration list`
+2. Reset local database: `npx supabase db reset`
+3. Pull latest schema changes: `npx supabase db pull`
+4. Reapply migrations: `npx supabase db push`
 
-### Authentication Issues
-**Problem**: API routes failing with 401 Unauthorized
-**Checks**:
-1. Verify NextAuth configuration
-2. Check session tokens
-3. Validate environment variables
-4. Ensure proper middleware setup
-
-### Database Connection Issues
-**Problem**: Supabase connection failures
-**Checks**:
-1. Verify environment variables
-2. Check Supabase project status
-3. Validate connection strings
+### Real-time Subscription Failures
+**Error**: "Failed to establish WebSocket connection"
+**Platform Solution**:
+1. Verify Supabase real-time is enabled
+2. Check RLS policies allow subscriptions
+3. Validate WebSocket URL configuration
 4. Test with Supabase dashboard
 
-### API Integration Issues
-**Problem**: Alpaca API failures
-**Checks**:
-1. Verify API credentials
-2. Check rate limits
-3. Validate request format
-4. Test with Alpaca sandbox
+### Alpaca API Integration Issues
+**Error**: "Alpaca API rate limit exceeded"
+**Platform Solution**:
+1. Implement exponential backoff retry logic
+2. Cache market data to reduce API calls
+3. Upgrade Alpaca API plan for higher limits
+4. Implement request queuing for burst traffic
+
+## Platform Runtime Errors
+
+### Authentication Failures
+**Problem**: Users unable to login to platform
+**Platform Checks**:
+1. Verify Supabase Auth configuration
+2. Check JWT token expiration settings
+3. Validate OAuth provider settings
+4. Test social login integrations
+5. Review RLS policies for user data access
+
+### Trading Execution Failures
+**Problem**: Orders failing to execute
+**Platform Checks**:
+1. Verify Alpaca API credentials
+2. Check account permissions and funding
+3. Validate order parameters and formats
+4. Monitor Alpaca API status and maintenance
+5. Review platform rate limiting
+
+### Data Synchronization Issues
+**Problem**: Frontend and backend data out of sync
+**Platform Solutions**:
+1. Implement optimistic updates with rollback
+2. Use Supabase real-time subscriptions
+3. Add data validation on both client and server
+4. Implement conflict resolution strategies
+5. Monitor data consistency with checksums
 
 ## Development Environment Issues
 

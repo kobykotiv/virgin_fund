@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Portfolio } from '@/hooks/usePortfolios';
-import { MoreHorizontal, TrendingUp, TrendingDown, BarChart3, Rebalance, Trash2, Settings } from 'lucide-react';
+import { MoreHorizontal, TrendingUp, TrendingDown, BarChart3, RotateCcw as Rebalance, Trash2, Settings } from 'lucide-react';
 
 interface PortfolioTableProps {
   portfolios: Portfolio[];

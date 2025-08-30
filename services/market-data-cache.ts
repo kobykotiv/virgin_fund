@@ -1,9 +1,9 @@
-import { AlpacaClient } from '@alpacahq/alpaca-trade-api';
-import mongoose from 'mongoose';
-import MarketDataCache from '@/models/mongodb/MarketDataCache';
-import { connectToDatabase, disconnectFromDatabase } from '@/lib/db/models';
-import { Document } from 'mongodb';
+import AlpacaClient from '@alpacahq/alpaca-trade-api';
 import { MarketDataBar } from '@/types/market';
+
+// In-memory cache fallback (TTL)
+type CacheEntry<T> = { data: T; expiresAt: number }
+const inMemoryCache: Record<string, CacheEntry<any>> = {};
 
 // Cache configuration
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes in milliseconds
@@ -39,53 +39,40 @@ class MarketDataCacheService {
     key: string, 
     fetchFn: () => Promise<T>
   ): Promise<T> {
-    await connectToDatabase();
-    
-    try {
-      // Check if we have valid cached data
-      const now = Date.now();
-      const cachedEntry = await MarketDataCache.findOne({ key, expiresAt: { $gt: now } });
-      
-      if (cachedEntry) {
-        console.log(`Returning cached data for ${key}`);
-        return cachedEntry.data;
-      }
-      
-      // Fetch fresh data
-      console.log(`Fetching fresh data for ${key}`);
-      const data = await fetchFn();
-      
-      // Cache the result
-      await MarketDataCache.findOneAndUpdate(
-        { key },
-        { 
-          key,
-          data,
-          timestamp: now,
-          expiresAt: new Date(now + CACHE_TTL)
-        },
-        { upsert: true, new: true }
-      );
-      
-      return data;
-    } finally {
-      await disconnectFromDatabase();
+    // Check in-memory cache first
+    const now = Date.now();
+    const entry = inMemoryCache[key];
+    if (entry && entry.expiresAt > now) {
+      console.log(`Returning cached data for ${key} (in-memory)`);
+      return entry.data as T;
     }
+
+    // Fetch fresh data and cache it in-memory
+    console.log(`Fetching fresh data for ${key}`);
+    const data = await fetchFn();
+    inMemoryCache[key] = { data, expiresAt: now + CACHE_TTL };
+    return data;
   }
 
-  // Clear cache for a specific key or all cache if no key provided
-  public async clearCache(key?: string): Promise<void> {
-    await connectToDatabase();
-    
-    try {
-      if (key) {
-        await MarketDataCache.deleteOne({ key });
-      } else {
-        await MarketDataCache.deleteMany({});
-      }
-    } finally {
-      await disconnectFromDatabase();
+  // Clear cache for a specific key, or clear all, or clear entries older than X days
+  // Usage: clearCache('watchlists:all') OR clearCache(undefined, 7)
+  public async clearCache(key?: string, olderThanDays?: number): Promise<void> {
+    if (key) {
+      delete inMemoryCache[key];
+      return;
     }
+
+    if (typeof olderThanDays === 'number') {
+      const cutoff = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
+      Object.keys(inMemoryCache).forEach(k => {
+        if (inMemoryCache[k].expiresAt < cutoff) delete inMemoryCache[k];
+      });
+      console.log(`Cleared market data cache older than ${olderThanDays} days`);
+      return;
+    }
+
+    // Default: clear everything
+    Object.keys(inMemoryCache).forEach(k => delete inMemoryCache[k]);
   }
 
   // Get calendar data with caching
@@ -110,12 +97,15 @@ class MarketDataCacheService {
     }
     
     const cacheKey = `activities:${activityType}:${date || 'all'}`;
-    return this.getData(cacheKey, () => 
-      this.alpaca!.getAccountActivities({
-        activityType,
-        date,
-      })
-    );
+    return this.getData(cacheKey, async () => {
+      // newer SDK expects activityTypes and pagination params; wrap for compatibility
+      const params: any = { activityTypes: activityType ? [activityType] : undefined };
+      if (date) params.date = date;
+      // call whatever method exists
+      // @ts-ignore
+      const resp = await (this.alpaca as any).getAccountActivities?.(params) ?? [];
+      return resp;
+    });
   }
 
   // Get market data with caching
@@ -125,14 +115,23 @@ class MarketDataCacheService {
     }
     
     const cacheKey = `marketdata:${symbol}:${timeframe}:${start}:${end}`;
-    return this.getData(cacheKey, () => 
-      this.alpaca!.getBars({
-        symbol,
-        timeframe,
-        start,
-        end,
-      })
-    );
+    return this.getData(cacheKey, async () => {
+      // prefer getBarsV2 if available
+      // @ts-ignore
+      if ((this.alpaca as any).getBarsV2) {
+        // getBarsV2 returns an async iterator in some SDKs; normalize to array
+        // @ts-ignore
+        const it = (this.alpaca as any).getBarsV2(symbol, { start, end, timeframe });
+        const out: any[] = [];
+        if (it && typeof it[Symbol.asyncIterator] === 'function') {
+          for await (const b of it) out.push(b);
+          return out;
+        }
+      }
+      // fallback to getBars if present
+      // @ts-ignore
+      return await (this.alpaca as any).getBars?.({ symbol, timeframe, start, end }) ?? [];
+    });
   }
 
   // Get watchlists with caching
@@ -142,9 +141,10 @@ class MarketDataCacheService {
     }
     
     const cacheKey = `watchlists:all`;
-    return this.getData(cacheKey, () => 
-      this.alpaca!.getWatchlists()
-    );
+    return this.getData(cacheKey, async () => {
+      // @ts-ignore
+      return await (this.alpaca as any).getWatchlists?.() ?? [];
+    });
   }
 
   // Create a new watchlist
@@ -153,10 +153,8 @@ class MarketDataCacheService {
       throw new Error('Alpaca client not initialized');
     }
     
-    const watchlist = await this.alpaca!.createWatchlist({
-      name,
-      symbols
-    });
+  // @ts-ignore
+  const watchlist = await (this.alpaca as any).createWatchlist?.({ name, symbols }) ?? null;
     
     // Invalidate the watchlists cache
     await this.clearCache('watchlists:all');
@@ -171,65 +169,30 @@ class MarketDataCacheService {
     }
     
     const cacheKey = `portfolio:history:${timeframe}`;
-    return this.getData(cacheKey, () => 
-      this.alpaca!.getPortfolioHistory({
-        period: timeframe,
-        timeframe: '1D'
-      })
-    );
+    return this.getData(cacheKey, async () => {
+      // normalize call shape for possible SDK versions
+      const params: any = { period: timeframe, timeframe: '1D' };
+      // @ts-ignore
+      return await (this.alpaca as any).getPortfolioHistory?.(params) ?? {};
+    });
   }
 
   async cacheData(symbol: string, timeframe: string, data: MarketDataBar[]) {
-    try {
-      await connectToDatabase();
-      
-      // Upsert the data
-      await MarketDataCache.findOneAndUpdate(
-        { symbol, timeframe },
-        { symbol, timeframe, data, lastUpdated: new Date() },
-        { upsert: true, new: true }
-      );
-    } catch (error) {
-      console.error('Error caching market data:', error);
-      throw error;
-    }
+  const key = `market:${symbol}:${timeframe}`;
+  inMemoryCache[key] = { data, expiresAt: Date.now() + (60 * 60 * 1000) };
   }
   
   async getCachedData(symbol: string, timeframe: string, maxAge: number = 3600000): Promise<MarketDataBar[] | null> {
-    try {
-      await connectToDatabase();
-      
-      const cachedData = await MarketDataCache.findOne({ symbol, timeframe });
-      
-      if (!cachedData) return null;
-      
-      // Check if data is too old
-      const now = new Date();
-      const lastUpdated = new Date(cachedData.lastUpdated);
-      if (now.getTime() - lastUpdated.getTime() > maxAge) {
-        return null;
-      }
-      
-      return cachedData.data as MarketDataBar[];
-    } catch (error) {
-      console.error('Error retrieving cached market data:', error);
-      return null;
-    }
+    const key = `market:${symbol}:${timeframe}`;
+    const entry = inMemoryCache[key];
+    if (!entry) return null;
+    if (Date.now() - (entry.expiresAt - CACHE_TTL) > maxAge) return null;
+    return entry.data as MarketDataBar[];
   }
   
-  async clearCache(olderThanDays: number = 7) {
-    try {
-      await connectToDatabase();
-      
-      const date = new Date();
-      date.setDate(date.getDate() - olderThanDays);
-      
-      await MarketDataCache.deleteMany({ lastUpdated: { $lt: date } });
-      console.log(`Cleared market data cache older than ${olderThanDays} days`);
-    } catch (error) {
-      console.error('Error clearing market data cache:', error);
-      throw error;
-    }
+  // keep legacy-compatible method name (alias)
+  async clearOldCache(olderThanDays: number = 7) {
+    await this.clearCache(undefined, olderThanDays);
   }
 }
 

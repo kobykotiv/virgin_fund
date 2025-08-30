@@ -23,6 +23,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { calculatePositionValue, formatCurrency } from '@/lib/portfolio-utils'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
+import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from 'react'
+import { Position } from '@/types/portfolio'
+import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from 'react'
  
 interface Props {
   params: { id: string }
@@ -472,8 +475,8 @@ export default function PortfolioPage({ params }: Props) {
                       {portfolio.positions.flatMap(position => {
                         // If it's a basket, get trades from all its positions
                         if (position.assetType === 'basket' && position.positions) {
-                          return position.positions.flatMap(p => 
-                            (p.trades || []).map(trade => ({
+                          return position.positions.flatMap((p: { trades: any; ticker: any }) => 
+                            (p.trades || []).map((trade: any) => ({
                               ...trade,
                               ticker: p.ticker,
                               basketName: position.name
@@ -482,7 +485,7 @@ export default function PortfolioPage({ params }: Props) {
                         }
                         
                         // Regular position trades
-                        return (position.trades || []).map(trade => ({
+                        return (position.trades || []).map((trade: any) => ({
                           ...trade,
                           ticker: position.ticker
                         }));
@@ -707,7 +710,7 @@ function MobileOverviewSection({
           </div>
           
           <div className="space-y-1">
-            {portfolio.allocation.map(item => (
+            {portfolio.allocation.map((item: { name: boolean | Key | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; color: any; value: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined }) => (
               <div key={item.name} className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2">
                   <div 
@@ -741,7 +744,7 @@ function MobilePositionsSection({ portfolio }) {
       </CardHeader>
       <CardContent className="px-2">
         <div className="space-y-4">
-          {portfolio.positions.map((position) => {
+          {portfolio.positions.map((position: Position) => {
             if (position.assetType === 'basket') {
               // Basket position card
               return (
@@ -754,7 +757,7 @@ function MobilePositionsSection({ portfolio }) {
                   </CardHeader>
                   <CardContent className="py-0 px-3">
                     <div className="text-xs text-muted-foreground mb-2">
-                      Contains: {position.positions.map(p => p.ticker).join(", ")}
+                      Contains: {position.positions.map((p: { ticker: any }) => p.ticker).join(", ")}
                     </div>
                   </CardContent>
                   <CardFooter className="py-2 px-3 border-t bg-muted/30">
@@ -914,7 +917,7 @@ function MobileStrategySection({ portfolio, getSentimentColor }) {
             <div>
               <h3 className="text-sm font-medium mb-1">Portfolio Tags</h3>
               <div className="flex flex-wrap gap-1 mt-1">
-                {portfolio.tags.map(tag => (
+                {portfolio.tags.map((tag: boolean | Key | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined) => (
                   <Badge key={tag} variant="outline" className="text-xs">
                     {tag}
                   </Badge>

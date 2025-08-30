@@ -1,5 +1,3 @@
-"use client"
-
 // app/dashboard/backtest/page.tsx
 import { useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";

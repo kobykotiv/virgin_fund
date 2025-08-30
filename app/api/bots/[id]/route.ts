@@ -28,22 +28,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
     if (body.scheduleCron !== undefined) update.schedule_cron = body.scheduleCron
 
-    const { data: updated, error } = await supabase.from('bots').update(update).eq('id', params.id).eq('user_id', userId).select().limit(1).maybeSingle()
+    const { data: updated, error } = await supabase.from('bots').update(update).eq('id', params.id).eq('owner_id', userId).select().limit(1).maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     // Map the updated data back to frontend format
     const mappedUpdated = {
       ...updated,
-      type: updated.type || 'manual',
-      status: updated.status || 'paused',
-      strategy: updated.strategy_type || updated.type || 'manual',
-      assets: updated.config?.assets || [],
-      allocation: updated.capital_allocated || 0,
+      type: updated.strategy,
+      status: updated.status === 'running' ? 'active' : updated.status,
       createdAt: updated.created_at,
       updatedAt: updated.updated_at,
-      userId: updated.user_id,
-      owner_id: updated.user_id // Add owner_id for compatibility
+      userId: updated.owner_id
     }
 
     return NextResponse.json(mappedUpdated)
@@ -61,7 +57,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     const userId = (session as any).user_id
     const supabase = getSupabaseAdmin()
 
-    const { error } = await supabase.from('bots').delete().eq('id', params.id).eq('user_id', userId)
+    const { error } = await supabase.from('bots').delete().eq('id', params.id).eq('owner_id', userId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   } catch (err) {
@@ -82,17 +78,17 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     const id = params.id
     const path = _req.nextUrl?.pathname || ''
     if (path.endsWith('/start')) {
-      const { data, error } = await supabase.from('bots').update({ status: 'active' }).eq('id', id).eq('user_id', userId).select().limit(1).maybeSingle()
+      const { data, error } = await supabase.from('bots').update({ status: 'running' }).eq('id', id).eq('owner_id', userId).select().limit(1).maybeSingle()
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
       return NextResponse.json({ data })
     }
     if (path.endsWith('/pause')) {
-      const { data, error } = await supabase.from('bots').update({ status: 'paused' }).eq('id', id).eq('user_id', userId).select().limit(1).maybeSingle()
+      const { data, error } = await supabase.from('bots').update({ status: 'paused' }).eq('id', id).eq('owner_id', userId).select().limit(1).maybeSingle()
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
       return NextResponse.json({ data })
     }
     if (path.endsWith('/stop')) {
-      const { data, error } = await supabase.from('bots').update({ status: 'stopped' }).eq('id', id).eq('user_id', userId).select().limit(1).maybeSingle()
+      const { data, error } = await supabase.from('bots').update({ status: 'stopped' }).eq('id', id).eq('owner_id', userId).select().limit(1).maybeSingle()
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
       return NextResponse.json({ data })
     }

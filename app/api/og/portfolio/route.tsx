@@ -1,4 +1,4 @@
-import { ImageResponse } from 'next/og'
+import { ImageResponse } from 'next/server'
 import { portfolios } from '@/lib/demo-portfolios'
  
 export const runtime = 'edge'

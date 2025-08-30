@@ -21,9 +21,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RefreshCw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 
-// Import the new enhanced dashboard layout
-import { EnhancedDashboardLayout } from "@/components/layout/enhanced-dashboard-layout"
-
 export default function DashboardPage() {
   const [bots, setBots] = useState<Bot[]>([])
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null)
@@ -165,375 +162,444 @@ export default function DashboardPage() {
   const [isDemoMode, setIsDemoMode] = useState(false)
 
   return (
-    <EnhancedDashboardLayout>
-      <div className="flex flex-col min-h-screen bg-background">
-        {/* Header Section */}
-        <div className="p-4 border-b flex justify-between items-center bg-card/50 backdrop-blur-sm">
-          <div>
-            <h1 className="text-2xl font-mono font-bold">Virgin Fund : GenEric TraDer AI</h1>
-            <p className="text-muted-foreground text-sm">Alpaca Markets Trading Bot Manager</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2" onClick={() => router.push("/backtest")}>
-              <BarChart2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Backtest</span>
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => setIsApiKeyFormOpen(true)} title="API Settings">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="p-4 border-b flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-mono font-bold">Virgin Fund : GenEric TraDer AI</h1>
+          <p className="text-muted-foreground text-sm">Alpaca Markets Trading Bot Manager</p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => router.push("/backtest")}>
+            <BarChart2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Backtest</span>
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => setIsApiKeyFormOpen(true)} title="API Settings">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
 
-        {/* Subscription Banner */}
-        <div className="px-4 py-2 mb-4">
-          {currentTier !== "xl" && (
-            <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-3 flex justify-between items-center">
-              <div>
-                <span className="text-sm font-medium">
-                  {currentTier === "free"
-                    ? "You are on the Free plan. Upgrade to enable live trading."
-                    : `You are on the ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} plan. Using ${bots.length}/${tierLimits.maxBots} bots.`}
-                </span>
+      {/* Add a subscription banner below the header */}
+      <div className="px-4 py-2 mb-4">
+        {currentTier !== "xl" && (
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-3 flex justify-between items-center">
+            <div>
+              <span className="text-sm font-medium">
+                {currentTier === "free"
+                  ? "You are on the Free plan. Upgrade to enable live trading."
+                  : `You are on the ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} plan. Using ${bots.length}/${tierLimits.maxBots} bots.`}
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push("/pricing")}
+              disabled={isDemoMode}
+              title={isDemoMode ? "Upgrade not available in demo mode" : "Upgrade your plan"}
+            >
+              Upgrade Plan
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab as any} className="flex-1">
+        <TabsList className="w-full justify-start border-b rounded-none px-4">
+          <TabsTrigger value="dashboard">Overview</TabsTrigger>
+          <TabsTrigger value="bots">Bots</TabsTrigger>
+          <TabsTrigger value="strategies">Strategies</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="flex-1 p-4">
+          {apiConfigured && (
+            <Dashboard 
+              bots={bots} 
+              apiConfig={apiConfig}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="bots" className="mt-0 h-full">
+          {apiConfigured && (
+            <div className="h-full">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Trading Bots</h2>
+                <Button
+                  onClick={() => {
+                    setSelectedBot(null)
+                    setIsFormOpen(true)
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" /> New Bot
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => router.push("/pricing")}
-                disabled={isDemoMode}
-                title={isDemoMode ? "Upgrade not available in demo mode" : "Upgrade your plan"}
-              >
-                Upgrade Plan
-              </Button>
+              <BotList
+                bots={bots}
+                onEdit={handleEditBot}
+                onDelete={handleDeleteBot}
+                onToggleStatus={handleToggleBotStatus}
+              />
             </div>
           )}
-        </div>
+        </TabsContent>
 
-        {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab as any} className="flex-1">
-          <TabsList className="w-full justify-start border-b rounded-none px-4 bg-card/50">
-            <TabsTrigger value="dashboard">Overview</TabsTrigger>
-            <TabsTrigger value="bots">Bots</TabsTrigger>
-            <TabsTrigger value="strategies">Strategies</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="flex-1 p-4">
-            {apiConfigured && (
-              <Dashboard
-                bots={bots}
-                apiConfig={apiConfig}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="bots" className="mt-0 h-full">
-            {apiConfigured && (
-              <div className="h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Trading Bots</h2>
-                  <Button
-                    onClick={() => {
-                      setSelectedBot(null)
-                      setIsFormOpen(true)
-                    }}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> New Bot
+        <TabsContent value="strategies" className="mt-0 h-full">
+          {apiConfigured && (
+            <div className="h-full p-4">
+              <h2 className="text-xl font-semibold mb-4">Trading Strategies</h2>
+              <p className="text-muted-foreground mb-4">Manage and customize your trading strategies.</p>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {/* Technical Analysis Strategies */}
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Mean Reversion</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Popular
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Buy low, sell high based on price deviations from historical averages.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
                   </Button>
                 </div>
-                <BotList
-                  bots={bots}
-                  onEdit={handleEditBot}
-                  onDelete={handleDeleteBot}
-                  onToggleStatus={handleToggleBotStatus}
-                />
-              </div>
-            )}
-          </TabsContent>
 
-          <TabsContent value="strategies" className="mt-0 h-full">
-            {apiConfigured && (
-              <div className="h-full p-4">
-                <h2 className="text-xl font-semibold mb-4">Trading Strategies</h2>
-                <p className="text-muted-foreground mb-4">Manage and customize your trading strategies.</p>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Technical Analysis Strategies */}
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Mean Reversion</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Popular
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Buy low, sell high based on price deviations from historical averages.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Momentum Trading</h3>
+                    <Badge variant="outline" className="text-xs">
+                      High Risk
+                    </Badge>
                   </div>
-
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Momentum Trading</h3>
-                      <Badge variant="outline" className="text-xs">
-                        High Risk
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Capitalize on continuing market trends and price movements.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
-
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Breakout Strategy</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Technical
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Enter positions when price breaks above resistance or below support.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
-
-                  {/* Indicator-Based Strategies */}
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">RSI Divergence</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Indicator
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Identify potential reversals when price and RSI move in opposite directions.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
-
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">MACD Crossover</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Indicator
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Trade when the MACD line crosses above or below the signal line.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
-
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Bollinger Squeeze</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Volatility
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Identify potential breakouts when Bollinger Bands contract significantly.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
-
-                  {/* Advanced Strategies */}
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Pairs Trading</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Advanced
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Trade correlated securities when their price relationship deviates from historical norms.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
-
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Sector Rotation</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Macro
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Shift investments between sectors based on economic cycle phases.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
-
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Options Wheel</h3>
-                      <Badge variant="outline" className="text-xs">
-                        Options
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Generate income by selling puts and calls on quality stocks you want to own.
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Apply to Watchlist
-                    </Button>
-                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Capitalize on continuing market trends and price movements.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
                 </div>
 
-                {/* Watchlist Comparison Section */}
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold mb-4">Compare Watchlist Tickers</h3>
-                  <div className="border rounded-lg p-4 bg-card">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="strategy-select">Select Strategy</Label>
-                        <Select defaultValue="rsi">
-                          <SelectTrigger id="strategy-select">
-                            <SelectValue placeholder="Select strategy" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="rsi">RSI Comparison</SelectItem>
-                            <SelectItem value="macd">MACD Signals</SelectItem>
-                            <SelectItem value="volume">Volume Analysis</SelectItem>
-                            <SelectItem value="correlation">Correlation Matrix</SelectItem>
-                            <SelectItem value="volatility">Volatility Ranking</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Breakout Strategy</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Technical
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Enter positions when price breaks above resistance or below support.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
+                </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="timeframe-select">Timeframe</Label>
-                        <Select defaultValue="1d">
-                          <SelectTrigger id="timeframe-select">
-                            <SelectValue placeholder="Select timeframe" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1h">1 Hour</SelectItem>
-                            <SelectItem value="4h">4 Hours</SelectItem>
-                            <SelectItem value="1d">1 Day</SelectItem>
-                            <SelectItem value="1w">1 Week</SelectItem>
-                            <SelectItem value="1m">1 Month</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                {/* Indicator-Based Strategies */}
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">RSI Divergence</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Indicator
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Identify potential reversals when price and RSI move in opposite directions.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
+                </div>
 
-                      <div className="flex items-end">
-                        <Button className="w-full">Compare Tickers</Button>
-                      </div>
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">MACD Crossover</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Indicator
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Trade when the MACD line crosses above or below the signal line.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Bollinger Squeeze</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Volatility
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Identify potential breakouts when Bollinger Bands contract significantly.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
+                </div>
+
+                {/* Advanced Strategies */}
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Pairs Trading</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Advanced
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Trade correlated securities when their price relationship deviates from historical norms.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Sector Rotation</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Macro
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Shift investments between sectors based on economic cycle phases.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Options Wheel</h3>
+                    <Badge variant="outline" className="text-xs">
+                      Options
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Generate income by selling puts and calls on quality stocks you want to own.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Apply to Watchlist
+                  </Button>
+                </div>
+              </div>
+
+              {/* Watchlist Comparison Section */}
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4">Compare Watchlist Tickers</h3>
+                <div className="border rounded-lg p-4 bg-card">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="strategy-select">Select Strategy</Label>
+                      <Select defaultValue="rsi">
+                        <SelectTrigger id="strategy-select">
+                          <SelectValue placeholder="Select strategy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="rsi">RSI Comparison</SelectItem>
+                          <SelectItem value="macd">MACD Signals</SelectItem>
+                          <SelectItem value="volume">Volume Analysis</SelectItem>
+                          <SelectItem value="correlation">Correlation Matrix</SelectItem>
+                          <SelectItem value="volatility">Volatility Ranking</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    <div className="mt-4 border-t pt-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium">Your Watchlist</h4>
-                        <Button variant="outline" size="sm">
-                          <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                          Refresh
-                        </Button>
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="timeframe-select">Timeframe</Label>
+                      <Select defaultValue="1d">
+                        <SelectTrigger id="timeframe-select">
+                          <SelectValue placeholder="Select timeframe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1h">1 Hour</SelectItem>
+                          <SelectItem value="4h">4 Hours</SelectItem>
+                          <SelectItem value="1d">1 Day</SelectItem>
+                          <SelectItem value="1w">1 Week</SelectItem>
+                          <SelectItem value="1m">1 Month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "BTC-USD"].map((ticker) => (
-                          <div key={ticker} className="flex items-center space-x-2 border rounded p-2">
-                            <Checkbox id={`ticker-${ticker}`} defaultChecked />
-                            <Label htmlFor={`ticker-${ticker}`} className="flex-1">
-                              {ticker}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex items-end">
+                      <Button className="w-full">Compare Tickers</Button>
+                    </div>
+                  </div>
 
-                      <div className="mt-4 h-64 border rounded-lg bg-muted/30 flex items-center justify-center">
-                        <div className="text-center">
-                          <BarChart2 className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-                          <p className="text-sm text-muted-foreground">
-                            Select a strategy and click "Compare Tickers" to see analysis
-                          </p>
+                  <div className="mt-4 border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">Your Watchlist</h4>
+                      <Button variant="outline" size="sm">
+                        <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                        Refresh
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "BTC-USD"].map((ticker) => (
+                        <div key={ticker} className="flex items-center space-x-2 border rounded p-2">
+                          <Checkbox id={`ticker-${ticker}`} defaultChecked />
+                          <Label htmlFor={`ticker-${ticker}`} className="flex-1">
+                            {ticker}
+                          </Label>
                         </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 h-64 border rounded-lg bg-muted/30 flex items-center justify-center">
+                      <div className="text-center">
+                        <BarChart2 className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Select a strategy and click "Compare Tickers" to see analysis
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
-          </TabsContent>
+            </div>
+          )}
+        </TabsContent>
 
-          <TabsContent value="performance" className="mt-0 h-full">
-            {apiConfigured && (
-              <div className="h-full p-4">
-                <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="border rounded-lg p-4 bg-card">
-                    <h3 className="font-medium mb-2">Portfolio Performance</h3>
-                    <div className="h-40 bg-muted rounded flex items-center justify-center">
-                      Performance Chart Placeholder
-                    </div>
+        <TabsContent value="performance" className="mt-0 h-full">
+          {apiConfigured && (
+            <div className="h-full p-4">
+              <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="border rounded-lg p-4 bg-card">
+                  <h3 className="font-medium mb-2">Portfolio Performance</h3>
+                  <div className="h-40 bg-muted rounded flex items-center justify-center">
+                    Performance Chart Placeholder
                   </div>
-                  <div className="border rounded-lg p-4 bg-card">
-                    <h3 className="font-medium mb-2">Bot Performance</h3>
-                    <div className="h-40 bg-muted rounded flex items-center justify-center">
-                      Bot Performance Chart Placeholder
-                    </div>
+                </div>
+                <div className="border rounded-lg p-4 bg-card">
+                  <h3 className="font-medium mb-2">Bot Performance</h3>
+                  <div className="h-40 bg-muted rounded flex items-center justify-center">
+                    Bot Performance Chart Placeholder
                   </div>
                 </div>
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        {/* Modals */}
-        {isApiKeyFormOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-card p-6 rounded-lg w-full max-w-md">
-              <ApiKeyForm
-                onSave={handleApiKeySave}
-                onCancel={() => setIsApiKeyFormOpen(false)}
-                currentConfig={apiConfig}
-              />
             </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-0 h-full">
+          {apiConfigured && (
+            <div className="h-full p-4">
+              <h2 className="text-xl font-semibold mb-4">Advanced Analytics</h2>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="border rounded-lg p-4 bg-card md:col-span-2">
+                  <h3 className="font-medium mb-2">Market Correlation</h3>
+                  <div className="h-60 bg-muted rounded flex items-center justify-center">
+                    Correlation Matrix Placeholder
+                  </div>
+                </div>
+                <div className="border rounded-lg p-4 bg-card">
+                  <h3 className="font-medium mb-2">Risk Metrics</h3>
+                  <ul className="space-y-2">
+                    <li className="flex justify-between">
+                      <span className="text-muted-foreground">Sharpe Ratio</span>
+                      <span>1.42</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-muted-foreground">Max Drawdown</span>
+                      <span>-8.3%</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-muted-foreground">Volatility</span>
+                      <span>12.7%</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-muted-foreground">Beta</span>
+                      <span>0.85</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-0 h-full">
+          {apiConfigured && (
+            <div className="h-full p-4">
+              <h2 className="text-xl font-semibold mb-4">Dashboard Settings</h2>
+              <div className="space-y-6 max-w-2xl">
+                <div className="border rounded-lg p-4 bg-card">
+                  <h3 className="font-medium mb-4">Display Preferences</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span>Show real-time updates</span>
+                      <div className="h-5 w-10 bg-muted rounded-full"></div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Compact view</span>
+                      <div className="h-5 w-10 bg-muted rounded-full"></div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Show notifications</span>
+                      <div className="h-5 w-10 bg-muted rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="border rounded-lg p-4 bg-card">
+                  <h3 className="font-medium mb-4">Data Refresh Rate</h3>
+                  <div className="h-5 w-full bg-muted rounded-full"></div>
+                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                    <span>5s</span>
+                    <span>30s</span>
+                    <span>1m</span>
+                    <span>5m</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {isApiKeyFormOpen && (
+        // Finally, update the ApiKeyForm component call to pass the current configuration
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-lg w-full max-w-md">
+            <ApiKeyForm
+              onSave={handleApiKeySave}
+              onCancel={() => setIsApiKeyFormOpen(false)}
+              currentConfig={apiConfig}
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {isFormOpen && (
-          <div className="fixed inset-0 bg-gradient-to-b from-background/95 to-background/90 backdrop-blur-sm z-50 flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-xl font-semibold">{selectedBot ? "Edit Bot" : "Create New Bot"}</h2>
-              <Button variant="ghost" size="icon" onClick={() => setIsFormOpen(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <BotForm
-                initialBot={selectedBot}
-                onSubmit={selectedBot ? handleUpdateBot : handleCreateBot}
-                onCancel={() => setIsFormOpen(false)}
-                presentationMode={true}
-              />
-            </div>
+      {isFormOpen && (
+        <div className="fixed inset-0 bg-gradient-to-b from-background/95 to-background/90 backdrop-blur-sm z-50 flex flex-col">
+          <div className="flex justify-between items-center p-4 border-b">
+            <h2 className="text-xl font-semibold">{selectedBot ? "Edit Bot" : "Create New Bot"}</h2>
+            <Button variant="ghost" size="icon" onClick={() => setIsFormOpen(false)}>
+              <X className="h-5 w-5" />
+            </Button>
           </div>
-        )}
+          <div className="flex-1 overflow-hidden">
+            <BotForm
+              initialBot={selectedBot}
+              onSubmit={selectedBot ? handleUpdateBot : handleCreateBot}
+              onCancel={() => setIsFormOpen(false)}
+              presentationMode={true}
+            />
+          </div>
+        </div>
+      )}
 
-        {/* Footer */}
-        <footer className="p-3 border-t text-center text-xs text-muted-foreground bg-card/50">
-          Virgin Fund : GenEric TraDer AI • Connected to Alpaca Markets • {new Date().getFullYear()}
-        </footer>
-      </div>
-    </EnhancedDashboardLayout>
+      <footer className="p-3 border-t text-center text-xs text-muted-foreground">
+        Virgin Fund : GenEric TraDer AI • Connected to Alpaca Markets • {new Date().getFullYear()}
+      </footer>
+    </div>
   )
 }
 

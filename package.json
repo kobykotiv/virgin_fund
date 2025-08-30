@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:prod": "next build -c next.config.prod.mjs",
     "start": "next start",
     "clean": "rimraf .next out",
     "prebuild": "npm run clean",

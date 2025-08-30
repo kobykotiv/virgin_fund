@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const userId = (session as any).user_id
     const supabase = getSupabaseAdmin()
 
-    const { data, error } = await supabase.from('bots').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('bots').select('*').eq('owner_id', userId).order('created_at', { ascending: false })
     if (error) {
       console.error('bots GET db error', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -20,15 +20,11 @@ export async function GET(req: NextRequest) {
     // Map database fields to frontend expected fields
     const mappedData = (data || []).map((bot: any) => ({
       ...bot,
-      type: bot.type || 'manual', // Map type to type
-      status: bot.status || 'paused', // Map status to status
-      strategy: bot.strategy_type || bot.type || 'manual', // Map strategy_type to strategy
-      assets: bot.config?.assets || [], // Extract assets from config
-      allocation: bot.capital_allocated || 0, // Map capital_allocated to allocation
+      type: bot.strategy, // Map strategy to type
+      status: bot.status === 'running' ? 'active' : bot.status, // Map running to active
       createdAt: bot.created_at,
       updatedAt: bot.updated_at,
-      userId: bot.user_id,
-      owner_id: bot.user_id // Add owner_id for compatibility
+      userId: bot.owner_id
     }))
 
     return NextResponse.json(mappedData)
@@ -48,28 +44,15 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json().catch(() => ({} as any))) as any
     const payload = {
-      user_id: userId,
+      owner_id: userId,
       name: body.name || null,
-      type: body.type || body.strategy || 'manual', // Map type to type
-      risk: body.risk || 'medium',
-      config: {
-        assets: body.assets || [],
-        stopLoss: body.stopLoss,
-        takeProfit: body.takeProfit,
-        maxDrawdown: body.maxDrawdown,
-        indicatorConfig: body.indicatorConfig,
-        gridConfig: body.gridConfig,
-        dcaConfig: body.dcaConfig,
-        basketConfig: body.basketConfig,
-      },
-      status: body.status === 'active' ? 'active' : (body.status || 'paused'), // Map active to active
-      strategy_type: body.type || body.strategy || 'manual',
-      capital_allocated: body.allocation ?? null,
-      max_position_size: body.maxPositionSize ?? null,
-      risk_tolerance: body.riskTolerance || 'medium',
-      auto_trade: body.autoTrade || false,
-      description: body.description || null,
-      performance: body.performance?.totalPnL || 0
+      strategy: body.type || body.strategy || 'dca', // Map type to strategy
+      assets: body.assets || [],
+      allocation: body.allocation ?? null,
+      currency: body.currency || 'USD',
+      status: body.status === 'active' ? 'running' : (body.status || 'paused'), // Map active to running
+      schedule_cron: body.scheduleCron || null,
+      initial_balance: body.initialBalance ?? null,
     }
 
     const { data: inserted, error } = await supabase.from('bots').insert([payload]).select().limit(1).maybeSingle()
@@ -81,15 +64,11 @@ export async function POST(req: NextRequest) {
     // Map the inserted data back to frontend format
     const mappedInserted = inserted ? {
       ...inserted,
-      type: inserted.type || 'manual',
-      status: inserted.status || 'paused',
-      strategy: inserted.strategy_type || inserted.type || 'manual',
-      assets: inserted.config?.assets || [],
-      allocation: inserted.capital_allocated || 0,
+      type: inserted.strategy,
+      status: inserted.status === 'running' ? 'active' : inserted.status,
       createdAt: inserted.created_at,
       updatedAt: inserted.updated_at,
-      userId: inserted.user_id,
-      owner_id: inserted.user_id // Add owner_id for compatibility
+      userId: inserted.owner_id
     } : null
 
     return NextResponse.json(mappedInserted)

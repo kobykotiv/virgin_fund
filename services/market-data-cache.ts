@@ -1,285 +1,230 @@
-import { supabase } from '@/lib/supabase-client';
+import { AlpacaClient } from '@alpacahq/alpaca-trade-api';
+import mongoose from 'mongoose';
+import MarketDataCache from '@/models/mongodb/MarketDataCache';
+import { connectToDatabase, disconnectFromDatabase } from '@/lib/db/models';
+import { Document } from 'mongodb';
 import { MarketDataBar } from '@/types/market';
 
 // Cache configuration
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 class MarketDataCacheService {
-  // Check if Alpaca client is initialized (for backward compatibility)
+  private alpaca: AlpacaClient | null = null;
+
+  constructor() {
+    // Initialize Alpaca client if in browser environment
+    if (typeof window !== 'undefined') {
+      const apiKey = localStorage.getItem('alpaca_api_key');
+      const apiSecret = localStorage.getItem('alpaca_secret_key');
+      
+      if (apiKey && apiSecret) {
+        this.alpaca = new AlpacaClient({
+          credentials: {
+            key: apiKey,
+            secret: apiSecret,
+          },
+          paper: true, // Use paper trading for safety
+        });
+      }
+    }
+  }
+
+  // Check if Alpaca client is initialized
   public isInitialized(): boolean {
-    return true; // Always return true since we're using API routes
+    return this.alpaca !== null;
   }
 
   // Get data from cache or fetch from API
   public async getData<T>(
-    key: string,
+    key: string, 
     fetchFn: () => Promise<T>
   ): Promise<T> {
+    await connectToDatabase();
+    
     try {
       // Check if we have valid cached data
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + CACHE_TTL);
-
-      const { data: cachedEntry, error } = await supabase
-        .from('market_data_cache')
-        .select('data')
-        .eq('key', key)
-        .gt('expires_at', now.toISOString())
-        .single();
-
-      if (cachedEntry && !error) {
+      const now = Date.now();
+      const cachedEntry = await MarketDataCache.findOne({ key, expiresAt: { $gt: now } });
+      
+      if (cachedEntry) {
         console.log(`Returning cached data for ${key}`);
-        return cachedEntry.data as T;
+        return cachedEntry.data;
       }
-
+      
       // Fetch fresh data
       console.log(`Fetching fresh data for ${key}`);
       const data = await fetchFn();
-
+      
       // Cache the result
-      const { error: upsertError } = await supabase
-        .from('market_data_cache')
-        .upsert({
+      await MarketDataCache.findOneAndUpdate(
+        { key },
+        { 
           key,
           data,
-          expires_at: expiresAt.toISOString(),
-          last_updated: now.toISOString()
-        }, {
-          onConflict: 'key'
-        });
-
-      if (upsertError) {
-        console.error('Error caching data:', upsertError);
-      }
-
+          timestamp: now,
+          expiresAt: new Date(now + CACHE_TTL)
+        },
+        { upsert: true, new: true }
+      );
+      
       return data;
-    } catch (error) {
-      console.error('Error in getData:', error);
-      // If caching fails, just return fresh data
-      return await fetchFn();
+    } finally {
+      await disconnectFromDatabase();
     }
   }
 
   // Clear cache for a specific key or all cache if no key provided
   public async clearCache(key?: string): Promise<void> {
+    await connectToDatabase();
+    
     try {
       if (key) {
-        const { error } = await supabase
-          .from('market_data_cache')
-          .delete()
-          .eq('key', key);
-
-        if (error) {
-          console.error('Error clearing cache for key:', error);
-        }
+        await MarketDataCache.deleteOne({ key });
       } else {
-        const { error } = await supabase
-          .from('market_data_cache')
-          .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-
-        if (error) {
-          console.error('Error clearing all cache:', error);
-        }
+        await MarketDataCache.deleteMany({});
       }
-    } catch (error) {
-      console.error('Error in clearCache:', error);
+    } finally {
+      await disconnectFromDatabase();
     }
   }
 
   // Get calendar data with caching
   public async getCalendar(start: string, end: string) {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    
     const cacheKey = `calendar:${start}:${end}`;
-    return this.getData(cacheKey, async () => {
-      const response = await fetch(`/api/market/calendar?start=${start}&end=${end}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch calendar data');
-      }
-      return response.json();
-    });
+    return this.getData(cacheKey, () => 
+      this.alpaca!.getCalendar({
+        start,
+        end,
+      })
+    );
   }
 
   // Get account activities with caching
   public async getAccountActivities(activityType: string, date?: string) {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    
     const cacheKey = `activities:${activityType}:${date || 'all'}`;
-    return this.getData(cacheKey, async () => {
-      const url = `/api/market/activities?activityType=${activityType}${date ? `&date=${date}` : ''}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch account activities');
-      }
-      return response.json();
-    });
+    return this.getData(cacheKey, () => 
+      this.alpaca!.getAccountActivities({
+        activityType,
+        date,
+      })
+    );
   }
 
   // Get market data with caching
   public async getMarketData(symbol: string, timeframe: string, start: string, end: string) {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    
     const cacheKey = `marketdata:${symbol}:${timeframe}:${start}:${end}`;
-    return this.getData(cacheKey, async () => {
-      const url = `/api/market/data?symbol=${symbol}&timeframe=${timeframe}&start=${start}&end=${end}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch market data');
-      }
-      const result = await response.json();
-      return result.data;
-    });
+    return this.getData(cacheKey, () => 
+      this.alpaca!.getBars({
+        symbol,
+        timeframe,
+        start,
+        end,
+      })
+    );
   }
 
   // Get watchlists with caching
   public async getWatchlists() {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    
     const cacheKey = `watchlists:all`;
-    return this.getData(cacheKey, async () => {
-      const response = await fetch('/api/market/watchlists');
-      if (!response.ok) {
-        throw new Error('Failed to fetch watchlists');
-      }
-      const result = await response.json();
-      return result.data;
-    });
+    return this.getData(cacheKey, () => 
+      this.alpaca!.getWatchlists()
+    );
   }
 
   // Create a new watchlist
   public async createWatchlist(name: string, symbols: string[]) {
-    const response = await fetch('/api/market/watchlists', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, symbols }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create watchlist');
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
     }
-
-    const result = await response.json();
-
+    
+    const watchlist = await this.alpaca!.createWatchlist({
+      name,
+      symbols
+    });
+    
     // Invalidate the watchlists cache
     await this.clearCache('watchlists:all');
-
-    return result.data;
+    
+    return watchlist;
   }
 
   // Get portfolio history with caching
   public async getPortfolioHistory(timeframe: string) {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    
     const cacheKey = `portfolio:history:${timeframe}`;
-    return this.getData(cacheKey, async () => {
-      const response = await fetch(`/api/market/portfolio?timeframe=${timeframe}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch portfolio history');
-      }
-      const result = await response.json();
-      return result.data;
-    });
-  }
-
-  // Get account data
-  public async getAccount() {
-    const cacheKey = `account`;
-    return this.getData(cacheKey, async () => {
-      const response = await fetch('/api/market/account');
-      if (!response.ok) {
-        throw new Error('Failed to fetch account data');
-      }
-      const result = await response.json();
-      return result.data;
-    });
-  }
-
-  // Get positions
-  public async getPositions() {
-    const cacheKey = `positions`;
-    return this.getData(cacheKey, async () => {
-      const response = await fetch('/api/market/positions');
-      if (!response.ok) {
-        throw new Error('Failed to fetch positions');
-      }
-      const result = await response.json();
-      return result.data;
-    });
-  }
-
-  // Get orders
-  public async getOrders(status = 'open') {
-    const cacheKey = `orders:${status}`;
-    return this.getData(cacheKey, async () => {
-      const response = await fetch(`/api/market/orders?status=${status}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-      const result = await response.json();
-      return result.data;
-    });
+    return this.getData(cacheKey, () => 
+      this.alpaca!.getPortfolioHistory({
+        period: timeframe,
+        timeframe: '1D'
+      })
+    );
   }
 
   async cacheData(symbol: string, timeframe: string, data: MarketDataBar[]) {
     try {
-      const now = new Date();
-      const cacheKey = `marketdata:${symbol}:${timeframe}`;
-
-      const { error } = await supabase
-        .from('market_data_cache')
-        .upsert({
-          key: cacheKey,
-          symbol,
-          timeframe,
-          data,
-          last_updated: now.toISOString(),
-          expires_at: new Date(now.getTime() + CACHE_TTL).toISOString()
-        }, {
-          onConflict: 'key'
-        });
-
-      if (error) {
-        console.error('Error caching market data:', error);
-        throw error;
-      }
+      await connectToDatabase();
+      
+      // Upsert the data
+      await MarketDataCache.findOneAndUpdate(
+        { symbol, timeframe },
+        { symbol, timeframe, data, lastUpdated: new Date() },
+        { upsert: true, new: true }
+      );
     } catch (error) {
       console.error('Error caching market data:', error);
       throw error;
     }
   }
-
+  
   async getCachedData(symbol: string, timeframe: string, maxAge: number = 3600000): Promise<MarketDataBar[] | null> {
     try {
-      const cacheKey = `marketdata:${symbol}:${timeframe}`;
+      await connectToDatabase();
+      
+      const cachedData = await MarketDataCache.findOne({ symbol, timeframe });
+      
+      if (!cachedData) return null;
+      
+      // Check if data is too old
       const now = new Date();
-      const maxAgeDate = new Date(now.getTime() - maxAge);
-
-      const { data: cachedData, error } = await supabase
-        .from('market_data_cache')
-        .select('data, last_updated')
-        .eq('key', cacheKey)
-        .gt('last_updated', maxAgeDate.toISOString())
-        .single();
-
-      if (error || !cachedData) {
+      const lastUpdated = new Date(cachedData.lastUpdated);
+      if (now.getTime() - lastUpdated.getTime() > maxAge) {
         return null;
       }
-
+      
       return cachedData.data as MarketDataBar[];
     } catch (error) {
       console.error('Error retrieving cached market data:', error);
       return null;
     }
   }
-
-  async clearOldCache(olderThanDays: number = 7) {
+  
+  async clearCache(olderThanDays: number = 7) {
     try {
+      await connectToDatabase();
+      
       const date = new Date();
       date.setDate(date.getDate() - olderThanDays);
-
-      const { error } = await supabase
-        .from('market_data_cache')
-        .delete()
-        .lt('last_updated', date.toISOString());
-
-      if (error) {
-        console.error('Error clearing old cache:', error);
-        throw error;
-      }
-
+      
+      await MarketDataCache.deleteMany({ lastUpdated: { $lt: date } });
       console.log(`Cleared market data cache older than ${olderThanDays} days`);
     } catch (error) {
       console.error('Error clearing market data cache:', error);

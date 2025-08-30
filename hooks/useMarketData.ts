@@ -58,7 +58,7 @@ export function useMarketData(symbols: string[]): MarketData {
     };
     
     fetchData();
-  }, [symbols.join(',')]);
+  }, [JSON.stringify(symbols)]);
   
   return { quotes, loading, error };
 }

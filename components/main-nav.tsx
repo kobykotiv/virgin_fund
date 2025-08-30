@@ -35,6 +35,7 @@ import {
   Upload,
   Activity,
   RefreshCw,
+  Brain,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -152,6 +153,18 @@ export function MainNav() {
       active: pathname === "/home",
     },
     {
+      href: "/social-trading",
+      label: "Social Trading",
+      icon: <Users className="h-4 w-4 mr-2" />,
+      active: pathname === "/social-trading",
+    },
+    {
+      href: "/ai-signals",
+      label: "AI Signals",
+      icon: <Brain className="h-4 w-4 mr-2" />,
+      active: pathname === "/ai-signals",
+    },
+    {
       href: "/bots",
       label: "Trading Bots",
       icon: <Robot className="h-4 w-4 mr-2" />,
@@ -187,9 +200,9 @@ export function MainNav() {
   // Determine if we're on the landing page or dashboard
   const isLandingPage =
     pathname === "/" ||
-    pathname.startsWith("/blog") ||
-    pathname.startsWith("/features") ||
-    pathname.startsWith("/demos")
+    (pathname && pathname.startsWith("/blog")) ||
+    (pathname && pathname.startsWith("/features")) ||
+    (pathname && pathname.startsWith("/demos"))
   const navItems = isLandingPage ? mainNavItems : dashboardNavItems
 
   return (
@@ -237,7 +250,7 @@ export function MainNav() {
                       <DropdownMenuLabel>{title}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                        {children.map((child) => (
+                        {children && children.map((child) => (
                           <DropdownMenuItem key={child.title} asChild>
                             <Link href={child.href} className="flex items-center cursor-pointer">
                               {child.icon}

@@ -34,7 +34,7 @@ if (typeof (globalThis as any).crypto === 'undefined') {
   ;(globalThis as any).crypto = nodeCrypto.webcrypto
 }
 
-import { vi } from 'vitest';
+// import { vi } from 'vitest';
 
 // Set up environment variables before any imports
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://mock.supabase.co';

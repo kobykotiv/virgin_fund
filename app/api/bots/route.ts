@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const userId = (session as any).user_id
-    const supabase = getSupabaseAdmin()
+  const supabase = getSupabaseAdmin() as any
 
     const { data, error } = await supabase.from('bots').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     if (error) {
@@ -91,6 +91,13 @@ export async function POST(req: NextRequest) {
       userId: inserted.user_id,
       owner_id: inserted.user_id // Add owner_id for compatibility
     } : null
+
+    // Analytics: record bot created event
+    try {
+      await supabase.from('analytics_events').insert([{ user_id: userId, event_type: 'bot.created', payload: { bot_id: mappedInserted?.id } }])
+    } catch (ae) {
+      console.warn('analytics insert failed', ae)
+    }
 
     return NextResponse.json(mappedInserted)
   } catch (err) {

@@ -10,7 +10,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const userId = (session as any).user_id
-    const supabase = getSupabaseAdmin()
+  const supabase = getSupabaseAdmin() as any
 
     const body = (await req.json().catch(() => ({} as any))) as any
     const update = {} as any
@@ -46,6 +46,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       owner_id: updated.user_id // Add owner_id for compatibility
     }
 
+    // Analytics: record bot.updated
+    try {
+      await supabase.from('analytics_events').insert([{ user_id: userId, event_type: 'bot.updated', payload: { bot_id: mappedUpdated.id } }])
+    } catch (ae) {
+      console.warn('analytics insert failed', ae)
+    }
+
     return NextResponse.json(mappedUpdated)
   } catch (err) {
     console.error('bots/[id] PUT error', err)
@@ -59,10 +66,17 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const userId = (session as any).user_id
-    const supabase = getSupabaseAdmin()
+  const supabase = getSupabaseAdmin() as any
 
     const { error } = await supabase.from('bots').delete().eq('id', params.id).eq('user_id', userId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    // Analytics: record bot.deleted
+    try {
+      await supabase.from('analytics_events').insert([{ user_id: userId, event_type: 'bot.deleted', payload: { bot_id: params.id } }])
+    } catch (ae) {
+      console.warn('analytics insert failed', ae)
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('bots/[id] DELETE error', err)

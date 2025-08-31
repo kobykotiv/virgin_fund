@@ -1,8 +1,14 @@
 "use client"
 
-import React, { useState, useCallback, createContext, useContext } from 'react'
+import React, { useState, useCallback, createContext, useContext, useEffect } from 'react'
 import { Window } from './Window'
 import { Taskbar } from './Taskbar'
+import BotsWindow from './windows/BotsWindow'
+import StrategiesWindow from './windows/StrategiesWindow'
+import BacktestWindow from './windows/BacktestWindow'
+import PortfolioWindow from './windows/PortfolioWindow'
+import AnalyticsWindow from './windows/AnalyticsWindow'
+import SettingsWindow from './windows/SettingsWindow'
 
 interface WindowState {
   id: string
@@ -109,7 +115,36 @@ export const WindowManager: React.FC<WindowManagerProps> = ({ children }) => {
     windows
   }
 
-  const openWindows = windows.filter(w => !w.isMinimized)
+  // Keyboard shortcuts: Ctrl+1..6 to open windows
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return
+      switch (e.key) {
+        case '1':
+          openWindow('bots', 'Bots', BotsWindow)
+          break
+        case '2':
+          openWindow('strategies', 'Strategies', StrategiesWindow)
+          break
+        case '3':
+          openWindow('backtest', 'Backtest', BacktestWindow)
+          break
+        case '4':
+          openWindow('portfolio', 'Portfolio', PortfolioWindow)
+          break
+        case '5':
+          openWindow('analytics', 'Analytics', AnalyticsWindow)
+          break
+        case '6':
+          openWindow('settings', 'Settings', SettingsWindow)
+          break
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [openWindow])
+
+  const openWindows = windows // show all windows in taskbar, indicate minimized state
 
   return (
     <WindowManagerContext.Provider value={contextValue}>
@@ -134,10 +169,10 @@ export const WindowManager: React.FC<WindowManagerProps> = ({ children }) => {
           </Window>
         ))}
         <Taskbar
-          openWindows={openWindows}
-          onWindowClick={focusWindow}
+          windows={openWindows.map(w => ({ id: w.id, title: w.title, isMinimized: w.isMinimized }))}
+          onWindowClick={(id) => focusWindow(id)}
           onMinimizeAll={minimizeAll}
-          onCloseWindow={closeWindow}
+          onCloseWindow={(id) => closeWindow(id)}
         />
       </div>
     </WindowManagerContext.Provider>

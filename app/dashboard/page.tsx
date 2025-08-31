@@ -1,12 +1,4 @@
 "use client"
-import { useToast } from '@/hooks/use-toast'
-// import React from 'react'
-import DashboardApp from '@/components/DashboardApp'
-
-// export default function DashboardPage() {
-//   return <DashboardApp />
-// }
-// "use client"
 
 import React, { useState, useEffect } from "react"
 import { Dashboard } from "@/components/dashboard"
@@ -30,8 +22,8 @@ import { RefreshCw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { StrategySidebar } from "@/components/StrategySidebar";
 import { StrategyPanel } from "@/components/StrategyPanel";
-import { StrategyBuilder } from "@/components/strategy-builder"
 import { LayoutToggle } from '@/components/layout/LayoutToggle'
+import { WindowManager } from '@/components/WindowManager'
 
 const strategies = [
   '1% Grid',
@@ -43,9 +35,8 @@ const strategies = [
   'Arbitrage',
 ];
 
-export default function DashboardPage() {
+function DashboardInner() {
   const [bots, setBots] = useState<Bot[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isApiKeyFormOpen, setIsApiKeyFormOpen] = useState(false)
@@ -57,7 +48,6 @@ export default function DashboardPage() {
 
   // Add this inside the DashboardPage component, after the useState declarations
   const { canCreateMoreBots, tierLimits, currentTier } = useSubscription()
-  const { toast } = useToast()
 
   // Update the Home component to fetch and pass the current API configuration
 
@@ -83,7 +73,7 @@ export default function DashboardPage() {
         if (!data.configured) {
           setIsApiKeyFormOpen(true)
         } else {
-          void loadBots()
+          loadBots()
         }
       } catch (error) {
         console.error("Error checking API configuration:", error)
@@ -94,15 +84,11 @@ export default function DashboardPage() {
   }, [])
 
   const loadBots = async () => {
-    setIsLoading(true)
     try {
       const botData = await fetchBots()
       setBots(botData)
     } catch (error) {
-  console.error("Error loading bots:", error)
-  toast({ title: 'Error', description: `Could not load bots: ${error instanceof Error ? error.message : String(error)}` })
-    } finally {
-      setIsLoading(false)
+      console.error("Error loading bots:", error)
     }
   }
 
@@ -120,36 +106,30 @@ export default function DashboardPage() {
       }
 
       const newBot = await createBot(botData)
-    setBots([...bots, newBot])
-    toast({ title: 'Bot created', description: `${newBot.name || 'New bot'} created successfully` })
-    setIsFormOpen(false)
+      setBots([...bots, newBot])
+      setIsFormOpen(false)
     } catch (error) {
-  console.error("Error creating bot:", error)
-  toast({ title: 'Error', description: `Failed to create bot: ${error instanceof Error ? error.message : String(error)}` })
+      console.error("Error creating bot:", error)
     }
   }
 
   const handleUpdateBot = async (bot: Bot) => {
     try {
       const updatedBot = await updateBot(bot)
-    setBots(bots.map((b) => (b.id === bot.id ? updatedBot : b)))
-    setSelectedBot(null)
-    toast({ title: 'Bot updated', description: `${updatedBot.name || 'Bot'} updated` })
-    setIsFormOpen(false)
+      setBots(bots.map((b) => (b.id === bot.id ? updatedBot : b)))
+      setSelectedBot(null)
+      setIsFormOpen(false)
     } catch (error) {
-  console.error("Error updating bot:", error)
-  toast({ title: 'Error', description: `Failed to update bot: ${error instanceof Error ? error.message : String(error)}` })
+      console.error("Error updating bot:", error)
     }
   }
 
   const handleDeleteBot = async (botId: string) => {
     try {
       await deleteBot(botId)
-    setBots(bots.filter((bot) => bot.id !== botId))
-    toast({ title: 'Bot deleted', description: 'Bot removed successfully' })
+      setBots(bots.filter((bot) => bot.id !== botId))
     } catch (error) {
-  console.error("Error deleting bot:", error)
-  toast({ title: 'Error', description: `Failed to delete bot: ${error instanceof Error ? error.message : String(error)}` })
+      console.error("Error deleting bot:", error)
     }
   }
 
@@ -173,9 +153,9 @@ export default function DashboardPage() {
       // Update the local state with the updated bot
       setBots(bots.map((b) => (b.id === botId ? updatedBot : b)))
     } catch (error) {
-  console.error("Error toggling bot status:", error)
+      console.error("Error toggling bot status:", error)
       // Show an error notification to the user
-  toast({ title: 'Error', description: `Failed to update bot status: ${error instanceof Error ? error.message : 'Unknown error'}` })
+      alert(`Failed to update bot status: ${error instanceof Error ? error.message : "Unknown error"}`)
     }
   }
 
@@ -212,46 +192,6 @@ export default function DashboardPage() {
       /* ignore */
     }
   }, [useSidebar])
-
-  // Analytics placeholder used by the tabs
-  function DashboardPageAnalyticsPlaceholder() {
-    return (
-      <div>
-        <h2 className="text-xl font-semibold">Platform Analytics (Preview)</h2>
-        <p className="text-sm text-muted-foreground">Overview of system health, API usage, and bot performance trends.</p>
-      </div>
-    )
-  }
-
-  // Small File menu used in desktop layout
-  const FileMenu = () => {
-    const [open, setOpen] = useState(false)
-    return (
-      <div className="relative">
-        <button data-testid="filemenu-button" onClick={() => setOpen(!open)} className="px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-800">
-          File
-        </button>
-        {open && (
-          <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50">
-            <ul className="py-1">
-              <li>
-                <button onClick={() => { setIsFormOpen(true); setSelectedBot(null); setActiveTab('bots'); setIsFormOpen(true); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">New Bot</button>
-              </li>
-              <li>
-                <button onClick={() => router.push('/calculators')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">Calculators</button>
-              </li>
-              <li>
-                <button onClick={() => router.push('/backtest')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">Backtest</button>
-              </li>
-              <li>
-                <button onClick={() => router.push('/bots')} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">Manage Bots</button>
-              </li>
-            </ul>
-          </div>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -307,80 +247,25 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="px-6 py-4">
-        <div className="flex items-center gap-4 mb-4">
-          <FileMenu />
-          <div className="flex gap-2">
-            <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-2 rounded ${activeTab === 'dashboard' ? 'bg-slate-200' : ''}`}>Dashboard</button>
-            <button onClick={() => setActiveTab('bots')} className={`px-3 py-2 rounded ${activeTab === 'bots' ? 'bg-slate-200' : ''}`}>Bots</button>
-            <button onClick={() => setActiveTab('strategies')} className={`px-3 py-2 rounded ${activeTab === 'strategies' ? 'bg-slate-200' : ''}`}>Strategies</button>
-            <button onClick={() => setActiveTab('performance')} className={`px-3 py-2 rounded ${activeTab === 'performance' ? 'bg-slate-200' : ''}`}>Performance</button>
-            <button onClick={() => setActiveTab('analytics')} className={`px-3 py-2 rounded ${activeTab === 'analytics' ? 'bg-slate-200' : ''}`}>Analytics</button>
-            <button onClick={() => setActiveTab('settings')} className={`px-3 py-2 rounded ${activeTab === 'settings' ? 'bg-slate-200' : ''}`}>Settings</button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', height: '70vh' }}>
-          {useSidebar && (
-            <StrategySidebar
-              strategies={strategies}
-              selected={selectedStrategy}
-              onSelect={setSelectedStrategy}
-            />
-          )}
-
-          <main style={{ flex: 1, padding: 24 }}>
-            {activeTab === 'dashboard' && <StrategyPanel strategy={selectedStrategy} />}
-
-            {activeTab === 'bots' && (
-              <div>
-                <div className="mb-4 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">Your Bots</h2>
-                  <div className="flex gap-2">
-                    <Button onClick={() => { setSelectedBot(null); setIsFormOpen(true); }}>New Bot</Button>
-                    <Button variant="outline" onClick={() => void loadBots()} title="Refresh"> <RefreshCw className="h-4 w-4" /> </Button>
-                  </div>
-                </div>
-                <div>
-                  <BotList
-                    bots={bots}
-                    onEdit={(b) => { setSelectedBot(b); setIsFormOpen(true) }}
-                    onDelete={handleDeleteBot}
-                    onToggleStatus={handleToggleBotStatus}
-                    isLoading={isLoading}
-                  />
-                </div>
-              </div>
-            )}
-
-      {activeTab === 'strategies' && (
-              <div>
-                <h2 className="text-xl font-semibold mb-3">Strategy Builder</h2>
-        <StrategyBuilder onSave={(data: any) => void handleCreateBot(data)} availableAssets={["AAPL","MSFT","GOOGL","AMZN","TSLA","BTC-USD","ETH-USD","SPY"]} />
-              </div>
-            )}
-
-            {activeTab === 'performance' && (
-              <div>
-                <h2 className="text-xl font-semibold mb-3">Backtesting & Performance</h2>
-                <div className="p-4 border rounded bg-card">Run in-depth backtests in the Backtest studio or view saved results.</div>
-                <div className="mt-3">
-                  <Button onClick={() => router.push('/backtest')}>Open Backtest Studio</Button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'analytics' && <DashboardPageAnalyticsPlaceholder />}
-
-            {activeTab === 'settings' && (
-              <div>
-                <h2 className="text-xl font-semibold mb-3">Account & API Settings</h2>
-                <p className="text-sm text-muted-foreground mb-3">Manage your Alpaca API keys and account preferences.</p>
-                <Button onClick={() => setIsApiKeyFormOpen(true)}>Open API Settings</Button>
-              </div>
-            )}
-          </main>
-        </div>
+      <div style={{ display: 'flex', height: '100vh' }}>
+        {useSidebar && (
+          <StrategySidebar
+            strategies={strategies}
+            selected={selectedStrategy}
+            onSelect={setSelectedStrategy}
+          />
+        )}
+        <main
+          style={{
+            flex: 1,
+            padding: 24,
+            display: 'flex',
+            alignItems: useSidebar ? 'flex-start' : 'center',
+            justifyContent: useSidebar ? 'flex-start' : 'center',
+          }}
+        >
+          <StrategyPanel strategy={selectedStrategy} />
+        </main>
       </div>
 
       {isApiKeyFormOpen && (
@@ -425,6 +310,16 @@ export default function DashboardPage() {
         Virgin Fund : GenEric TraDer AI • Connected to Alpaca Markets • {new Date().getFullYear()}
       </footer>
     </div>
+  )
+}
+
+// Wrap the dashboard inner component with the WindowManager so hooks from the windowing
+// system (useWindowManager) are always used inside the provider.
+export default function DashboardPage() {
+  return (
+    <WindowManager>
+      <DashboardInner />
+    </WindowManager>
   )
 }
 

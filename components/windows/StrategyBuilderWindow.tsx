@@ -86,7 +86,7 @@ export const StrategyBuilderWindow: React.FC = () => {
     createdAt: new Date().toISOString(),
     lastModified: new Date().toISOString()
   })
-  const [selectedTab, setSelectedTab] = useState('indicators')
+  const [selectedTab, setSelectedTab] = useState('basic')
   const [testResults, setTestResults] = useState<any>(null)
 
   const addIndicator = useCallback(() => {
@@ -126,7 +126,7 @@ export const StrategyBuilderWindow: React.FC = () => {
     }))
   }, [])
 
-  const addCondition = useCallback((type: 'entry' | 'exit') => {
+  const addEntryCondition = useCallback(() => {
     if (currentStrategy.indicators.length === 0) return
 
     const newCondition: Condition = {
@@ -139,30 +139,61 @@ export const StrategyBuilderWindow: React.FC = () => {
 
     setCurrentStrategy(prev => ({
       ...prev,
-      [type === 'entry' ? 'entryConditions' : 'exitConditions']: [
-        ...(type === 'entry' ? prev.entryConditions : prev.exitConditions),
-        newCondition
-      ],
+      entryConditions: [...prev.entryConditions, newCondition],
       lastModified: new Date().toISOString()
     }))
   }, [currentStrategy.indicators])
 
-  const removeCondition = useCallback((type: 'entry' | 'exit', id: string) => {
+  const addExitCondition = useCallback(() => {
+    if (currentStrategy.indicators.length === 0) return
+
+    const newCondition: Condition = {
+      id: `condition_${Date.now()}`,
+      indicatorId: currentStrategy.indicators[0].id,
+      operator: '>',
+      value: 0,
+      logic: 'AND'
+    }
+
     setCurrentStrategy(prev => ({
       ...prev,
-      [type === 'entry' ? 'entryConditions' : 'exitConditions']:
-        (type === 'entry' ? prev.entryConditions : prev.exitConditions).filter(cond => cond.id !== id),
+      exitConditions: [...prev.exitConditions, newCondition],
+      lastModified: new Date().toISOString()
+    }))
+  }, [currentStrategy.indicators])
+
+  const removeEntryCondition = useCallback((id: string) => {
+    setCurrentStrategy(prev => ({
+      ...prev,
+      entryConditions: prev.entryConditions.filter(cond => cond.id !== id),
       lastModified: new Date().toISOString()
     }))
   }, [])
 
-  const updateCondition = useCallback((type: 'entry' | 'exit', id: string, updates: Partial<Condition>) => {
+  const removeExitCondition = useCallback((id: string) => {
     setCurrentStrategy(prev => ({
       ...prev,
-      [type === 'entry' ? 'entryConditions' : 'exitConditions']:
-        (type === 'entry' ? prev.entryConditions : prev.exitConditions).map(cond =>
-          cond.id === id ? { ...cond, ...updates } : cond
-        ),
+      exitConditions: prev.exitConditions.filter(cond => cond.id !== id),
+      lastModified: new Date().toISOString()
+    }))
+  }, [])
+
+  const updateEntryCondition = useCallback((id: string, updates: Partial<Condition>) => {
+    setCurrentStrategy(prev => ({
+      ...prev,
+      entryConditions: prev.entryConditions.map(cond =>
+        cond.id === id ? { ...cond, ...updates } : cond
+      ),
+      lastModified: new Date().toISOString()
+    }))
+  }, [])
+
+  const updateExitCondition = useCallback((id: string, updates: Partial<Condition>) => {
+    setCurrentStrategy(prev => ({
+      ...prev,
+      exitConditions: prev.exitConditions.map(cond =>
+        cond.id === id ? { ...cond, ...updates } : cond
+      ),
       lastModified: new Date().toISOString()
     }))
   }, [])
@@ -186,15 +217,8 @@ export const StrategyBuilderWindow: React.FC = () => {
       return [...prev, strategyToSave]
     })
 
-    // Save to localStorage
-    localStorage.setItem('tradingStrategies', JSON.stringify(
-      strategies.find(s => s.id === strategyToSave.id)
-        ? strategies.map(s => s.id === strategyToSave.id ? strategyToSave : s)
-        : [...strategies, strategyToSave]
-    ))
-
     setCurrentStrategy(strategyToSave)
-  }, [currentStrategy, strategies])
+  }, [currentStrategy])
 
   const testStrategy = useCallback(async () => {
     // Mock strategy testing - in real implementation, this would run against historical data
@@ -207,7 +231,6 @@ export const StrategyBuilderWindow: React.FC = () => {
       trades: [
         { date: '2025-01-15', type: 'BUY', price: 150.25, result: 'WIN' },
         { date: '2025-01-20', type: 'SELL', price: 165.80, result: 'WIN' },
-        // ... more mock trades
       ]
     })
   }, [])
@@ -267,7 +290,11 @@ export const StrategyBuilderWindow: React.FC = () => {
           <CardContent>
             <div className="space-y-2">
               {strategies.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No strategies saved yet</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No strategies saved yet</p>
+                  <p className="text-sm">Create and save your first trading strategy</p>
+                </div>
               ) : (
                 strategies.map(strategy => (
                   <div
@@ -292,7 +319,7 @@ export const StrategyBuilderWindow: React.FC = () => {
         {/* Strategy Builder */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Strategy Configuration</CardTitle>
+            <CardTitle className="text-lg">Strategy Builder</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
@@ -427,7 +454,7 @@ export const StrategyBuilderWindow: React.FC = () => {
                       <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
                       Entry Conditions
                     </h4>
-                    <Button onClick={() => addCondition('entry')} size="sm" disabled={currentStrategy.indicators.length === 0}>
+                    <Button onClick={addEntryCondition} size="sm" disabled={currentStrategy.indicators.length === 0}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Entry
                     </Button>
@@ -439,7 +466,7 @@ export const StrategyBuilderWindow: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <Select
                             value={condition.indicatorId}
-                            onValueChange={(value) => updateCondition('entry', condition.id, { indicatorId: value })}
+                            onValueChange={(value) => updateEntryCondition(condition.id, { indicatorId: value })}
                           >
                             <SelectTrigger className="w-40">
                               <SelectValue />
@@ -455,7 +482,7 @@ export const StrategyBuilderWindow: React.FC = () => {
 
                           <Select
                             value={condition.operator}
-                            onValueChange={(value: any) => updateCondition('entry', condition.id, { operator: value })}
+                            onValueChange={(value: any) => updateEntryCondition(condition.id, { operator: value })}
                           >
                             <SelectTrigger className="w-32">
                               <SelectValue />
@@ -474,13 +501,13 @@ export const StrategyBuilderWindow: React.FC = () => {
                           <Input
                             type="number"
                             value={condition.value}
-                            onChange={(e) => updateCondition('entry', condition.id, { value: parseFloat(e.target.value) || 0 })}
+                            onChange={(e) => updateEntryCondition(condition.id, { value: parseFloat(e.target.value) || 0 })}
                             className="w-24"
                           />
 
                           <Select
                             value={condition.logic}
-                            onValueChange={(value: any) => updateCondition('entry', condition.id, { logic: value })}
+                            onValueChange={(value: any) => updateEntryCondition(condition.id, { logic: value })}
                           >
                             <SelectTrigger className="w-20">
                               <SelectValue />
@@ -494,7 +521,7 @@ export const StrategyBuilderWindow: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeCondition('entry', condition.id)}
+                            onClick={() => removeEntryCondition(condition.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -518,7 +545,7 @@ export const StrategyBuilderWindow: React.FC = () => {
                       <TrendingDown className="w-5 h-5 mr-2 text-red-500" />
                       Exit Conditions
                     </h4>
-                    <Button onClick={() => addCondition('exit')} size="sm" disabled={currentStrategy.indicators.length === 0}>
+                    <Button onClick={addExitCondition} size="sm" disabled={currentStrategy.indicators.length === 0}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Exit
                     </Button>
@@ -530,7 +557,7 @@ export const StrategyBuilderWindow: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <Select
                             value={condition.indicatorId}
-                            onValueChange={(value) => updateCondition('exit', condition.id, { indicatorId: value })}
+                            onValueChange={(value) => updateExitCondition(condition.id, { indicatorId: value })}
                           >
                             <SelectTrigger className="w-40">
                               <SelectValue />
@@ -546,7 +573,7 @@ export const StrategyBuilderWindow: React.FC = () => {
 
                           <Select
                             value={condition.operator}
-                            onValueChange={(value: any) => updateCondition('exit', condition.id, { operator: value })}
+                            onValueChange={(value: any) => updateExitCondition(condition.id, { operator: value })}
                           >
                             <SelectTrigger className="w-32">
                               <SelectValue />
@@ -565,13 +592,13 @@ export const StrategyBuilderWindow: React.FC = () => {
                           <Input
                             type="number"
                             value={condition.value}
-                            onChange={(e) => updateCondition('exit', condition.id, { value: parseFloat(e.target.value) || 0 })}
+                            onChange={(e) => updateExitCondition(condition.id, { value: parseFloat(e.target.value) || 0 })}
                             className="w-24"
                           />
 
                           <Select
                             value={condition.logic}
-                            onValueChange={(value: any) => updateCondition('exit', condition.id, { logic: value })}
+                            onValueChange={(value: any) => updateExitCondition(condition.id, { logic: value })}
                           >
                             <SelectTrigger className="w-20">
                               <SelectValue />
@@ -585,7 +612,7 @@ export const StrategyBuilderWindow: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeCondition('exit', condition.id)}
+                            onClick={() => removeExitCondition(condition.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

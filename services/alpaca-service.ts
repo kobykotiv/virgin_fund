@@ -29,18 +29,6 @@ export interface BarData {
 // Mock data for demo purposes
 // In a real implementation, this would be replaced with actual API calls
 const mockAssets: Record<string, AssetData> = {
-  AAPL: {
-    id: "1",
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    exchange: "NASDAQ",
-    class: "us_equity",
-    status: "active",
-    tradable: true,
-    marginable: true,
-    shortable: true,
-    easy_to_borrow: true,
-  },
   MSFT: {
     id: "2",
     symbol: "MSFT",
@@ -196,5 +184,61 @@ export function getPortfolioAllocation(portfolioId: string) {
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 8) // Show top 8 positions
+}
+
+// AlpacaService class
+export class AlpacaService {
+  private config: {
+    enabled: boolean
+    apiKey: string
+    secretKey: string
+    baseUrl: string
+    isPaper: boolean
+  }
+
+  constructor(config: any) {
+    this.config = config
+  }
+
+  async getAccount() {
+    if (!this.config.enabled) return null
+    // Mock account data
+    return {
+      id: "mock-account",
+      equity: 100000,
+      buying_power: 200000,
+      cash: 50000
+    }
+  }
+
+  async getPositions() {
+    if (!this.config.enabled) return []
+    // Mock positions data
+    return [
+      {
+        symbol: "AAPL",
+        qty: 100,
+        avg_entry_price: 150,
+        current_price: 155,
+        market_value: 15500
+      }
+    ]
+  }
+
+  async getOrders() {
+    if (!this.config.enabled) return []
+    // Mock orders data
+    return []
+  }
+
+  async placeOrder(order: any) {
+    if (!this.config.enabled) throw new Error('Alpaca not enabled')
+    // Mock order placement
+    return { id: "mock-order-id", status: "accepted" }
+  }
+
+  async testConnection(): Promise<boolean> {
+    return this.config.enabled
+  }
 }
 

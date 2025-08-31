@@ -391,3 +391,41 @@ function getTrend(symbol: string): number {
   }
 }
 
+// MarketDataService class wrapper
+export class MarketDataService {
+  async getMultipleQuotes(symbols: string[]): Promise<Record<string, any>> {
+    const result: Record<string, any> = {}
+    for (const symbol of symbols) {
+      try {
+        const data = await getMarketData(symbol)
+        result[symbol] = {
+          symbol: data.symbol,
+          price: data.price,
+          change: data.change,
+          changePercent: data.changePercent,
+          volume: data.volume,
+          marketCap: data.marketCap,
+          lastUpdated: data.timestamp
+        }
+      } catch (error) {
+        console.warn(`Failed to get market data for ${symbol}:`, error)
+      }
+    }
+    return result
+  }
+
+  async getNews(symbol?: string): Promise<any[]> {
+    // Mock news data
+    return [
+      {
+        title: "Market Update",
+        description: "Latest market developments",
+        url: "#",
+        source: "Financial News",
+        publishedAt: new Date().toISOString(),
+        symbols: symbol ? [symbol] : []
+      }
+    ]
+  }
+}
+

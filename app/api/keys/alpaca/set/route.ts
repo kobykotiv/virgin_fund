@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { setAlpacaKeysInStore } from "@/lib/supabaseAdmin"
+import { writeAlpacaKeys } from "@/lib/server-keys"
 
 export async function POST(req: Request) {
   const admin = req.headers.get("x-admin-token")
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const { keyId, secret } = await req.json()
     if (!keyId || !secret) return NextResponse.json({ ok: false, error: "missing" }, { status: 400 })
-    await setAlpacaKeysInStore(keyId, secret)
+    writeAlpacaKeys(keyId, secret)
     return NextResponse.json({ ok: true })
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 })

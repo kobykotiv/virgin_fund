@@ -1,5 +1,6 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import { NextRequest } from 'next/server'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,4 +32,28 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login'
   }
+}
+
+// Simple user authentication for development
+// In production, implement proper JWT/session validation
+export async function getUserFromRequest(req: NextRequest): Promise<string | null> {
+  // For development, return a mock user ID
+  // In production, validate JWT token from headers
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) return null;
+
+  // Mock validation - replace with real JWT validation
+  if (authHeader.startsWith('Bearer ')) {
+    return 'mock-user-id';
+  }
+
+  return null;
+}
+
+export async function requireAuth(req: NextRequest): Promise<string> {
+  const userId = await getUserFromRequest(req);
+  if (!userId) {
+    throw new Error('Unauthorized');
+  }
+  return userId;
 }

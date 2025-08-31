@@ -194,7 +194,7 @@ function DashboardInner() {
   }, [useSidebar])
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-transparent">
       <header className="p-4 border-b flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-mono font-bold">Virgin Fund : GenEric TraDer AI</h1>
@@ -288,7 +288,7 @@ function DashboardInner() {
       )}
 
       {isFormOpen && (
-        <div className="fixed inset-0 bg-gradient-to-b from-background/95 to-background/90 backdrop-blur-sm z-50 flex flex-col">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col">
           <div className="flex justify-between items-center p-4 border-b">
             <h2 className="text-xl font-semibold">{selectedBot ? "Edit Bot" : "Create New Bot"}</h2>
             <Button variant="ghost" size="icon" onClick={() => setIsFormOpen(false)}>

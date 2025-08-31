@@ -3,12 +3,14 @@
 import React, { useState, useCallback, createContext, useContext, useEffect } from 'react'
 import { Window } from './Window'
 import { Taskbar } from './Taskbar'
+import { Desktop } from './Desktop'
 import BotsWindow from './windows/BotsWindow'
 import StrategiesWindow from './windows/StrategiesWindow'
 import BacktestWindow from './windows/BacktestWindow'
 import PortfolioWindow from './windows/PortfolioWindow'
 import AnalyticsWindow from './windows/AnalyticsWindow'
 import SettingsWindow from './windows/SettingsWindow'
+import { StrategyBuilderWindow } from './windows/StrategyBuilderWindow'
 
 interface WindowState {
   id: string
@@ -27,6 +29,7 @@ interface WindowManagerContextType {
   focusWindow: (id: string) => void
   minimizeWindow: (id: string) => void
   maximizeWindow: (id: string) => void
+  toggleStartMenu: () => void
   windows: WindowState[]
 }
 
@@ -47,6 +50,7 @@ interface WindowManagerProps {
 export const WindowManager: React.FC<WindowManagerProps> = ({ children }) => {
   const [windows, setWindows] = useState<WindowState[]>([])
   const [nextZIndex, setNextZIndex] = useState(1)
+  const [isStartMenuOpen, setIsStartMenuOpen] = useState(false)
 
   const openWindow = useCallback((id: string, title: string, component: React.ComponentType) => {
     setWindows(prev => {
@@ -106,49 +110,63 @@ export const WindowManager: React.FC<WindowManagerProps> = ({ children }) => {
     setWindows(prev => prev.map(w => ({ ...w, isMinimized: true })))
   }, [])
 
+  const toggleStartMenu = useCallback(() => {
+    setIsStartMenuOpen(prev => !prev)
+  }, [])
+
   const contextValue: WindowManagerContextType = {
     openWindow,
     closeWindow,
     focusWindow,
     minimizeWindow,
     maximizeWindow,
+    toggleStartMenu,
     windows
   }
 
-  // Keyboard shortcuts: Ctrl+1..6 to open windows
+  // Keyboard shortcuts: Ctrl+1..7 to open windows, Ctrl+Space for start menu
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (!e.ctrlKey) return
-      switch (e.key) {
-        case '1':
-          openWindow('bots', 'Bots', BotsWindow)
-          break
-        case '2':
-          openWindow('strategies', 'Strategies', StrategiesWindow)
-          break
-        case '3':
-          openWindow('backtest', 'Backtest', BacktestWindow)
-          break
-        case '4':
-          openWindow('portfolio', 'Portfolio', PortfolioWindow)
-          break
-        case '5':
-          openWindow('analytics', 'Analytics', AnalyticsWindow)
-          break
-        case '6':
-          openWindow('settings', 'Settings', SettingsWindow)
-          break
+      if (e.ctrlKey) {
+        switch (e.key) {
+          case '1':
+            openWindow('bots', 'Bots', BotsWindow)
+            break
+          case '2':
+            openWindow('strategies', 'Strategies', StrategiesWindow)
+            break
+          case '3':
+            openWindow('backtest', 'Backtest', BacktestWindow)
+            break
+          case '4':
+            openWindow('portfolio', 'Portfolio', PortfolioWindow)
+            break
+          case '5':
+            openWindow('analytics', 'Analytics', AnalyticsWindow)
+            break
+          case '6':
+            openWindow('settings', 'Settings', SettingsWindow)
+            break
+          case '7':
+            openWindow('strategy-builder', 'Strategy Builder', StrategyBuilderWindow)
+            break
+          case ' ':
+            e.preventDefault()
+            toggleStartMenu()
+            break
+        }
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [openWindow])
+  }, [openWindow, toggleStartMenu])
 
   const openWindows = windows // show all windows in taskbar, indicate minimized state
 
   return (
     <WindowManagerContext.Provider value={contextValue}>
       <div className="relative w-full h-screen overflow-hidden">
+        <Desktop />
         {children}
         {windows.map(window => (
           <Window
@@ -173,6 +191,8 @@ export const WindowManager: React.FC<WindowManagerProps> = ({ children }) => {
           onWindowClick={(id) => focusWindow(id)}
           onMinimizeAll={minimizeAll}
           onCloseWindow={(id) => closeWindow(id)}
+          isStartMenuOpen={isStartMenuOpen}
+          onToggleStartMenu={toggleStartMenu}
         />
       </div>
     </WindowManagerContext.Provider>

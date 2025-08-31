@@ -1,8 +1,9 @@
-import type React from "react"
+import React from "react"
 import type { Metadata } from "next"
 import ClientLayout from "./ClientLayout"
 import { Inter } from "next/font/google"
 import { Providers } from "@/providers/providers"
+import { LayoutProvider } from '@/components/layout/LayoutContext'
 import "./globals.css"
 import { MockDataWarning } from '../components/mock-data-warning'
 import { ThemeProvider } from "@/providers/theme-provider"
@@ -41,8 +42,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          {children}
-          <MockDataWarning />
+          <LayoutProvider>
+            {children}
+            <MockDataWarning />
+          </LayoutProvider>
         </Providers>
       </body>
     </html>

@@ -41,8 +41,18 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setIsLoading(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (!isDemoMode) {
+        const res = await fetch('/api/users', { method: 'PATCH', body: JSON.stringify(profileData) })
+        const json = await res.json().catch(() => ({}))
+        if (res.ok && json.user) {
+          setProfileData((prev) => ({ ...prev, ...json.user }))
+        } else {
+          throw new Error(json.error || 'Failed to update profile')
+        }
+      } else {
+        // Simulate API call in demo mode
+        await new Promise((resolve) => setTimeout(resolve, 300))
+      }
 
       toast({
         title: "Profile Updated",
@@ -135,7 +145,7 @@ export default function ProfilePage() {
         </Card>
 
         <div className="md:col-span-3">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="notifications">Notifications</TabsTrigger>

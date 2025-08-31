@@ -209,24 +209,13 @@ export default function LoginPage() {
     }
   }
   const router = useRouter()
-  const { login, enableDemoMode } = useAuth()
+  const { login, enableDemoMode, isAuthenticated } = useAuth()
 
-  // Fix the login screen auto-dismissal issue by modifying the useEffect hook
+  // Ensure we rely on server-side session via AuthProvider
   useEffect(() => {
-    // Only run on client-side
-    if (typeof window !== "undefined") {
-      try {
-        // Check if user is already logged in
-        const isAuthenticated = localStorage.getItem("isAuthenticated") === "true"
-        
-        // Remove automatic redirection - let user stay on login page
-        // The previous code was redirecting automatically to home
-        // Remove: router.push("/")
-      } catch (error) {
-        console.error("Error checking authentication state:", error)
-      }
-    }
-  }, [router])
+    // Nothing to do here — server session populates AuthProvider on mount.
+    // Keep effect to preserve previous timing and avoid redirect.
+  }, [isAuthenticated, router])
 
   // Effect for demo animation
   useEffect(() => {
@@ -271,7 +260,7 @@ export default function LoginPage() {
         return
       }
 
-      await login(email, password)
+  await login({ email, password })
 
       // On successful login, mark as dismissed but DON'T redirect automatically
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")
@@ -334,7 +323,7 @@ export default function LoginPage() {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Auto-login after signup
-      await login(email, password)
+  await login({ email, password })
 
       // On successful signup and login, mark as dismissed but DON'T redirect
       localStorage.setItem(LOCAL_STORAGE_KEY, "true")

@@ -22,6 +22,7 @@ import { RefreshCw } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { StrategySidebar } from "@/components/StrategySidebar";
 import { StrategyPanel } from "@/components/StrategyPanel";
+import { LayoutToggle } from '@/components/layout/LayoutToggle'
 
 const strategies = [
   '1% Grid',
@@ -205,6 +206,9 @@ export default function DashboardPage() {
               onChange={(e) => setUseSidebar(e.target.checked)}
               aria-label="Toggle sidebar layout"
             />
+            <div className="ml-4">
+              <LayoutToggle />
+            </div>
           </div>
         </div>
         <div className="flex gap-2">

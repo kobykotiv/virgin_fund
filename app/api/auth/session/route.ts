@@ -1,27 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { verifySessionToken } from '@/lib/session'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const token = req.cookies.get('vf_session')?.value
+    const payload = await verifySessionToken(token as string)
+    if (!payload) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
 
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    const user = {
+      id: (payload as any).user_id,
+      email: (payload as any).email,
+      name: (payload as any).name,
+      role: (payload as any).role || 'free',
     }
 
-    return NextResponse.json({
-      user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        alpacaApiKey: (session.user as any).alpacaApiKey,
-        alpacaSecretKey: (session.user as any).alpacaSecretKey,
-        isPaper: (session.user as any).isPaper,
-      }
-    })
+    return NextResponse.json({ user })
   } catch (error) {
-    console.error('Session check error:', error)
+    console.error('session route error', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

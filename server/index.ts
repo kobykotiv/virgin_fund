@@ -5,6 +5,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '../lib/supabaseAdmin'
 import crypto from 'crypto';
 
 dotenv.config();
@@ -12,9 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY!;
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
+const supabaseAdmin = getSupabaseAdmin()
 
 function hashSolution(solution: string) {
   return crypto.createHash('sha256').update(solution).digest('hex');

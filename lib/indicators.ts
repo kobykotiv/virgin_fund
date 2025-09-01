@@ -389,3 +389,18 @@ export function calculateOBV(data: CandleData[]): IndicatorResult[] {
 
   return results;
 }
+
+/**
+ * calculateIndicators: convenience wrapper that runs a set of common indicators
+ * and returns a map of results. This helps other modules expect a single export.
+ */
+export function calculateIndicators(data: CandleData[]) {
+  return {
+    sma20: calculateSMA(data, 20),
+    ema12: calculateEMA(data, 12),
+    rsi14: calculateRSI(data, 14),
+    macd: calculateMACD(data),
+    atr14: calculateATR(data, 14),
+    bollinger: calculateBollingerBands(data, 20, 2),
+  }
+}

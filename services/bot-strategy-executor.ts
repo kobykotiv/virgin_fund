@@ -1,4 +1,4 @@
-import { MarketDataService } from './market-data'
+import { MarketDataService } from './market-data-service'
 import { StrategyType, TradingBot, Order } from '@/types/bot'
 
 export class BotStrategyExecutor {

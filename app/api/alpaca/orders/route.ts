@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { MarketDataService } from '@/services/market-data'
+import { MarketDataService } from '../../../../services/market-data-service'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 

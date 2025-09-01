@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MarketQuote } from '@/types/market';
-import { MarketDataService } from '@/services/market-data';
+import { MarketDataService } from '@/services/market-data-service';
 
 interface MarketData {
   quotes: Record<string, MarketQuote>;

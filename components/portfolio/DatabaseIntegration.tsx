@@ -24,7 +24,6 @@ import {
   Settings,
   Download,
   Upload,
-  Sync,
   Clock,
   Activity
 } from 'lucide-react'
@@ -178,7 +177,7 @@ export function DatabaseIntegration({
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <Sync className={`w-4 h-4 ${syncStatus.syncInProgress ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`w-4 h-4 ${syncStatus.syncInProgress ? 'animate-spin' : ''}`} />
                       <div>
                         <div className="font-medium">
                           {syncStatus.syncInProgress ? 'Syncing...' : 'Sync Status'}
@@ -373,7 +372,7 @@ export function DatabaseIntegration({
                         </>
                       ) : (
                         <>
-                          <Sync className="w-4 h-4 mr-2" />
+                          <RefreshCw className="w-4 h-4 mr-2" />
                           Sync Now
                         </>
                       )}

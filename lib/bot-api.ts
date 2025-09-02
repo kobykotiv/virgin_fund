@@ -38,6 +38,8 @@ const mockBots: Bot[] = [
         AMZN: 0.2,
       },
     },
+    strategy: "basket",
+    parameters: { period: 20, threshold: 2 },
   },
   {
     id: "2",
@@ -62,6 +64,8 @@ const mockBots: Bot[] = [
       lowerLimit: 25000,
       quantity: 0.01,
     },
+    strategy: "grid",
+    parameters: { gridSize: 1, upperLimit: 35000, lowerLimit: 25000 },
   },
   {
     id: "3",
@@ -87,6 +91,8 @@ const mockBots: Bot[] = [
       entryThreshold: 30,
       exitThreshold: 70,
     },
+    strategy: "indicator",
+    parameters: { period: 14, threshold: 30 },
   },
   {
     id: "4",
@@ -108,6 +114,8 @@ const mockBots: Bot[] = [
       amount: 500,
       duration: "90days",
     },
+    strategy: "dca",
+    parameters: { amount: 500, interval: "weekly" },
   },
 ]
 
@@ -175,7 +183,9 @@ export async function createBot(botData: Partial<Bot>): Promise<Bot> {
         gridConfig: botData.gridConfig,
         dcaConfig: botData.dcaConfig,
         basketConfig: botData.basketConfig,
-        allocation: 500000 // Default $500K allocation for new bots in demo mode
+        allocation: 500000, // Default $500K allocation for new bots in demo mode
+        strategy: botData.strategy || "indicator",
+        parameters: botData.parameters || { period: 14, threshold: 30 },
       }
 
       setTimeout(() => resolve(newBot), 500)

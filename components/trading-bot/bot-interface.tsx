@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
-import { Bot, AlarmBell, Play, Pause, BarChart3, RefreshCw, Info, Save, AlertTriangle } from 'lucide-react'
+import { Bot, Bell, Play, Pause, BarChart3, RefreshCw, Info, Save, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/providers/auth-provider'
 
 interface BotInterface {

@@ -65,5 +65,66 @@ export interface Bot {
   gridConfig?: GridConfig
   dcaConfig?: DCAConfig
   basketConfig?: BasketConfig
+
+  // Additional properties used in components
+  strategy: string
+  parameters: Record<string, any>
+}
+
+// Alias for backward compatibility
+export type TradingBot = Bot
+
+// Bot configuration type
+export type BotConfig = IndicatorConfig | GridConfig | DCAConfig | BasketConfig
+
+// Strategy types
+export type StrategyType = BotType
+
+// Position type
+export interface Position {
+  symbol: string
+  quantity: number
+  avgPrice: number
+  currentPrice: number
+  pnl: number
+  pnlPercent: number
+}
+
+// Trade type
+export interface Trade {
+  id: string
+  symbol: string
+  side: 'buy' | 'sell'
+  quantity: number
+  price: number
+  timestamp: string
+  pnl?: number
+  // Additional properties used in components
+  date: string
+  action: 'BUY' | 'SELL'
+}
+
+// Order type
+export interface Order {
+  id: string
+  symbol: string
+  side: 'buy' | 'sell'
+  type: 'market' | 'limit' | 'stop' | 'stop_limit'
+  quantity: number
+  price?: number
+  status: 'pending' | 'filled' | 'cancelled' | 'rejected'
+  timestamp: string
+}
+
+// Backtest result type
+export interface BacktestResult {
+  totalReturn: number
+  winRate: number
+  maxDrawdown: number
+  sharpeRatio: number
+  totalTrades: number
+  trades: Trade[]
+  // Additional property used in components
+  initialCapital: number
 }
 

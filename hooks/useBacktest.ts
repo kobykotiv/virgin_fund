@@ -64,3 +64,36 @@ export function useBacktest() {
     error
   }
 }
+
+export function useListBacktest() {
+  const [backtests, setBacktests] = useState<BacktestResult[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchBacktests = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/backtest')
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch backtests')
+      }
+
+      const data = await response.json()
+      setBacktests(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  return {
+    backtests,
+    isLoading,
+    error,
+    fetchBacktests
+  }
+}

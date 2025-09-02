@@ -71,6 +71,12 @@ export interface Portfolio {
   connectedBots: BotConnection[]
   createdAt: string
   updatedAt: string
+  // Additional properties used in components
+  totalValue: number
+  totalReturn: number
+  riskScore: number
+  description?: string
+  botConnections: BotConnection[]
 }
 
 export interface MarketData {

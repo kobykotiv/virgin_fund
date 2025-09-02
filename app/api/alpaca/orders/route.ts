@@ -12,7 +12,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { apiKey, secretKey, isPaper } = session.user as any
+    const user = session.user as any
+    const apiKey = user.apiKey || user.alpacaApiKey
+    const secretKey = user.secretKey || user.alpacaSecretKey
+    const isPaper = user.isPaper !== undefined ? user.isPaper : true
     
     if (!apiKey || !secretKey) {
       return NextResponse.json({ error: 'API credentials not configured' }, { status: 400 })
@@ -27,7 +30,7 @@ export async function GET(request: Request) {
     return NextResponse.json(orders)
   } catch (error: any) {
     console.error('Error fetching orders:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -40,7 +43,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    const { apiKey, secretKey, isPaper } = session.user as any
+    const user = session.user as any
+    const apiKey = user.apiKey || user.alpacaApiKey
+    const secretKey = user.secretKey || user.alpacaSecretKey
+    const isPaper = user.isPaper !== undefined ? user.isPaper : true
     
     if (!apiKey || !secretKey) {
       return NextResponse.json({ error: 'API credentials not configured' }, { status: 400 })
@@ -59,6 +65,6 @@ export async function POST(request: Request) {
     return NextResponse.json(order)
   } catch (error: any) {
     console.error('Error placing order:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

@@ -79,12 +79,15 @@ export class BacktestEngine {
               
               // Record trade
               trades.push({
-                date: currentDate,
+                id: Math.random().toString(36).substr(2, 9),
                 symbol,
-                action: 'buy',
+                side: 'buy',
+                action: 'BUY',
+                quantity: shares,
                 price,
-                shares,
-                value: cost
+                timestamp: currentDate,
+                date: currentDate,
+                pnl: 0
               })
             }
           } else if (action === 'sell') {
@@ -101,12 +104,15 @@ export class BacktestEngine {
               
               // Record trade
               trades.push({
-                date: currentDate,
+                id: Math.random().toString(36).substr(2, 9),
                 symbol,
-                action: 'sell',
+                side: 'sell',
+                action: 'SELL',
+                quantity: shares,
                 price,
-                shares,
-                value: revenue
+                timestamp: currentDate,
+                date: currentDate,
+                pnl: 0
               })
             }
           }
@@ -133,7 +139,7 @@ export class BacktestEngine {
       // Calculate performance metrics
       const roi = (finalPortfolioValue - initialCapital) / initialCapital * 100
       const winningTrades = trades.filter(t => 
-        t.action === 'sell' && t.price > (positions[t.symbol]?.entryPrice || 0)
+        t.action === 'SELL' && t.price > (positions[t.symbol]?.entryPrice || 0)
       ).length
       const winRate = trades.length > 0 ? winningTrades / trades.length * 100 : 0
       
@@ -154,12 +160,12 @@ export class BacktestEngine {
       
       return {
         initialCapital,
-        finalCapital: finalPortfolioValue,
-        roi,
-        trades,
-        equityCurve,
+        totalReturn: roi,
         winRate,
-        maxDrawdown
+        maxDrawdown,
+        sharpeRatio: 0, // TODO: Calculate Sharpe ratio
+        totalTrades: trades.length,
+        trades
       }
     } catch (error) {
       console.error('Error running backtest:', error)

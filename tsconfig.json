@@ -23,7 +23,7 @@
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "types": ["@emotion/react/types/css-prop"]
+    "types": []
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

@@ -1,0 +1,27 @@
+{
+  "name": "virgin-fund-bun-server",
+  "version": "1.0.0",
+  "description": "Bun-based middleware backend for Trading Agent dashboard",
+  "main": "src/server.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "build": "bun build src/server.ts --outdir dist --target bun",
+    "type-check": "bun --env-file=.env tsc --noEmit"
+  },
+  "dependencies": {
+    "bun": "^1.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.24.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}

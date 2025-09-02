@@ -244,7 +244,7 @@ function TechnicalIndicatorsPanel({
  */
 interface NewsSentimentPanelProps {
   symbol: string;
-  news: any[];
+  news?: any[];
   isLoading: boolean;
 }
 
@@ -300,12 +300,12 @@ function NewsSentimentPanel({ symbol, news, isLoading }: NewsSentimentPanelProps
 interface AnalysisSummaryPanelProps {
   symbol: string;
   indicators: any;
-  news: any[];
+  news?: any[];
 }
 
 function AnalysisSummaryPanel({ symbol, indicators, news }: AnalysisSummaryPanelProps) {
   // Calculate overall sentiment
-  const overallSentiment = calculateOverallSentiment(indicators, news);
+  const overallSentiment = calculateOverallSentiment(indicators, news || []);
   
   return (
     <div className="trading-card p-6">
@@ -356,7 +356,7 @@ function AnalysisSummaryPanel({ symbol, indicators, news }: AnalysisSummaryPanel
  * Helper Components and Functions
  */
 function IndicatorCard({ title, value, interpretation, color }: any) {
-  const colorClasses = {
+  const colorClasses: Record<string, string> = {
     green: 'border-green-500 bg-green-50',
     red: 'border-red-500 bg-red-50',
     blue: 'border-blue-500 bg-blue-50',

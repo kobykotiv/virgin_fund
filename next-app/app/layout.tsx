@@ -1,9 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { ReactQueryProvider } from '@/components/ReactQueryProvider';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Trading Agent Dashboard',
@@ -24,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <ReactQueryProvider>
           <div className="min-h-screen bg-background">
             {/* Navigation will be added by individual pages */}

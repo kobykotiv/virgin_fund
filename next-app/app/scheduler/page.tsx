@@ -352,7 +352,7 @@ interface StatCardProps {
   title: string;
   value: string;
   icon: any;
-  color?: 'green' | 'blue' | 'red';
+  color?: 'green' | 'blue' | 'red' | 'gray';
   loading?: boolean;
 }
 

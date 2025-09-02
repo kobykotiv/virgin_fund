@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsClient } from '@/lib/api/apiClients';
 import { queryKeys } from '@/components/ReactQueryProvider';
@@ -83,14 +83,18 @@ function ProfileTab() {
   const { data: profile, isLoading } = useQuery({
     queryKey: queryKeys.settings.profile(),
     queryFn: settingsClient.getProfile,
-    onSuccess: (data) => {
-      setFormData({
-        name: data.name || '',
-        email: data.email || '',
-        preferences: data.preferences,
-      });
-    },
   });
+
+  // Update form data when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || '',
+        email: profile.email || '',
+        preferences: profile.preferences,
+      });
+    }
+  }, [profile]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({

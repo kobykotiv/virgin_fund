@@ -50,7 +50,7 @@ export function AgentPanel() {
   };
 
   const isAnalysisRunning = startAnalysisMutation.isPending;
-  const hasActiveJobs = agentStatus?.activeJobs > 0;
+  const hasActiveJobs = agentStatus?.activeJobs && agentStatus.activeJobs > 0;
 
   return (
     <div className="trading-card p-6">

@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["types/signal.ts", "hooks/use-signals.ts", "pages/signal-builder.tsx"]
+}

@@ -26,11 +26,11 @@ export default function CompoundInterestCalculator() {
   const [result, setResult] = useState<CompoundInterestResult | null>(null)
 
   function calculate({ principal, rate, years, frequency }: CompoundInterestInputs): CompoundInterestResult {
-    let total = principal * Math.pow(1 + rate / 100 / frequency, frequency * years)
-    let interest = total - principal
-    let breakdown = []
+    const total = principal * Math.pow(1 + rate / 100 / frequency, frequency * years)
+    const interest = total - principal
+    const breakdown = []
     for (let y = 1; y <= years; y++) {
-      let value = principal * Math.pow(1 + rate / 100 / frequency, frequency * y)
+      const value = principal * Math.pow(1 + rate / 100 / frequency, frequency * y)
       breakdown.push({ year: y, value })
     }
     return { total, interest, breakdown }

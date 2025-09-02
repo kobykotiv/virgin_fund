@@ -1,22 +1,20 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { 
   Wallet, LineChart, RefreshCw, Activity, DollarSign, 
-  TrendingUp, TrendingDown, BarChart2, PieChart, ArrowRight,
-  Settings, AlertTriangle 
+  TrendingUp, TrendingDown, ArrowRight, Settings, AlertTriangle 
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/providers/auth-provider'
-import { MarketDataService } from '@/services/market-data'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 
-// Mock data for demonstration
-import { mockPortfolioData, mockPerformanceData, mockMarketData } from '@/lib/mock-data'
+ // Mock data for demonstration
+import { mockPortfolioData, mockMarketData } from '@/lib/mock-data'
 
 // Define props interface
 interface EnhancedDashboardProps {
@@ -28,26 +26,73 @@ interface EnhancedDashboardProps {
   } | null
 }
 
+type Bot = {
+  id: number
+  name: string
+  status: 'active' | 'paused' | 'error' | string
+  assets: string[]
+  updatedAt: string | Date
+}
+
+type Position = {
+  symbol: string
+  quantity: number
+  avgPrice: number
+  currentPrice: number
+  pnl: number
+}
+
+type Order = {
+  id: number
+  symbol: string
+  side: string
+  type: string
+  quantity: number
+  status: string
+  createdAt: string | Date
+}
+
+type MarketDatum = {
+  symbol: string
+  price: number
+  changePercent: number
+  volume: number
+  open: number
+  high: number
+  low: number
+}
+
+type Portfolio = {
+  value: number
+  bots: Bot[]
+  positions: Position[]
+  performance: {
+    totalPnL: number
+    avgPnlPercentage: number
+  }
+  orders?: Order[]
+} | null
+
 export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("overview")
-  const [portfolio, setPortfolio] = useState<any>(null)
-  const [orders, setOrders] = useState<any[]>([])
-  const [marketData, setMarketData] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [activeTab, setActiveTab] = useState<string>("overview")
+  const [portfolio, setPortfolio] = useState<Portfolio>(null)
+  const [_orders, setOrders] = useState<Order[]>([])
+  const [marketData, setMarketData] = useState<MarketDatum[]>([])
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const { toast } = useToast()
   const { isDemoMode } = useAuth()
   
   // Calculate summary metrics
   const totalBots = portfolio?.bots?.length || 0
-  const activeBots = portfolio?.bots?.filter((bot: any) => bot.status === 'active').length || 0
-  const pausedBots = portfolio?.bots?.filter((bot: any) => bot.status === 'paused').length || 0
-  const errorBots = portfolio?.bots?.filter((bot: any) => bot.status === 'error').length || 0
+  const activeBots = portfolio?.bots?.filter((bot: Bot) => bot.status === 'active').length || 0
+  const pausedBots = portfolio?.bots?.filter((bot: Bot) => bot.status === 'paused').length || 0
+  const errorBots = portfolio?.bots?.filter((bot: Bot) => bot.status === 'error').length || 0
   
   const totalPnL = portfolio?.performance?.totalPnL || 0
   const avgPnlPercentage = portfolio?.performance?.avgPnlPercentage || 0
   
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setIsLoading(true)
     
     try {
@@ -113,7 +158,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [apiConfig, isDemoMode, toast, setPortfolio, setMarketData, setOrders])
   
   // Load data on initial render
   useEffect(() => {
@@ -122,7 +167,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
     const intervalId = setInterval(loadDashboardData, 60000) // Update every minute
     
     return () => clearInterval(intervalId)
-  }, [apiConfig, isDemoMode])
+  }, [loadDashboardData])
   
   return (
     <div className="space-y-6">
@@ -285,7 +330,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                   <Skeleton className="h-8 w-full" />
                 ) : (
                   <>
-                    <div className="text-2xl font-bold">${portfolio?.value.toFixed(2) || "0.00"}</div>
+                    <div className="text-2xl font-bold">${(portfolio?.value ?? 0).toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {portfolio?.positions?.length || 0} active positions
                     </p>
@@ -352,7 +397,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                   </div>
                 ) : portfolio?.bots?.length > 0 ? (
                   <div className="space-y-4">
-                    {portfolio.bots.slice(0, 4).map((bot: any) => (
+                    {(portfolio?.bots ?? []).slice(0, 4).map((bot: Bot) => (
                       <div key={bot.id} className="flex items-start space-x-3">
                         <div
                           className={`mt-0.5 rounded-full p-1.5 ${
@@ -421,7 +466,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {portfolio.positions.map((position: any) => (
+                      {(portfolio?.positions ?? []).map((position: Position) => (
                         <tr key={position.symbol} className="border-b">
                           <td className="py-2 px-4">{position.symbol}</td>
                           <td className="py-2 px-4">{position.quantity}</td>
@@ -467,7 +512,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {portfolio.bots.map((bot: any) => (
+                      {(portfolio?.bots ?? []).map((bot: Bot) => (
                         <tr key={bot.id} className="border-b">
                           <td className="py-3 px-4 font-medium">{bot.name}</td>
                           <td className="py-3 px-4">
@@ -543,7 +588,7 @@ export function EnhancedDashboard({ apiConfig }: EnhancedDashboardProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {marketData.map((data: any) => (
+                      {(marketData ?? []).map((data: MarketDatum) => (
                         <tr key={data.symbol} className="border-b">
                           <td className="py-3 px-4 font-medium">{data.symbol}</td>
                           <td className="py-3 px-4">${data.price.toFixed(2)}</td>

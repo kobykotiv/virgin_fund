@@ -139,7 +139,7 @@ export function SignalBuilder() {
     for (let i = 1; i < prices.length; i++) changes.push(prices[i] - prices[i - 1])
     const gains: number[] = []
     const losses: number[] = []
-    for (let c of changes) {
+    for (const c of changes) {
       gains.push(Math.max(0, c))
       losses.push(Math.max(0, -c))
     }

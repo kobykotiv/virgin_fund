@@ -29,8 +29,8 @@ export function PerformanceChart({ days, variant = "default", className }: Perfo
     // Generate data based on the variant
     const generateData = () => {
       const data = []
-      let trend = variant === "crypto" ? 0.6 : variant === "defi" ? 0.4 : 0.2
-      let volatility = variant === "crypto" ? 4 : variant === "defi" ? 3 : 2
+      const trend = variant === "crypto" ? 0.6 : variant === "defi" ? 0.4 : 0.2
+      const volatility = variant === "crypto" ? 4 : variant === "defi" ? 3 : 2
       
       let value = 100
       for (let i = 0; i < days; i++) {

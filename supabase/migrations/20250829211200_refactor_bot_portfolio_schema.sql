@@ -1,6 +1,24 @@
 -- Refactor schema to be bot-centered: bots -> positions[] -> orders[] -> trades[]
 -- This migration restructures the portfolio system to be comprehensive and bot-focused
 
+-- Create tables if they don't exist first
+CREATE TABLE IF NOT EXISTS "public"."positions" (
+    "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "ticker" text,
+    "quantity" numeric,
+    "avg_price" numeric
+);
+
+CREATE TABLE IF NOT EXISTS "public"."trades" (
+    "trade_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "position_id" uuid,
+    "action" text,
+    "side" text,
+    "quantity" numeric,
+    "price" numeric,
+    "datetime" timestamp with time zone
+);
+
 -- Drop existing foreign key constraints that will be changed
 ALTER TABLE "public"."positions" DROP CONSTRAINT IF EXISTS "positions_portfolio_id_fkey";
 ALTER TABLE "public"."trades" DROP CONSTRAINT IF EXISTS "trades_position_id_fkey";
@@ -24,11 +42,26 @@ ADD COLUMN IF NOT EXISTS "description" text,
 ADD COLUMN IF NOT EXISTS "active_orders_count" integer DEFAULT 0,
 ADD COLUMN IF NOT EXISTS "positions_count" integer DEFAULT 0;
 
--- Update existing columns for consistency
-ALTER TABLE "public"."bots" 
-ALTER COLUMN "name" SET NOT NULL,
-ALTER COLUMN "type" SET DEFAULT 'manual',
-ALTER COLUMN "risk" SET DEFAULT 'medium';
+-- Update existing columns for consistency (only if they exist)
+DO $$
+BEGIN
+    -- Set name as NOT NULL if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bots' AND column_name = 'name') THEN
+        ALTER TABLE "public"."bots" ALTER COLUMN "name" SET NOT NULL;
+    END IF;
+    
+    -- Set type default if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bots' AND column_name = 'type') THEN
+        ALTER TABLE "public"."bots" ALTER COLUMN "type" SET DEFAULT 'manual';
+    END IF;
+    
+    -- Add risk column if it doesn't exist, then set default
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bots' AND column_name = 'risk') THEN
+        ALTER TABLE "public"."bots" ADD COLUMN "risk" text DEFAULT 'medium';
+    ELSE
+        ALTER TABLE "public"."bots" ALTER COLUMN "risk" SET DEFAULT 'medium';
+    END IF;
+END $$;
 
 -- Recreate positions table with bot relationship (not portfolio)
 ALTER TABLE "public"."positions"
@@ -94,48 +127,153 @@ ADD COLUMN IF NOT EXISTS "broker_trade_id" text,
 ADD COLUMN IF NOT EXISTS "created_at" timestamp with time zone DEFAULT now(),
 ADD COLUMN IF NOT EXISTS "updated_at" timestamp with time zone DEFAULT now();
 
--- Update existing trade columns
-ALTER TABLE "public"."trades"
-ALTER COLUMN "action" SET DEFAULT 'buy',
-ALTER COLUMN "side" SET DEFAULT 'buy',
-ALTER COLUMN "quantity" SET NOT NULL,
-ALTER COLUMN "price" SET NOT NULL,
-ALTER COLUMN "datetime" SET DEFAULT now();
+-- Update existing trade columns (only if they exist)
+DO $$
+BEGIN
+    -- Set action default if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'action') THEN
+        ALTER TABLE "public"."trades" ALTER COLUMN "action" SET DEFAULT 'buy';
+    END IF;
+    
+    -- Set side default if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'side') THEN
+        ALTER TABLE "public"."trades" ALTER COLUMN "side" SET DEFAULT 'buy';
+    END IF;
+    
+    -- Handle quantity vs qty column naming
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'quantity') THEN
+        ALTER TABLE "public"."trades" ALTER COLUMN "quantity" SET NOT NULL;
+    ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'qty') THEN
+        ALTER TABLE "public"."trades" ALTER COLUMN "qty" SET NOT NULL;
+    END IF;
+    
+    -- Set price NOT NULL if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'price') THEN
+        ALTER TABLE "public"."trades" ALTER COLUMN "price" SET NOT NULL;
+    END IF;
+    
+    -- Set datetime default if it exists
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'datetime') THEN
+        ALTER TABLE "public"."trades" ALTER COLUMN "datetime" SET DEFAULT now();
+    END IF;
+END $$;
 
 -- Create primary keys and constraints
 CREATE UNIQUE INDEX IF NOT EXISTS orders_pkey ON public.orders USING btree (id);
 ALTER TABLE "public"."orders" ADD CONSTRAINT "orders_pkey" PRIMARY KEY USING INDEX "orders_pkey";
 
--- Add foreign key constraints
-ALTER TABLE "public"."positions" 
-ADD CONSTRAINT "positions_bot_id_fkey" FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE;
+-- Add foreign key constraints (only if they don't exist)
+DO $$
+BEGIN
+    -- Add positions_bot_id_fkey if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'positions_bot_id_fkey' AND table_name = 'positions'
+    ) THEN
+        ALTER TABLE "public"."positions" 
+        ADD CONSTRAINT "positions_bot_id_fkey" FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE;
+    END IF;
 
-ALTER TABLE "public"."orders" 
-ADD CONSTRAINT "orders_bot_id_fkey" FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE,
-ADD CONSTRAINT "orders_position_id_fkey" FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE SET NULL;
+    -- Add orders_bot_id_fkey if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'orders_bot_id_fkey' AND table_name = 'orders'
+    ) THEN
+        ALTER TABLE "public"."orders" 
+        ADD CONSTRAINT "orders_bot_id_fkey" FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE;
+    END IF;
 
-ALTER TABLE "public"."trades" 
-ADD CONSTRAINT "trades_order_id_fkey" FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
-ADD CONSTRAINT "trades_bot_id_fkey" FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE;
+    -- Add orders_position_id_fkey if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'orders_position_id_fkey' AND table_name = 'orders'
+    ) THEN
+        ALTER TABLE "public"."orders" 
+        ADD CONSTRAINT "orders_position_id_fkey" FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE SET NULL;
+    END IF;
 
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_positions_bot_id ON public.positions (bot_id);
-CREATE INDEX IF NOT EXISTS idx_positions_symbol ON public.positions (symbol);
-CREATE INDEX IF NOT EXISTS idx_positions_status ON public.positions (status);
+    -- Add trades_order_id_fkey if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'trades_order_id_fkey' AND table_name = 'trades'
+    ) THEN
+        ALTER TABLE "public"."trades" 
+        ADD CONSTRAINT "trades_order_id_fkey" FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL;
+    END IF;
 
-CREATE INDEX IF NOT EXISTS idx_orders_bot_id ON public.orders (bot_id);
-CREATE INDEX IF NOT EXISTS idx_orders_symbol ON public.orders (symbol);
-CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders (status);
-CREATE INDEX IF NOT EXISTS idx_orders_submitted_at ON public.orders (submitted_at);
+    -- Add trades_bot_id_fkey if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'trades_bot_id_fkey' AND table_name = 'trades'
+    ) THEN
+        ALTER TABLE "public"."trades" 
+        ADD CONSTRAINT "trades_bot_id_fkey" FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS idx_trades_order_id ON public.trades (order_id);
-CREATE INDEX IF NOT EXISTS idx_trades_bot_id ON public.trades (bot_id);
-CREATE INDEX IF NOT EXISTS idx_trades_position_id ON public.trades (position_id);
-CREATE INDEX IF NOT EXISTS idx_trades_symbol ON public.trades (symbol);
-CREATE INDEX IF NOT EXISTS idx_trades_datetime ON public.trades (datetime);
+-- Create indexes for performance (only if columns exist)
+DO $$
+BEGIN
+    -- Positions indexes
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'positions' AND column_name = 'bot_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_positions_bot_id ON public.positions (bot_id);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'positions' AND column_name = 'symbol') THEN
+        CREATE INDEX IF NOT EXISTS idx_positions_symbol ON public.positions (symbol);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'positions' AND column_name = 'status') THEN
+        CREATE INDEX IF NOT EXISTS idx_positions_status ON public.positions (status);
+    END IF;
 
-CREATE INDEX IF NOT EXISTS idx_bots_user_id ON public.bots (user_id);
-CREATE INDEX IF NOT EXISTS idx_bots_status ON public.bots (status);
+    -- Orders indexes
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'bot_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_orders_bot_id ON public.orders (bot_id);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'symbol') THEN
+        CREATE INDEX IF NOT EXISTS idx_orders_symbol ON public.orders (symbol);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'status') THEN
+        CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders (status);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'submitted_at') THEN
+        CREATE INDEX IF NOT EXISTS idx_orders_submitted_at ON public.orders (submitted_at);
+    END IF;
+
+    -- Trades indexes
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'order_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_trades_order_id ON public.trades (order_id);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'bot_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_trades_bot_id ON public.trades (bot_id);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'position_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_trades_position_id ON public.trades (position_id);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'symbol') THEN
+        CREATE INDEX IF NOT EXISTS idx_trades_symbol ON public.trades (symbol);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'trades' AND column_name = 'datetime') THEN
+        CREATE INDEX IF NOT EXISTS idx_trades_datetime ON public.trades (datetime);
+    END IF;
+
+    -- Bots indexes
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bots' AND column_name = 'user_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_bots_user_id ON public.bots (user_id);
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bots' AND column_name = 'status') THEN
+        CREATE INDEX IF NOT EXISTS idx_bots_status ON public.bots (status);
+    END IF;
+END $$;
 
 -- Grant permissions for orders table
 GRANT DELETE ON TABLE "public"."orders" TO "anon";

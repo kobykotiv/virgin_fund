@@ -16,17 +16,16 @@ ALTER TABLE public.bots ENABLE ROW LEVEL SECURITY;
 
 -- Policy: users can select their own bots
 CREATE POLICY "Bots: users can select own bots" ON public.bots
-  FOR SELECT USING (auth.uid() = user_id::text OR auth.role() = 'service_role');
+  FOR SELECT USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
 -- Policy: users can insert bots (server/service role recommended)
 CREATE POLICY "Bots: insert by service or owner" ON public.bots
-  FOR INSERT USING (auth.role() = 'service_role' OR auth.uid() = user_id::text)
-  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = user_id::text);
+  FOR INSERT WITH CHECK (auth.role() = 'service_role' OR auth.uid() = user_id);
 
 -- Policy: users can update their own bots
 CREATE POLICY "Bots: users can update own bots" ON public.bots
-  FOR UPDATE USING (auth.uid() = user_id::text)
-  WITH CHECK (auth.uid() = user_id::text);
+  FOR UPDATE USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- Trades table
 CREATE TABLE IF NOT EXISTS public.trades (
@@ -46,14 +45,13 @@ ALTER TABLE public.trades ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Trades: select if bot owner" ON public.trades
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM public.bots b WHERE b.id = bot_id AND (auth.uid() = b.user_id::text OR auth.role() = 'service_role')
+      SELECT 1 FROM public.bots b WHERE b.id = bot_id AND (auth.uid() = b.user_id OR auth.role() = 'service_role')
     )
   );
 
 -- Policy: inserts by service role only (server recorded)
 CREATE POLICY "Trades: insert by service role" ON public.trades
-  FOR INSERT USING (auth.role() = 'service_role')
-  WITH CHECK (auth.role() = 'service_role');
+  FOR INSERT WITH CHECK (auth.role() = 'service_role');
 
 -- Triggers to update updated_at for bots
 CREATE OR REPLACE FUNCTION public.set_updated_at_bots()

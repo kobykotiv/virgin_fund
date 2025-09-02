@@ -18,17 +18,16 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 -- Policy: allow users to select their own record
 CREATE POLICY "Users can select own data" ON public.users
-  FOR SELECT USING (auth.uid() = id::text OR auth.role() = 'service_role');
+  FOR SELECT USING (auth.uid() = id OR auth.role() = 'service_role');
 
 -- Policy: allow users to update their profile fields only for themselves
 CREATE POLICY "Users can update own profile" ON public.users
-  FOR UPDATE USING (auth.uid() = id::text)
-  WITH CHECK (auth.uid() = id::text);
+  FOR UPDATE USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 -- Policy: restrict insert to service role (server-side) or admin
 CREATE POLICY "Insert by service or admin" ON public.users
-  FOR INSERT USING (auth.role() = 'service_role' OR auth.role() = 'admin')
-  WITH CHECK (auth.role() = 'service_role' OR auth.role() = 'admin');
+  FOR INSERT WITH CHECK (auth.role() = 'service_role' OR auth.role() = 'admin');
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users (email);

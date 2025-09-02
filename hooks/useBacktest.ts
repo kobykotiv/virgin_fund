@@ -64,27 +64,3 @@ export function useBacktest() {
     error
   }
 }
-
-// List/backtests hook: fetches available backtests from the API
-export function useListBacktest() {
-  const [list, setList] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchList = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/backtests')
-      if (!res.ok) throw new Error('Failed to fetch backtests')
-      const data = await res.json()
-      setList(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  return { list, fetchList, loading, error, setList }
-}

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/providers/auth-provider'
-import { MarketDataService } from '@/services/market-data-service'
+import { MarketDataService } from '@/services/market-data'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 

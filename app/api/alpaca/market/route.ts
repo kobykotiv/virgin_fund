@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { MarketDataService } from '../../../../services/market-data-service'
+import { MarketDataService } from '@/services/market-data'
 import { marketDataCache } from '@/services/market-data-cache'
 import { cookies } from 'next/headers'
 

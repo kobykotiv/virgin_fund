@@ -1,4 +1,4 @@
-import { MarketDataService } from './market-data-service'
+import { MarketDataService } from './market-data'
 import { TradingBot, BacktestResult, Trade } from '@/types/bot'
 import { MarketDataBar } from '@/types/market'
 

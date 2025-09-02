@@ -10,7 +10,7 @@ import { PortfolioLineChart } from "@/components/portfolio-line-chart"
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, LucideIcon, Loader2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useMarketData } from '@/hooks/use-market-data';
-import { MarketDataService } from '@/services/market-data-service';
+import { MarketDataService } from '@/services/market-data';
 
 interface PortfolioPreviewModalProps {
   isOpen: boolean

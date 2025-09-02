@@ -2,7 +2,7 @@
 // Uses shadcn/ui, Tailwind, and Next.js App Router
 
 import "@/app/globals.css";
-import { Sidebar } from "@/components/layouts/Sidebar";
+import Sidebar from "@/components/layouts/Sidebar";
 import { Header } from "@/components/layouts/Header";
 import { ReactNode } from "react";
 import QueryProvider from "@/components/QueryProvider";

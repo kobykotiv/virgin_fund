@@ -15,6 +15,7 @@ type FormValues = {
 export default function SignInForm() {
   const router = useRouter()
   const form = useForm<FormValues>({ defaultValues: { email: "", password: "" } })
+  const { runAuthLifecycle } = require('@/hooks/useAuthLifecycle') as any
 
   async function onSubmit(values: FormValues) {
     try {
@@ -30,7 +31,10 @@ export default function SignInForm() {
         throw new Error(body?.error ?? "Sign in failed")
       }
 
-      // success -> server set cookie; navigate to dashboard
+      // success -> server set cookie; refresh auth-derived server state then navigate
+      try {
+        await runAuthLifecycle()
+      } catch (e) {}
       router.push("/dashboard")
     } catch (err: any) {
       form.setError("email", { message: err?.message ?? "Unexpected error" })

@@ -44,7 +44,13 @@ export default function OrdersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("all")
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false)
-  const [newOrder, setNewOrder] = useState({
+  const [newOrder, setNewOrder] = useState<{
+    symbol: string
+    side: "buy" | "sell"
+    type: "market" | "limit"
+    quantity: number
+    price?: number | undefined
+  }>({
     symbol: "AAPL",
     side: "buy",
     type: "market",
@@ -221,7 +227,7 @@ export default function OrdersPage() {
                   <Label htmlFor="side" className="text-right">
                     Side
                   </Label>
-                  <Select value={newOrder.side} onValueChange={(value) => setNewOrder({ ...newOrder, side: value })}>
+                  <Select value={newOrder.side} onValueChange={(value) => setNewOrder({ ...newOrder, side: value as "buy" | "sell" })}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select side" />
                     </SelectTrigger>
@@ -235,7 +241,7 @@ export default function OrdersPage() {
                   <Label htmlFor="type" className="text-right">
                     Order Type
                   </Label>
-                  <Select value={newOrder.type} onValueChange={(value) => setNewOrder({ ...newOrder, type: value })}>
+                  <Select value={newOrder.type} onValueChange={(value) => setNewOrder({ ...newOrder, type: value as "market" | "limit" })}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select order type" />
                     </SelectTrigger>
@@ -371,4 +377,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-

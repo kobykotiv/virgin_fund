@@ -7,7 +7,7 @@ export function useInflationCalculator() {
   const [chartData, setChartData] = useState<{ x: number; y: number }[]>([]);
 
   function calculate() {
-    let data = [];
+    const data = [];
     let value = current;
     for (let i = 1; i <= years; i++) {
       value = value * (1 + rate / 100);

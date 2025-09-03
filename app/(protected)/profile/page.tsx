@@ -99,8 +99,8 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="md:col-span-1">
           <CardContent className="p-6 flex flex-col items-center">
-            <div className="relative mb-4">
-              <UserAvatar user={user} size="lg" />
+              <div className="relative mb-4">
+              <UserAvatar user={user ?? undefined} size="lg" />
               <Button
                 size="icon"
                 variant="secondary"
@@ -383,4 +383,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       secretKey: body.secretKey,
       isPaper: Boolean(body.isPaper ?? true)
     }
-    const encryptedSecret = await encryptObject(secretToEncrypt)
+    const encryptedSecret = (await encryptObject(secretToEncrypt)) as string
 
     // Create hash of public key for lookups (not for security, just for indexing)
     const apiKeyHash = crypto.createHash('sha256').update(body.apiKey).digest('base64')
@@ -59,12 +59,12 @@ export async function POST(req: NextRequest) {
       name: 'Alpaca Markets API',
       provider: 'alpaca',
       api_key_hash: apiKeyHash,
-      encrypted_secret: encryptedSecret.encryptedBase64,
+      encrypted_secret: encryptedSecret,
       is_paper: Boolean(body.isPaper ?? true),
       metadata: {
         public_key_last_4: body.apiKey.slice(-4),
-        encrypted_iv: encryptedSecret.ivBase64,
-        encrypted_tag: encryptedSecret.tagBase64
+        encrypted_iv: null,
+        encrypted_tag: null
       },
       created_at: new Date().toISOString(),
     }

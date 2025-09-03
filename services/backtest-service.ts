@@ -120,7 +120,7 @@ function calculateSharpeRatio(trades: any[]) {
 function executeGridStrategy(data: any[], params: any, initialCapital: number) {
   // Simple grid strategy implementation
   const trades = []
-  let capital = initialCapital
+  const capital = initialCapital
   
   for (let i = 1; i < data.length; i++) {
     const currentPrice = data[i].close
@@ -150,7 +150,7 @@ function executeDCAStrategy(data: any[], params: any, initialCapital: number) {
   // Dollar-cost averaging strategy
   const trades = []
   const interval = params.interval || 30 // days
-  let capital = initialCapital
+  const capital = initialCapital
   
   for (let i = 0; i < data.length; i += interval) {
     if (i < data.length) {

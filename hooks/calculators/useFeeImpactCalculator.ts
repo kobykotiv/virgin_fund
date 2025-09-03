@@ -7,7 +7,7 @@ export function useFeeImpactCalculator() {
   const [chartData, setChartData] = useState<{ x: number; y: number }[]>([]);
 
   function calculate() {
-    let data = [];
+    const data = [];
     let value = investment;
     for (let i = 1; i <= years; i++) {
       value = value * (1 - fee / 100);

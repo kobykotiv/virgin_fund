@@ -14,19 +14,19 @@ export async function GET(request: Request) {
     }
 
     // Create historical data points for the sparkline
-    const points = portfolio.historicalData?.map(d => d.value) || []
-    const max = Math.max(...points)
-    const min = Math.min(...points)
-    const range = max - min
+    const points: number[] = (portfolio.historicalData?.map((d: { value: number }) => d.value) ?? [])
+    const max = points.length ? Math.max(...points) : 0
+    const min = points.length ? Math.min(...points) : 0
+    const range = max - min || 1
     
     // Normalize points to 0-100 range for drawing
-    const normalizedPoints = points.map(p => 100 - ((p - min) / range) * 100)
+    const normalizedPoints: number[] = points.map((p: number) => 100 - ((p - min) / range) * 100)
     
     // Create SVG path for sparkline
     const width = 600
     const height = 200
     const pointsPerPixel = normalizedPoints.length / width
-    const path = normalizedPoints.reduce((acc, point, i) => {
+    const path = normalizedPoints.reduce((acc: string, point: number, i: number) => {
       const x = (i / pointsPerPixel).toFixed(2)
       const y = point.toFixed(2)
       return acc + (i === 0 ? `M ${x},${y}` : ` L ${x},${y}`)

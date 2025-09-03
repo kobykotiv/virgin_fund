@@ -1,5 +1,6 @@
 import { MarketDataService } from './market-data'
 import { StrategyType, TradingBot, Order } from '@/types/bot'
+import { getNumberParam } from '../src/lib/bot-helpers'
 
 export class BotStrategyExecutor {
   private marketDataService: MarketDataService
@@ -33,13 +34,16 @@ export class BotStrategyExecutor {
   }
   
   private async executeMeanReversionStrategy(bot: TradingBot, latestData: any): Promise<Order | null> {
-    const { symbol } = bot.assets[0]
-    const { parameters } = bot
+    const symbol = bot.assets[0]
+    // Read numeric parameters safely with defaults
+    const lookback = getNumberParam(bot, 'period', 14)
+    const threshold = getNumberParam(bot, 'threshold', 2)
+    const positionSize = getNumberParam(bot, 'positionSize', 1000)
     
     // Get historical data for calculating mean
     const endDate = new Date().toISOString()
     const startDate = new Date()
-    startDate.setDate(startDate.getDate() - parameters.period)
+    startDate.setDate(startDate.getDate() - lookback)
     
     const historicalData = await this.marketDataService.getHistoricalBars(
       symbol,
@@ -49,8 +53,8 @@ export class BotStrategyExecutor {
     )
     
     // Calculate mean price
-    const prices = historicalData.map(bar => (bar.h + bar.l) / 2)
-    const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length
+    const prices = historicalData.map((bar: { h: number; l: number }) => (bar.h + bar.l) / 2)
+    const mean = prices.reduce((sum: number, price: number) => sum + price, 0) / (prices.length || 1)
     
     // Current price
     const currentPrice = latestData[symbol].latestTrade.p
@@ -59,20 +63,20 @@ export class BotStrategyExecutor {
     const deviation = (currentPrice - mean) / mean * 100
     
     // Trading logic
-    if (deviation < -parameters.threshold) {
+    if (deviation < -threshold) {
       // Price is below threshold, buy
       return this.marketDataService.placeOrder({
         symbol,
-        qty: parameters.positionSize,
+        qty: positionSize,
         side: 'buy',
         type: 'market',
         time_in_force: 'day'
       })
-    } else if (deviation > parameters.threshold) {
+    } else if (deviation > threshold) {
       // Price is above threshold, sell
       return this.marketDataService.placeOrder({
         symbol,
-        qty: parameters.positionSize,
+        qty: positionSize,
         side: 'sell',
         type: 'market',
         time_in_force: 'day'

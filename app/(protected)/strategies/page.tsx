@@ -105,14 +105,17 @@ export default function StrategiesPage() {
     }
   }
 
-  const handleDuplicateStrategy = async (bot: Bot) => {
+      const handleDuplicateStrategy = async (bot: Bot) => {
     setIsLoading(true)
     try {
       const newBot = { ...bot }
-      delete newBot.id
-      newBot.name = `${newBot.name} (Copy)`
-      newBot.status = "paused"
-      await createBot(newBot)
+      const { id, ...botData } = newBot
+      const botToCreate: Partial<Bot> = {
+        ...botData,
+        name: `${bot.name} (Copy)`,
+        status: "paused",
+      }
+      await createBot(botToCreate)
       await loadBots()
     } catch (error) {
       console.error("Error duplicating bot:", error)
@@ -341,4 +344,3 @@ function StrategiesTable({ bots, onEdit, onDelete, onDuplicate, onBacktest }: St
     </Card>
   )
 }
-

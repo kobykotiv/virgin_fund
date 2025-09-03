@@ -1,6 +1,7 @@
 import { MarketDataService } from './market-data'
 import { TradingBot, BacktestResult, Trade } from '@/types/bot'
 import { MarketDataBar } from '@/types/market'
+import { getNumberParam } from '../src/lib/bot-helpers'
 
 export class BacktestEngine {
   private marketDataService: MarketDataService
@@ -14,7 +15,7 @@ export class BacktestEngine {
       // Initialize backtest state
       const initialCapital = 10000 // Default starting capital for backtest
       let cash = initialCapital
-      let positions: Record<string, { shares: number, entryPrice: number }> = {}
+      const positions: Record<string, { shares: number, entryPrice: number }> = {}
       const trades: Trade[] = []
       const equityCurve: { date: string, value: number }[] = []
       
@@ -33,7 +34,7 @@ export class BacktestEngine {
       
       // Get the longest data series for iteration
       const maxDataLength = Math.max(...Object.values(historicalDataByAsset).map(data => data.length))
-      let mainSymbol = bot.assets[0]
+      const mainSymbol = bot.assets[0]
       
       // Execute strategy for each day in the backtest period
       for (let i = 0; i < maxDataLength; i++) {
@@ -193,32 +194,35 @@ export class BacktestEngine {
         for (const symbol of bot.assets) {
           if (!snapshot[symbol]) continue
           
-          // Calculate historical mean
-          const lookback = bot.parameters.period || 14
+          // Safely read parameters with documented defaults
+          const lookback = getNumberParam(bot, 'period', 14)
+          const threshold = getNumberParam(bot, 'threshold', 2)
+          const positionSize = getNumberParam(bot, 'positionSize', 1000)
+          
           const startIdx = Math.max(0, currentIndex - lookback)
           const priceHistory = historicalData[symbol]
             .slice(startIdx, currentIndex + 1)
-            .map(bar => (bar.h + bar.l) / 2)
+            .map((bar: MarketDataBar) => (bar.h + bar.l) / 2)
           
-          const mean = priceHistory.reduce((sum, price) => sum + price, 0) / priceHistory.length
+          const mean = priceHistory.reduce((sum: number, price: number) => sum + price, 0) / (priceHistory.length || 1)
           const currentPrice = snapshot[symbol].c
           const deviation = (currentPrice - mean) / mean * 100
           
-          if (deviation < -(bot.parameters.threshold || 2)) {
+          if (deviation < -threshold) {
             // Price is below threshold, buy signal
             signals.push({
               symbol,
               action: 'buy',
               price: currentPrice,
-              shares: Math.floor((bot.parameters.positionSize || 1000) / currentPrice)
+              shares: Math.floor(positionSize / currentPrice)
             })
-          } else if (deviation > (bot.parameters.threshold || 2)) {
+          } else if (deviation > threshold) {
             // Price is above threshold, sell signal
             signals.push({
               symbol,
               action: 'sell',
               price: currentPrice,
-              shares: Math.floor((bot.parameters.positionSize || 1000) / currentPrice)
+              shares: Math.floor(positionSize / currentPrice)
             })
           }
         }

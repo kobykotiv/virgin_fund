@@ -7,7 +7,7 @@ export function useCompoundInterestCalculator() {
   const [chartData, setChartData] = useState<{ x: number; y: number }[]>([]);
 
   function calculate() {
-    let data = [];
+    const data = [];
     let total = principal;
     for (let i = 1; i <= years; i++) {
       total = total * (1 + rate / 100);

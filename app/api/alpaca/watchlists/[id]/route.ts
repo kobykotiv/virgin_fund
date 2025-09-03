@@ -57,10 +57,10 @@ export async function PUT(
     
     const body = await request.json();
     const { name, symbols } = body;
-    const payload = {};
+    const payload: { name?: string; symbols?: string[] } = {};
     
-    if (name) payload['name'] = name;
-    if (symbols) payload['symbols'] = symbols;
+    if (name) payload.name = name;
+    if (symbols) payload.symbols = symbols;
     
     const response = await fetch(`${AlpacaClient.baseUrl}/v2/watchlists/${id}`, {
       method: 'PUT',

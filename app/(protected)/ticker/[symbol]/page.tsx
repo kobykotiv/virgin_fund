@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -13,28 +13,30 @@ import { fetchMarketData } from "@/lib/bot-api"
 
 export default function TickerPage() {
   const params = useParams()
-  const symbol = params.symbol as string
-  const [marketData, setMarketData] = useState<any>(null)
+  const rawSymbol = params?.symbol
+  const symbol = Array.isArray(rawSymbol) ? rawSymbol[0] : rawSymbol ?? ""
+  type MarketData = { price: number; change: number; volume: number }
+  const [marketData, setMarketData] = useState<MarketData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
 
-  useEffect(() => {
-    if (symbol) {
-      loadMarketData()
-    }
-  }, [symbol])
-
-  const loadMarketData = async () => {
+  const loadMarketData = useCallback(async () => {
     setIsLoading(true)
     try {
       const data = await fetchMarketData(symbol)
-      setMarketData(data)
+      setMarketData(data as MarketData)
     } catch (error) {
       console.error(`Error loading market data for ${symbol}:`, error)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [symbol])
+
+  useEffect(() => {
+    if (symbol) {
+      loadMarketData()
+    }
+  }, [symbol, loadMarketData])
 
   return (
     <div className="container mx-auto p-4">
@@ -69,12 +71,12 @@ export default function TickerPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-3xl font-bold">
-                    ${isLoading ? "—" : marketData?.price.toFixed(2)}
+                    ${isLoading || !marketData ? "—" : marketData.price.toFixed(2)}
                   </CardTitle>
                   <CardDescription className="flex items-center mt-1">
-                    {isLoading ? (
+                    {isLoading || !marketData ? (
                       <Skeleton className="h-5 w-20" />
-                    ) : marketData?.change >= 0 ? (
+                    ) : marketData.change >= 0 ? (
                       <span className="flex items-center text-green-500">
                         <ArrowUp className="h-4 w-4 mr-1" />+{marketData.change.toFixed(2)}%
                       </span>
@@ -95,19 +97,19 @@ export default function TickerPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div>
                   <div className="text-sm text-muted-foreground">Open</div>
-                  <div className="font-medium">{isLoading ? "—" : `$${(marketData.price * 0.99).toFixed(2)}`}</div>
+                  <div className="font-medium">{isLoading || !marketData ? "—" : `$${(marketData.price * 0.99).toFixed(2)}`}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">High</div>
-                  <div className="font-medium">{isLoading ? "—" : `$${(marketData.price * 1.02).toFixed(2)}`}</div>
+                  <div className="font-medium">{isLoading || !marketData ? "—" : `$${(marketData.price * 1.02).toFixed(2)}`}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Low</div>
-                  <div className="font-medium">{isLoading ? "—" : `$${(marketData.price * 0.98).toFixed(2)}`}</div>
+                  <div className="font-medium">{isLoading || !marketData ? "—" : `$${(marketData.price * 0.98).toFixed(2)}`}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Volume</div>
-                  <div className="font-medium">{isLoading ? "—" : marketData.volume.toLocaleString()}</div>
+                  <div className="font-medium">{isLoading || !marketData ? "—" : marketData.volume.toLocaleString()}</div>
                 </div>
               </div>
 
@@ -337,4 +339,3 @@ export default function TickerPage() {
     </div>
   )
 }
-

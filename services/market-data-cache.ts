@@ -194,6 +194,47 @@ class MarketDataCacheService {
   async clearOldCache(olderThanDays: number = 7) {
     await this.clearCache(undefined, olderThanDays);
   }
+
+  /**
+   * Compatibility wrappers
+   * Provide getAccount, getOrders, getPositions aliases used by API routes.
+   * These wrap the underlying Alpaca client methods when available and cache results.
+   */
+
+  public async getAccount() {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    const cacheKey = `account:info`;
+    return this.getData(cacheKey, async () => {
+      // @ts-ignore
+      return await (this.alpaca as any).getAccount?.() ?? {};
+    });
+  }
+
+  public async getOrders(status?: string) {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    const cacheKey = `orders:${status ?? 'all'}`;
+    return this.getData(cacheKey, async () => {
+      const params: any = {};
+      if (status) params.status = status;
+      // @ts-ignore
+      return await (this.alpaca as any).getOrders?.(params) ?? [];
+    });
+  }
+
+  public async getPositions() {
+    if (!this.isInitialized()) {
+      throw new Error('Alpaca client not initialized');
+    }
+    const cacheKey = `positions:all`;
+    return this.getData(cacheKey, async () => {
+      // @ts-ignore
+      return await (this.alpaca as any).getPositions?.() ?? [];
+    });
+  }
 }
 
 // Create singleton instance

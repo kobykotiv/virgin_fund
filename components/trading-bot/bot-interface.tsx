@@ -211,7 +211,7 @@ export function TradingBotInterface({
                 <Input 
                   id="threshold" 
                   type="number" 
-                  value={botData.parameters.threshold} 
+                  value={botData.parameters?.threshold ?? 2} 
                   onChange={e => handleParameterChange('threshold', parseFloat(e.target.value))}
                 />
               </div>
@@ -220,7 +220,7 @@ export function TradingBotInterface({
                 <Input 
                   id="period" 
                   type="number" 
-                  value={botData.parameters.period} 
+                  value={botData.parameters?.period ?? 14} 
                   onChange={e => handleParameterChange('period', parseInt(e.target.value))}
                 />
               </div>
@@ -229,7 +229,7 @@ export function TradingBotInterface({
                 <Input 
                   id="stopLoss" 
                   type="number" 
-                  value={botData.parameters.stopLoss} 
+                  value={botData.parameters?.stopLoss ?? 5} 
                   onChange={e => handleParameterChange('stopLoss', parseFloat(e.target.value))}
                 />
               </div>
@@ -238,7 +238,7 @@ export function TradingBotInterface({
                 <Input 
                   id="takeProfit" 
                   type="number" 
-                  value={botData.parameters.takeProfit} 
+                  value={botData.parameters?.takeProfit ?? 10} 
                   onChange={e => handleParameterChange('takeProfit', parseFloat(e.target.value))}
                 />
               </div>

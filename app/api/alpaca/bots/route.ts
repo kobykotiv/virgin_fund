@@ -30,6 +30,8 @@ const bots: Bot[] = [
         AMZN: 0.2,
       },
     },
+    strategy: "meanReversion",
+    parameters: {},
   },
   {
     id: "2",
@@ -54,6 +56,8 @@ const bots: Bot[] = [
       lowerLimit: 25000,
       quantity: 0.01,
     },
+    strategy: "gridTrend",
+    parameters: {},
   },
 ]
 
@@ -94,6 +98,8 @@ export async function POST(request: Request) {
       gridConfig: botData.gridConfig,
       dcaConfig: botData.dcaConfig,
       basketConfig: botData.basketConfig,
+      strategy: botData.strategy ?? '',
+      parameters: botData.parameters ?? {},
     }
 
     bots.push(newBot)
@@ -104,4 +110,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Failed to create bot" }, { status: 500 })
   }
 }
-

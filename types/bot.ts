@@ -67,8 +67,8 @@ export interface Bot {
   basketConfig?: BasketConfig
 
   // Additional properties used in components
-  strategy: string
-  parameters: Record<string, any>
+  strategy?: string
+  parameters?: Record<string, any>
 }
 
 // Alias for backward compatibility
@@ -127,4 +127,3 @@ export interface BacktestResult {
   // Additional property used in components
   initialCapital: number
 }
-

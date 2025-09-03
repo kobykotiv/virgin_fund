@@ -110,7 +110,15 @@ export default function DashboardPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <EnhancedDashboard apiConfig={apiConfig} />
+            <EnhancedDashboard
+              apiConfig={apiConfig}
+              onBotAction={async (botId, action) => {
+                // Placeholder handler — replace with real implementation that calls bot service
+                // Kept simple to satisfy typechecking for now.
+                console.log('onBotAction', botId, action)
+              }}
+              isLoading={isPageLoading}
+            />
           </div>
           <div className="space-y-6">
             <UserProfileWidget />
@@ -126,7 +134,7 @@ export default function DashboardPage() {
             <ApiKeyForm
               onSave={handleApiKeySave}
               onCancel={() => setIsApiKeyFormOpen(false)}
-              currentConfig={apiConfig}
+              currentConfig={apiConfig ?? undefined}
             />
           </div>
         </div>
@@ -137,4 +145,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-

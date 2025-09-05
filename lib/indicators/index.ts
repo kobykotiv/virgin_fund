@@ -1,4 +1,4 @@
-import type { IndicatorConfig } from "@/lib/backtesting/types"
+import type { IndicatorConfig } from "../backtesting/types"
 
 export function calculateIndicators(data: any[], indicators: IndicatorConfig[]) {
   let enrichedData = [...data]

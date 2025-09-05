@@ -5,7 +5,7 @@
 //
 // Keep functions small and well-documented so they can be extended as needed.
 
-import type { Bot } from "@/types/bot"
+import type { Bot } from "../../types/bot"
 
 /**
  * Return bot.parameters or an empty object.

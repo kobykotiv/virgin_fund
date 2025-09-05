@@ -1,5 +1,6 @@
 import type { Bot, BotStatus } from "@/types/bot"
 import { generateDemoBots, generateDemoMarketData, generateDemoOrders, generateDemoPositions } from "@/lib/demo-data"
+import { getBotParams } from "../src/lib/bot-helpers"
 
 // Check if demo mode is enabled
 const isDemoMode = () => {
@@ -185,7 +186,7 @@ export async function createBot(botData: Partial<Bot>): Promise<Bot> {
         basketConfig: botData.basketConfig,
         allocation: 500000, // Default $500K allocation for new bots in demo mode
         strategy: botData.strategy || "indicator",
-        parameters: botData.parameters || { period: 14, threshold: 30 },
+        parameters: getBotParams(botData as any, { period: 14, threshold: 30 }),
       }
 
       setTimeout(() => resolve(newBot), 500)
@@ -504,4 +505,3 @@ export async function fetchAccountBalance(): Promise<any> {
     )
   })
 }
-

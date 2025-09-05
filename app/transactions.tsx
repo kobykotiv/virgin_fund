@@ -15,6 +15,7 @@ const TransactionsPage: React.FC = () => {
   const [form, setForm] = useState<Transaction>({ type: '', amount: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -34,6 +35,16 @@ const TransactionsPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+    // Frontend validation
+    if (!form.type || form.type.trim().length < 2) {
+      setFormError('Transaction type is required and must be at least 2 characters.');
+      return;
+    }
+    if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0) {
+      setFormError('Amount is required and must be a positive number.');
+      return;
+    }
     setLoading(true);
     const method = editingId ? 'PATCH' : 'POST';
     const res = await fetch('/api/transactions', {
@@ -92,11 +103,12 @@ const TransactionsPage: React.FC = () => {
             placeholder="Investment ID"
             className="border rounded px-3 py-2 w-full"
           />
+          {formError && <div className="text-red-500 text-sm mb-2">{formError}</div>}
           <button type="submit" className="bg-primary text-white px-4 py-2 rounded">
             {editingId ? 'Update Transaction' : 'Create Transaction'}
           </button>
           {editingId && (
-            <button type="button" className="ml-2 px-4 py-2 rounded bg-muted" onClick={() => { setForm({ type: '', amount: 0 }); setEditingId(null); }}>
+            <button type="button" className="ml-2 px-4 py-2 rounded bg-muted" onClick={() => { setForm({ type: '', amount: 0 }); setEditingId(null); setFormError(null); }}>
               Cancel
             </button>
           )}

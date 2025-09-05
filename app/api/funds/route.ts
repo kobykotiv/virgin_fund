@@ -2,6 +2,9 @@ export async function PATCH(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const body = await req.json();
   if (!body.id) return NextResponse.json({ error: 'Missing fund id' }, { status: 400 });
+  if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 3) {
+    return NextResponse.json({ error: 'Fund name is required and must be at least 3 characters.' }, { status: 400 });
+  }
   const { data, error } = await supabase.from('funds').update(body).eq('id', body.id).select().maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ fund: data });
@@ -28,6 +31,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const body = await req.json();
+  if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 3) {
+    return NextResponse.json({ error: 'Fund name is required and must be at least 3 characters.' }, { status: 400 });
+  }
   const { data, error } = await supabase.from('funds').insert([body]).select().maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ fund: data });

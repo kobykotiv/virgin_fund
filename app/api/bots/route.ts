@@ -47,6 +47,13 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdmin()
 
     const body = (await req.json().catch(() => ({} as any))) as any
+    // Backend validation
+    if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 3) {
+      return NextResponse.json({ error: 'Bot name is required and must be at least 3 characters.' }, { status: 400 })
+    }
+    if (!body.type || typeof body.type !== 'string' || body.type.trim().length < 3) {
+      return NextResponse.json({ error: 'Bot type is required and must be at least 3 characters.' }, { status: 400 })
+    }
     const payload = {
       user_id: userId,
       name: body.name || null,

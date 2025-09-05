@@ -1,3 +1,27 @@
+// Team and Role-based access types
+export type UserRole = 'investor' | 'admin' | 'manager' | 'viewer';
+
+export interface Team {
+  id: string;
+  name: string;
+  members: Array<{
+    user_id: string;
+    role: UserRole;
+    joined_at: string;
+  }>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamInvite {
+  id: string;
+  team_id: string;
+  email: string;
+  invited_by: string;
+  status: 'pending' | 'accepted' | 'declined';
+  sent_at: string;
+  responded_at?: string;
+}
 /**
  * Database type definitions for the refactored bot-centered schema
  * Schema: bots -> positions[] -> orders[] -> trades[]

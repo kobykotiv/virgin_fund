@@ -14,6 +14,7 @@ const FundsPage: React.FC = () => {
   const [form, setForm] = useState<Fund>({ name: '' });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchFunds = async () => {
     setLoading(true);
@@ -33,6 +34,12 @@ const FundsPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+    // Frontend validation
+    if (!form.name || form.name.trim().length < 3) {
+      setFormError('Fund name is required and must be at least 3 characters.');
+      return;
+    }
     setLoading(true);
     const method = editingId ? 'PATCH' : 'POST';
     const res = await fetch('/api/funds', {
@@ -82,11 +89,12 @@ const FundsPage: React.FC = () => {
             placeholder="Description"
             className="border rounded px-3 py-2 w-full"
           />
+          {formError && <div className="text-red-500 text-sm mb-2">{formError}</div>}
           <button type="submit" className="bg-primary text-white px-4 py-2 rounded">
             {editingId ? 'Update Fund' : 'Create Fund'}
           </button>
           {editingId && (
-            <button type="button" className="ml-2 px-4 py-2 rounded bg-muted" onClick={() => { setForm({ name: '' }); setEditingId(null); }}>
+            <button type="button" className="ml-2 px-4 py-2 rounded bg-muted" onClick={() => { setForm({ name: '' }); setEditingId(null); setFormError(null); }}>
               Cancel
             </button>
           )}

@@ -2,6 +2,84 @@ import { NextRequest, NextResponse } from 'next/server'
 import { parse } from 'cookie'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { verifySessionToken } from '@/lib/session'
+import { getUserRoleFromRequest } from '@/lib/rbac'
+
+type Bot = {
+  id: string
+  user_id: string
+  name: string
+  type: string
+  strategy?: string
+  status?: string
+  config?: any
+  capital_allocated?: number | null
+  created_at?: string
+  updated_at?: string
+  performance?: any
+}
+
+/**
+ * Lightweight in-memory mock bots used when Supabase isn't configured.
+ * Allows UI to function in local/dev mode without secrets.
+ */
+const MOCK_BOTS: Bot[] = [
+  {
+    id: 'bot_demo_1',
+    user_id: 'user_demo_1',
+    name: 'Demo Mean Reverter',
+    type: 'mean_reversion',
+    strategy: 'mean_reversion',
+    status: 'active',
+    config: { assets: ['DEMO'], params: { lookback: 14 } },
+    capital_allocated: 1000,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
+    performance: { totalPnL: 120.5 },
+  },
+  {
+    id: 'bot_demo_2',
+    user_id: 'user_demo_2',
+    name: 'Demo Momentum',
+    type: 'momentum',
+    strategy: 'momentum',
+    status: 'paused',
+    config: { assets: ['MOCK'], params: { lookback: 7 } },
+    capital_allocated: 500,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    performance: { totalPnL: -15.2 },
+  },
+]
+
+function generateId() {
+  return 'bot_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+}
+
+function mapDbBotToFrontend(bot: any) {
+  return {
+    ...bot,
+    type: bot.type || 'manual',
+    status: bot.status || 'paused',
+    strategy: bot.strategy_type || bot.type || bot.strategy || 'manual',
+    assets: bot.config?.assets || [],
+    allocation: bot.capital_allocated ?? 0,
+    createdAt: bot.created_at || bot.createdAt,
+    updatedAt: bot.updated_at || bot.updatedAt,
+    userId: bot.user_id || bot.userId,
+    owner_id: bot.user_id || bot.owner_id || bot.userId,
+  }
+}
+
+function validateBotPayload(payload: any) {
+  if (!payload) return { valid: false, message: 'Missing payload' }
+  if (!payload.name || typeof payload.name !== 'string' || payload.name.trim().length < 3) {
+    return { valid: false, message: 'Bot name is required and must be at least 3 characters.' }
+  }
+  if (!payload.type || typeof payload.type !== 'string' || payload.type.trim().length < 3) {
+    return { valid: false, message: 'Bot type is required and must be at least 3 characters.' }
+  }
+  return { valid: true }
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,28 +87,26 @@ export async function GET(req: NextRequest) {
     const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const userId = (session as any).user_id
-  const supabase = getSupabaseAdmin() as any
 
-    const { data, error } = await supabase.from('bots').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    const supabase = getSupabaseAdmin()
+    if (!supabase) {
+      // Return mock bots for the authenticated user
+      const userBots = MOCK_BOTS.filter((b) => b.user_id === userId)
+      return NextResponse.json(userBots.map(mapDbBotToFrontend))
+    }
+
+    const { data, error } = await supabase
+      .from('bots')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
     if (error) {
       console.error('bots GET db error', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Map database fields to frontend expected fields
-    const mappedData = (data || []).map((bot: any) => ({
-      ...bot,
-      type: bot.type || 'manual', // Map type to type
-      status: bot.status || 'paused', // Map status to status
-      strategy: bot.strategy_type || bot.type || 'manual', // Map strategy_type to strategy
-      assets: bot.config?.assets || [], // Extract assets from config
-      allocation: bot.capital_allocated || 0, // Map capital_allocated to allocation
-      createdAt: bot.created_at,
-      updatedAt: bot.updated_at,
-      userId: bot.user_id,
-      owner_id: bot.user_id // Add owner_id for compatibility
-    }))
-
+    const mappedData = (data || []).map(mapDbBotToFrontend)
     return NextResponse.json(mappedData)
   } catch (err) {
     console.error('bots GET error', err)
@@ -44,20 +120,21 @@ export async function POST(req: NextRequest) {
     const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session || (session as any).expired) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const userId = (session as any).user_id
-    const supabase = getSupabaseAdmin()
 
+    const supabase = getSupabaseAdmin()
+    const { role } = await getUserRoleFromRequest(req, supabase)
+    if (!role || !['admin', 'manager'].includes(role)) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+    }
     const body = (await req.json().catch(() => ({} as any))) as any
-    // Backend validation
-    if (!body.name || typeof body.name !== 'string' || body.name.trim().length < 3) {
-      return NextResponse.json({ error: 'Bot name is required and must be at least 3 characters.' }, { status: 400 })
-    }
-    if (!body.type || typeof body.type !== 'string' || body.type.trim().length < 3) {
-      return NextResponse.json({ error: 'Bot type is required and must be at least 3 characters.' }, { status: 400 })
-    }
+
+    const v = validateBotPayload(body)
+    if (!v.valid) return NextResponse.json({ error: v.message }, { status: 400 })
+
     const payload = {
       user_id: userId,
       name: body.name || null,
-      type: body.type || body.strategy || 'manual', // Map type to type
+      type: body.type || body.strategy || 'manual',
       risk: body.risk || 'medium',
       config: {
         assets: body.assets || [],
@@ -69,37 +146,36 @@ export async function POST(req: NextRequest) {
         dcaConfig: body.dcaConfig,
         basketConfig: body.basketConfig,
       },
-      status: body.status === 'active' ? 'active' : (body.status || 'paused'), // Map active to active
+      status: body.status === 'active' ? 'active' : (body.status || 'paused'),
       strategy_type: body.type || body.strategy || 'manual',
       capital_allocated: body.allocation ?? null,
       max_position_size: body.maxPositionSize ?? null,
       risk_tolerance: body.riskTolerance || 'medium',
       auto_trade: body.autoTrade || false,
       description: body.description || null,
-      performance: body.performance?.totalPnL || 0
+      performance: body.performance?.totalPnL || 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
-    const { data: inserted, error } = await supabase.from('bots').insert([payload]).select().limit(1).maybeSingle()
+    if (!supabase) {
+      const newBot: Bot = {
+        id: generateId(),
+        ...payload,
+      } as any
+      MOCK_BOTS.unshift(newBot)
+      return NextResponse.json(mapDbBotToFrontend(newBot))
+    }
+
+    const { data: inserted, error } = await supabase.from('bots').insert([payload]).select().maybeSingle()
     if (error) {
       console.error('bots insert failed', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Map the inserted data back to frontend format
-    const mappedInserted = inserted ? {
-      ...inserted,
-      type: inserted.type || 'manual',
-      status: inserted.status || 'paused',
-      strategy: inserted.strategy_type || inserted.type || 'manual',
-      assets: inserted.config?.assets || [],
-      allocation: inserted.capital_allocated || 0,
-      createdAt: inserted.created_at,
-      updatedAt: inserted.updated_at,
-      userId: inserted.user_id,
-      owner_id: inserted.user_id // Add owner_id for compatibility
-    } : null
+    const mappedInserted = inserted ? mapDbBotToFrontend(inserted) : null
 
-    // Analytics: record bot created event
+    // Analytics: record bot created event (best-effort)
     try {
       await supabase.from('analytics_events').insert([{ user_id: userId, event_type: 'bot.created', payload: { bot_id: mappedInserted?.id } }])
     } catch (ae) {

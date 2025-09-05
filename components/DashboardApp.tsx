@@ -1,9 +1,11 @@
+"use client"
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { navItems } from './navData'
 
-const DashboardApp: React.FC = () => {
+interface DashboardAppProps { demoMode?: boolean; demoPortfolio?: any }
+const DashboardApp: React.FC<DashboardAppProps> = ({ demoMode, demoPortfolio }) => {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const router = useRouter()
@@ -77,20 +79,20 @@ const DashboardApp: React.FC = () => {
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 transition-all duration-300">
             <Card title="Account Balance">
-              <p className="text-4xl font-bold text-gray-900 dark:text-green-400">$2,453.78</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+$12.34 (0.51%) today</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-green-400">{demoMode && demoPortfolio ? `$${demoPortfolio.totalValue}` : '$2,453.78'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{demoMode && demoPortfolio ? `Cash: $${demoPortfolio.cash}` : '+$12.34 (0.51%) today'}</p>
             </Card>
             <Card title="Active Bots">
-              <p className="text-4xl font-bold text-gray-900 dark:text-yellow-400">3</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">1 on profit, 2 in standby</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-yellow-400">{demoMode && demoPortfolio ? demoPortfolio.activeBots : 3}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{demoMode && demoPortfolio ? `${(demoPortfolio.bots || []).filter((b:any)=>b.status==='running').length} running` : '1 on profit, 2 in standby'}</p>
             </Card>
             <Card title="Open Positions">
-              <p className="text-4xl font-bold text-gray-900 dark:text-blue-400">5</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Total exposure: 0.8 BTC</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-blue-400">{demoMode && demoPortfolio ? demoPortfolio.openPositions : 5}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{demoMode && demoPortfolio ? `Total exposure: ${demoPortfolio.openPositions} positions` : 'Total exposure: 0.8 BTC'}</p>
             </Card>
             <Card title="Portfolio Value">
-              <p className="text-4xl font-bold text-gray-900 dark:text-purple-400">5.64 BTC</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Est. $389,000</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-purple-400">{demoMode && demoPortfolio ? `${demoPortfolio.totalValue} USD` : '5.64 BTC'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{demoMode && demoPortfolio ? `Est. $${demoPortfolio.totalValue}` : 'Est. $389,000'}</p>
             </Card>
 
             <div className="md:col-span-2 xl:col-span-4">

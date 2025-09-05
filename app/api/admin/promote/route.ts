@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { parse } from 'cookie'
 import { verifySessionToken } from '@/lib/session'
+import { getUserRoleFromRequest } from '@/lib/rbac'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,14 +10,18 @@ export async function POST(req: NextRequest) {
     const session = await verifySessionToken(cookies['vf_session'] || '')
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const actorRole = (session as any).role || 'free'
-    if (actorRole !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const supabase = getSupabaseAdmin()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+    }
+    const { userId: requesterId, role } = await getUserRoleFromRequest(req, supabase)
+    if (role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json().catch(() => ({} as any))
     const { userId, role } = body
     if (!userId || !role) return NextResponse.json({ error: 'userId and role required' }, { status: 400 })
 
-    const supabase = getSupabaseAdmin()
+    // supabase already initialized above
     const { data, error } = await supabase.from('users').update({ role }).eq('id', userId).select().maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

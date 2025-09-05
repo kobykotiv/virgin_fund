@@ -27,7 +27,7 @@ import {
   Zap,
 } from "lucide-react"
 import { AnimatedBackground } from "@/components/animated-background"
-import { PerformanceChart } from "@/components/performance-chart"
+import PerformanceChart from "@/components/performance-chart"
 import { FearGreedWidget } from "@/components/fear-greed-widget"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { CookieConsent } from "@/components/cookie-consent"
@@ -257,7 +257,8 @@ export default function LandingPage() {
                         while managing risk with dynamic position sizing.
                       </p>
                       <div className="h-[300px] w-full bg-muted/50 rounded-md overflow-hidden">
-                        <PerformanceChart days={90} className="h-full w-full" />
+                        {/* <PerformanceChart days={90} className="h-full w-full" >
+                        </PerformanceChart> */}
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                         <div className="space-y-1">
@@ -1198,4 +1199,3 @@ export default function LandingPage() {
     </div>
   )
 }
-          

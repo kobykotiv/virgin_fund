@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PerformanceChart } from "@/components/performance-chart"
+// import { PerformanceChartProps } from "@/components/performance-chart"
 import { PortfolioAllocation } from "@/components/portfolio-allocation"
 import { LiveTicker } from "@/components/live-ticker"
 import { NewsWidget } from "@/components/news-widget"
@@ -54,9 +54,9 @@ export default function DashboardOverview() {
           <CardHeader>
             <CardTitle>Performance Overview</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
+          {/* <CardContent className="pl-2">
             <PerformanceChart />
-          </CardContent>
+          </CardContent> */}
         </Card>
         <Card className="col-span-3">
           <CardHeader>

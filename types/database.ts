@@ -55,6 +55,17 @@ export interface Position {
   created_at: string;
   updated_at: string;
 }
+// User interface for authentication and API key storage
+export interface User {
+  id: string;
+  email: string;
+  password_hash: string;
+  role: 'investor' | 'admin';
+  gemini_api_key?: string; // encrypted at rest
+  openai_api_key?: string; // encrypted at rest
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Order {
   id: string;

@@ -1,5 +1,6 @@
 import React from 'react';
-import DashboardLayout from '../components/DashboardLayout';
+import AppLayout from '../components/AppLayout';
+import Card from '../components/Card';
 
 const mockData = [
   { id: 1, strategy: 'Momentum', result: '12.5%' },
@@ -8,26 +9,12 @@ const mockData = [
 
 export default function Backtest() {
   return (
-    <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-4">Backtest</h1>
-      <div className="bg-muted/10 p-4 rounded shadow">
-        <table className="w-full">
-          <thead>
-            <tr>
-              <th className="text-left py-2">Strategy</th>
-              <th className="text-left py-2">Result</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockData.map((row) => (
-              <tr key={row.id}>
-                <td className="py-2">{row.strategy}</td>
-                <td className="py-2">{row.result}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </DashboardLayout>
-  );
+    <AppLayout>
+      <Card>
+        <h1 className="text-2xl font-bold mb-2">Backtest</h1>
+        <div className="text-muted">Configure backtests, show results in charts.</div>
+        {/* Chart placeholder */}
+        <div className="mt-4 h-48 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 rounded-lg flex items-center justify-center text-muted">TradingView-style chart stub</div>
+      </Card>
+    </AppLayout>
 }

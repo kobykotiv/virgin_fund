@@ -9,7 +9,7 @@ import {
   validateCaptcha,
 } from "react-simple-captcha";
 import { Button } from "./ui/button";
-import { triggerConfetti } from '@/lib/confetti';
+import { DemoHint } from "./DemoHint";
 
 interface AuthFormProps {
   type: "login" | "signup";
@@ -246,6 +246,7 @@ export function AuthForm({ type }: AuthFormProps) {
           </form>
         </div>
       </div>
+      {type === "login" && <DemoHint />}
     </div>
   );
 }

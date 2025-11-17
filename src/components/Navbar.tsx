@@ -17,6 +17,7 @@ import {
   Settings,
   LogOut,
   LineChart,
+  ListPlus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -81,6 +82,21 @@ export function Navbar() {
                   >
                     <BookOpen className="w-6 h-6 mr-2" />
                     Learn
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/append-list"
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      "glass-button",
+                      isActive("/append-list") && "bg-primary/20",
+                    )}
+                  >
+                    <ListPlus className="w-6 h-6 mr-2" />
+                    Notes
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>

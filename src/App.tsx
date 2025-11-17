@@ -17,6 +17,7 @@ import { useAuth } from "./hooks/useAuth";
 import { StrategyProvider } from "./context/StrategyContext";
 import { Toaster } from "./components/ui/toaster";
 import { useThemeStore } from "./lib/theme";
+import { AppendOnlyList } from "./components/AppendOnlyList";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,14 @@ export default function App() {
                     element={
                       <PrivateRoute>
                         <Backtest />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/append-list"
+                    element={
+                      <PrivateRoute>
+                        <AppendOnlyList />
                       </PrivateRoute>
                     }
                   />
